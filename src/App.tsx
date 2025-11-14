@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Waves, Trophy, RotateCcw, Info, RotateCw } from 'lucide-react'
 
 type CellState = 'empty' | 'ship' | 'hit' | 'miss'
-type GamePhase = 'instructions' | 'placement' | 'battle' | 'gameOver'
+type GamePhase = 'title' | 'instructions' | 'placement' | 'battle' | 'gameOver'
 type Orientation = 'horizontal' | 'vertical'
 
 interface Cell {
@@ -299,6 +299,121 @@ function SonarRadar() {
   )
 }
 
+function TitleScreen({ onStart }: { onStart: () => void }) {
+  const [isFading, setIsFading] = useState(false)
+
+  const handleStart = () => {
+    setIsFading(true)
+    setTimeout(() => {
+      onStart()
+    }, 700)
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        handleStart()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  return (
+    <div 
+      className={`relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center cursor-pointer transition-opacity duration-700 ${isFading ? 'opacity-0' : 'opacity-100'}`}
+      onClick={handleStart}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          handleStart()
+        }
+      }}
+    >
+      {/* Smoky battlefield background with CSS gradients */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-black opacity-90" />
+      <div className="absolute inset-0 bg-gradient-radial from-transparent via-slate-900/50 to-black" />
+      
+      {/* Vignette overlay */}
+      <div 
+        className="absolute inset-0" 
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.85) 100%)'
+        }}
+      />
+      
+      {/* Subtle fog/noise overlay with animation */}
+      <div 
+        className="absolute inset-0 opacity-10 mix-blend-screen"
+        style={{
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 400 400\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' /%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' /%3E%3C/svg%3E")',
+          backgroundSize: '200px 200px',
+          animation: 'fog-pan 60s linear infinite'
+        }}
+      />
+      
+      {/* Content */}
+      <div className="relative z-30 text-center px-8 max-w-4xl">
+        {/* Main title */}
+        <h1 
+          className="font-bold uppercase mb-4"
+          style={{
+            fontFamily: 'Teko, sans-serif',
+            fontSize: 'clamp(2.5rem, 8vw, 6rem)',
+            letterSpacing: '0.15em',
+            color: '#eaeaea',
+            textShadow: '0 0 24px rgba(255,255,255,0.15), 0 0 48px rgba(255,255,255,0.08), 0 2px 4px rgba(0,0,0,0.8)',
+            lineHeight: '1'
+          }}
+        >
+          FLEET COMMAND OPS
+        </h1>
+        
+        {/* Subtitle with green accent */}
+        <h2 
+          className="font-bold uppercase mb-12"
+          style={{
+            fontFamily: 'Teko, sans-serif',
+            fontSize: 'clamp(1.25rem, 3.5vw, 2.5rem)',
+            letterSpacing: '0.2em',
+            color: '#8cff4f',
+            textShadow: '0 0 24px rgba(140,255,79,0.4), 0 0 48px rgba(140,255,79,0.2), 0 2px 4px rgba(0,0,0,0.8)',
+            lineHeight: '1.2'
+          }}
+        >
+          TACTICAL STRIKE MISSION
+        </h2>
+        
+        {/* Press START prompt */}
+        <p 
+          className="uppercase animate-pulse"
+          style={{
+            fontFamily: 'Rajdhani, sans-serif',
+            fontSize: 'clamp(0.9rem, 1.5vw, 1.25rem)',
+            letterSpacing: '0.1em',
+            color: '#eaeaea',
+            textShadow: '0 0 12px rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.8)',
+            fontWeight: 500
+          }}
+        >
+          Press START
+        </p>
+      </div>
+      
+      {/* CSS animation for fog pan */}
+      <style>{`
+        @keyframes fog-pan {
+          0% { background-position: 0% 0%; }
+          100% { background-position: 100% 100%; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
 function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefObject<HTMLDivElement>, crosshairPosition: { row: number, col: number } | null }) {
   const [overlayRect, setOverlayRect] = useState<{ left: number, top: number, width: number, height: number } | null>(null)
 
@@ -364,7 +479,7 @@ function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefOb
 }
 
 function App() {
-  const [gamePhase, setGamePhase] = useState<GamePhase>('instructions')
+  const [gamePhase, setGamePhase] = useState<GamePhase>('title')
   const [playerBoard, setPlayerBoard] = useState<Cell[][]>([])
   const [aiBoard, setAiBoard] = useState<Cell[][]>([])
   const [playerShips, setPlayerShips] = useState<Ship[]>([])
@@ -865,6 +980,10 @@ function App() {
         </div>
       </div>
     )
+  }
+
+  if (gamePhase === 'title') {
+    return <TitleScreen onStart={() => setGamePhase('instructions')} />
   }
 
   if (gamePhase === 'instructions') {
