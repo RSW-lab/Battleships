@@ -691,19 +691,23 @@ function App() {
   }
 
   const getCellClass = (cell: Cell, isPlayerBoard: boolean, row: number, col: number) => {
-    const baseClass = 'w-12 h-12 border border-slate-600 cursor-pointer transition-all duration-300 relative overflow-hidden'
+    const baseClass = 'w-12 h-12 border cursor-pointer transition-all duration-300 relative overflow-hidden'
     const isPreview = previewCells.some(([r, c]) => r === row && c === col)
     
-    let stateClass = 'bg-blue-900 hover:bg-blue-800'
+    let stateClass = ''
+    let borderClass = 'border-[rgba(57,255,20,0.4)]'
     
     if (cell.state === 'empty') {
-      stateClass = 'water-background'
+      stateClass = 'bg-transparent hover:bg-[rgba(57,255,20,0.15)]'
     } else if (cell.state === 'ship' && isPlayerBoard) {
-      stateClass = 'bg-slate-700 hover:bg-slate-600'
+      stateClass = 'bg-[rgba(57,255,20,0.2)] hover:bg-[rgba(57,255,20,0.3)]'
+      borderClass = 'border-[rgba(57,255,20,0.6)]'
     } else if (cell.state === 'hit') {
       stateClass = 'bg-red-600'
+      borderClass = 'border-red-400'
     } else if (cell.state === 'miss') {
-      stateClass = 'bg-blue-400'
+      stateClass = 'bg-[rgba(57,255,20,0.3)]'
+      borderClass = 'border-[rgba(57,255,20,0.5)]'
     }
     
     if (isPreview) {
@@ -714,7 +718,7 @@ function App() {
       stateClass += ' animate-pulse'
     }
     
-    return `${baseClass} ${stateClass}`
+    return `${baseClass} ${borderClass} ${stateClass}`
   }
 
   const renderBoard = (board: Cell[][], isPlayerBoard: boolean) => {
