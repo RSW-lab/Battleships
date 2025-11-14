@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 import './App.css'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Anchor, Waves, Target, Trophy, RotateCcw, Info, RotateCw } from 'lucide-react'
+import { Anchor, Waves, Target, Trophy, RotateCcw, Info, RotateCw, Rocket } from 'lucide-react'
 
 type CellState = 'empty' | 'ship' | 'hit' | 'miss'
 type GamePhase = 'instructions' | 'placement' | 'battle' | 'gameOver'
@@ -12,6 +12,15 @@ interface Cell {
   state: CellState
   shipId?: number
   animation?: string
+}
+
+interface MissileAnimation {
+  id: number
+  fromRow: number
+  fromCol: number
+  toRow: number
+  toCol: number
+  fromBoard: 'player' | 'ai'
 }
 
 interface Ship {
@@ -90,7 +99,7 @@ function computePlacements(board: Cell[][], ships: Ship[]): Placement[] {
   return res
 }
 
-function useGridMetrics(gridRef: React.RefObject<HTMLElement>, deps: any[]) {
+function useGridMetrics(gridRef: React.RefObject<HTMLElement>, deps: unknown[]) {
   const [metrics, setMetrics] = useState({ cell: 40, offsetLeft: 0, offsetTop: 0 })
   useLayoutEffect(() => {
     const container = gridRef.current
@@ -209,6 +218,85 @@ function ShipOverlays({
   )
 }
 
+function MissileOverlay({
+  missiles,
+  playerGridRef,
+  aiGridRef,
+}: {
+  missiles: MissileAnimation[]
+  playerGridRef: React.RefObject<HTMLDivElement>
+  aiGridRef: React.RefObject<HTMLDivElement>
+}) {
+  const playerMetrics = useGridMetrics(playerGridRef, [missiles])
+  const aiMetrics = useGridMetrics(aiGridRef, [missiles])
+
+  return (
+    <>
+      {missiles.map((missile) => {
+        const fromMetrics = missile.fromBoard === 'player' ? playerMetrics : aiMetrics
+        const toMetrics = missile.fromBoard === 'player' ? aiMetrics : playerMetrics
+        const fromGridRef = missile.fromBoard === 'player' ? playerGridRef : aiGridRef
+        const toGridRef = missile.fromBoard === 'player' ? aiGridRef : playerGridRef
+
+        if (!fromGridRef.current || !toGridRef.current) return null
+
+        const fromGridRect = fromGridRef.current.getBoundingClientRect()
+        const toGridRect = toGridRef.current.getBoundingClientRect()
+
+        const fromX = fromGridRect.left + fromMetrics.offsetLeft + missile.fromCol * fromMetrics.cell + fromMetrics.cell / 2
+        const fromY = fromGridRect.top + fromMetrics.offsetTop + missile.fromRow * fromMetrics.cell + fromMetrics.cell / 2
+
+        const toX = toGridRect.left + toMetrics.offsetLeft + missile.toCol * toMetrics.cell + toMetrics.cell / 2
+        const toY = toGridRect.top + toMetrics.offsetTop + missile.toRow * toMetrics.cell + toMetrics.cell / 2
+
+        const deltaX = toX - fromX
+        const deltaY = toY - fromY
+
+        return (
+          <div
+            key={missile.id}
+            className="fixed pointer-events-none z-50"
+            style={{
+              left: fromX,
+              top: fromY,
+              '--missile-x': `${deltaX}px`,
+              '--missile-y': `${deltaY}px`,
+            } as React.CSSProperties}
+          >
+            <div className="missile-animation">
+              <Rocket className="w-6 h-6 text-red-500" style={{ transform: `rotate(${Math.atan2(deltaY, deltaX) * 180 / Math.PI + 90}deg)` }} />
+            </div>
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
+function SonarRadar() {
+  return (
+    <div className="fixed bottom-8 right-8 w-32 h-32 pointer-events-none z-40">
+      <div className="relative w-full h-full">
+        <div className="absolute inset-0 rounded-full border-2 border-cyan-500 opacity-50"></div>
+        <div className="absolute inset-2 rounded-full border border-cyan-400 opacity-40"></div>
+        <div className="absolute inset-4 rounded-full border border-cyan-300 opacity-30"></div>
+        
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="radar-arm absolute w-1 h-16 bg-gradient-to-t from-cyan-400 to-transparent origin-bottom" style={{ transformOrigin: 'center center', bottom: '50%' }}></div>
+        </div>
+        
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="radar-ping absolute w-2 h-2 bg-cyan-400 rounded-full"></div>
+        </div>
+        
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-cyan-400 text-xs font-bold opacity-70">SONAR</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [gamePhase, setGamePhase] = useState<GamePhase>('instructions')
   const [playerBoard, setPlayerBoard] = useState<Cell[][]>([])
@@ -221,6 +309,7 @@ function App() {
   const [isPlayerTurn, setIsPlayerTurn] = useState(true)
   const [winner, setWinner] = useState<'player' | 'ai' | null>(null)
   const [message, setMessage] = useState('')
+  const [missiles, setMissiles] = useState<MissileAnimation[]>([])
   
   const aiTargetQueueRef = useRef<[number, number][]>([])
   const lastHitRef = useRef<[number, number] | null>(null)
@@ -228,6 +317,7 @@ function App() {
   const playerShipsRef = useRef<Ship[]>([])
   const playerGridRef = useRef<HTMLDivElement>(null)
   const aiGridRef = useRef<HTMLDivElement>(null)
+  const missileIdRef = useRef(0)
   
   useEffect(() => {
     playerBoardRef.current = playerBoard
@@ -393,14 +483,35 @@ function App() {
     setPreviewCells([])
   }
 
+  const launchMissile = (fromRow: number, fromCol: number, toRow: number, toCol: number, fromBoard: 'player' | 'ai') => {
+    const missileId = missileIdRef.current++
+    const missile: MissileAnimation = {
+      id: missileId,
+      fromRow,
+      fromCol,
+      toRow,
+      toCol,
+      fromBoard
+    }
+    setMissiles(prev => [...prev, missile])
+    
+    setTimeout(() => {
+      setMissiles(prev => prev.filter(m => m.id !== missileId))
+    }, 800)
+  }
+
   const handleAttack = async (row: number, col: number) => {
     if (!isPlayerTurn || gamePhase !== 'battle' || aiBoard[row][col].state === 'hit' || aiBoard[row][col].state === 'miss') {
       return
     }
 
+    launchMissile(7, 7, row, col, 'player')
+    
+    await new Promise(resolve => setTimeout(resolve, 600))
+
     const newBoard = JSON.parse(JSON.stringify(aiBoard))
     const cell = newBoard[row][col]
-    let updatedAiShips = [...aiShips]
+    const updatedAiShips = [...aiShips]
     
     if (cell.state === 'ship') {
       cell.state = 'hit'
@@ -488,68 +599,72 @@ function App() {
         } while (currentBoard[targetRow][targetCol].state === 'hit' || currentBoard[targetRow][targetCol].state === 'miss')
       }
 
-      const newBoard = JSON.parse(JSON.stringify(currentBoard))
-      const cell = newBoard[targetRow][targetCol]
-      let updatedPlayerShips = [...playerShipsRef.current]
-      
-      if (cell.state === 'ship') {
-        cell.state = 'hit'
-        cell.animation = 'hit'
-        setMessage('🚨 INCOMING FIRE! Our vessel is hit!')
-        lastHitRef.current = [targetRow, targetCol]
-        
-        const adjacentCells = [
-          [targetRow - 1, targetCol],
-          [targetRow + 1, targetCol],
-          [targetRow, targetCol - 1],
-          [targetRow, targetCol + 1],
-        ].filter(([r, c]) => 
-          r >= 0 && r < BOARD_SIZE && 
-          c >= 0 && c < BOARD_SIZE && 
-          newBoard[r][c].state !== 'hit' && 
-          newBoard[r][c].state !== 'miss'
-        ) as [number, number][]
-        
-        aiTargetQueueRef.current = [...aiTargetQueueRef.current, ...adjacentCells]
-        
-        const shipIndex = updatedPlayerShips.findIndex(s => s.id === cell.shipId)
-        if (shipIndex !== -1) {
-          updatedPlayerShips[shipIndex].hits++
-          if (updatedPlayerShips[shipIndex].hits === updatedPlayerShips[shipIndex].size) {
-            updatedPlayerShips[shipIndex].sunk = true
-            setMessage(`💀 CRITICAL DAMAGE! Our ${updatedPlayerShips[shipIndex].name.toUpperCase()} has been sunk!`)
-            lastHitRef.current = null
-            aiTargetQueueRef.current = []
-          }
-        }
-        setPlayerShips(updatedPlayerShips)
-        
-        if (updatedPlayerShips.every(s => s.sunk)) {
-          setWinner('ai')
-          setGamePhase('gameOver')
-          setMessage('💀 DEFEAT! Our fleet has been destroyed!')
-        }
-      } else {
-        cell.state = 'miss'
-        cell.animation = 'miss'
-        setMessage('💧 Enemy salvo missed! We remain unscathed.')
-      }
-      
-      setPlayerBoard(newBoard)
+      launchMissile(7, 7, targetRow, targetCol, 'ai')
       
       setTimeout(() => {
-        const updatedBoard = JSON.parse(JSON.stringify(newBoard))
-        updatedBoard[targetRow][targetCol].animation = undefined
-        setPlayerBoard(updatedBoard)
-      }, 1000)
-
-      if (cell.state === 'hit' && !updatedPlayerShips.every(s => s.sunk)) {
-        aiTurn()
-      } else if (!updatedPlayerShips.every(s => s.sunk)) {
+        const newBoard = JSON.parse(JSON.stringify(currentBoard))
+        const cell = newBoard[targetRow][targetCol]
+        const updatedPlayerShips = [...playerShipsRef.current]
+        
+        if (cell.state === 'ship') {
+          cell.state = 'hit'
+          cell.animation = 'hit'
+          setMessage('🚨 INCOMING FIRE! Our vessel is hit!')
+          lastHitRef.current = [targetRow, targetCol]
+          
+          const adjacentCells = [
+            [targetRow - 1, targetCol],
+            [targetRow + 1, targetCol],
+            [targetRow, targetCol - 1],
+            [targetRow, targetCol + 1],
+          ].filter(([r, c]) => 
+            r >= 0 && r < BOARD_SIZE && 
+            c >= 0 && c < BOARD_SIZE && 
+            newBoard[r][c].state !== 'hit' && 
+            newBoard[r][c].state !== 'miss'
+          ) as [number, number][]
+          
+          aiTargetQueueRef.current = [...aiTargetQueueRef.current, ...adjacentCells]
+          
+          const shipIndex = updatedPlayerShips.findIndex(s => s.id === cell.shipId)
+          if (shipIndex !== -1) {
+            updatedPlayerShips[shipIndex].hits++
+            if (updatedPlayerShips[shipIndex].hits === updatedPlayerShips[shipIndex].size) {
+              updatedPlayerShips[shipIndex].sunk = true
+              setMessage(`💀 CRITICAL DAMAGE! Our ${updatedPlayerShips[shipIndex].name.toUpperCase()} has been sunk!`)
+              lastHitRef.current = null
+              aiTargetQueueRef.current = []
+            }
+          }
+          setPlayerShips(updatedPlayerShips)
+          
+          if (updatedPlayerShips.every(s => s.sunk)) {
+            setWinner('ai')
+            setGamePhase('gameOver')
+            setMessage('💀 DEFEAT! Our fleet has been destroyed!')
+          }
+        } else {
+          cell.state = 'miss'
+          cell.animation = 'miss'
+          setMessage('💧 Enemy salvo missed! We remain unscathed.')
+        }
+        
+        setPlayerBoard(newBoard)
+        
         setTimeout(() => {
-          setIsPlayerTurn(true)
-        }, 1500)
-      }
+          const updatedBoard = JSON.parse(JSON.stringify(newBoard))
+          updatedBoard[targetRow][targetCol].animation = undefined
+          setPlayerBoard(updatedBoard)
+        }, 1000)
+
+        if (cell.state === 'hit' && !updatedPlayerShips.every(s => s.sunk)) {
+          aiTurn()
+        } else if (!updatedPlayerShips.every(s => s.sunk)) {
+          setTimeout(() => {
+            setIsPlayerTurn(true)
+          }, 1500)
+        }
+      }, 600)
     }, 1000)
   }
 
@@ -584,6 +699,14 @@ function App() {
   }
 
   const renderBoard = (board: Cell[][], isPlayerBoard: boolean) => {
+    const ships = isPlayerBoard ? playerShips : aiShips
+    
+    const isCellOnSunkShip = (cell: Cell): boolean => {
+      if (cell.state !== 'hit' || !cell.shipId) return false
+      const ship = ships.find(s => s.id === cell.shipId)
+      return ship?.sunk || false
+    }
+    
     return (
       <div className="inline-block">
         <div 
@@ -601,33 +724,41 @@ function App() {
               <div key={`label-${rowIndex}`} className="w-12 h-12 flex items-center justify-center text-cyan-400 font-bold text-sm">
                 {String.fromCharCode(65 + rowIndex)}
               </div>
-              {row.map((cell, colIndex) => (
-                <div
-                  key={`${rowIndex}-${colIndex}`}
-                  data-cell={`${rowIndex}-${colIndex}`}
-                  className={getCellClass(cell, isPlayerBoard, rowIndex, colIndex)}
-                  onClick={() => {
-                    if (gamePhase === 'placement' && isPlayerBoard) {
-                      handlePlayerPlacement(rowIndex, colIndex)
-                    } else if (gamePhase === 'battle' && !isPlayerBoard) {
-                      handleAttack(rowIndex, colIndex)
-                    }
-                  }}
-                  onMouseEnter={() => isPlayerBoard && handleMouseEnter(rowIndex, colIndex)}
-                  onMouseLeave={() => isPlayerBoard && handleMouseLeave()}
-                >
-                  {cell.state === 'hit' && (
-                    <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                      <Target className="w-6 h-6 text-white animate-spin" />
-                    </div>
-                  )}
-                  {cell.state === 'miss' && (
-                    <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                      <Waves className="w-5 h-5 text-white opacity-70" />
-                    </div>
-                  )}
-                </div>
-              ))}
+              {row.map((cell, colIndex) => {
+                const isOnSunkShip = isCellOnSunkShip(cell)
+                return (
+                  <div
+                    key={`${rowIndex}-${colIndex}`}
+                    data-cell={`${rowIndex}-${colIndex}`}
+                    className={getCellClass(cell, isPlayerBoard, rowIndex, colIndex)}
+                    onClick={() => {
+                      if (gamePhase === 'placement' && isPlayerBoard) {
+                        handlePlayerPlacement(rowIndex, colIndex)
+                      } else if (gamePhase === 'battle' && !isPlayerBoard) {
+                        handleAttack(rowIndex, colIndex)
+                      }
+                    }}
+                    onMouseEnter={() => isPlayerBoard && handleMouseEnter(rowIndex, colIndex)}
+                    onMouseLeave={() => isPlayerBoard && handleMouseLeave()}
+                  >
+                    {isOnSunkShip && (
+                      <div className="absolute inset-0 z-20 pointer-events-none">
+                        <div className="fire-effect absolute inset-0 bg-gradient-to-t from-orange-600 via-red-500 to-yellow-400 opacity-60"></div>
+                      </div>
+                    )}
+                    {cell.state === 'hit' && (
+                      <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+                        <Target className="w-6 h-6 text-white animate-spin" />
+                      </div>
+                    )}
+                    {cell.state === 'miss' && (
+                      <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+                        <Waves className="w-5 h-5 text-white opacity-70" />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </>
           ))}
         </div>
@@ -884,6 +1015,16 @@ function App() {
           </Button>
         </div>
       </div>
+      {gamePhase === 'battle' && (
+        <>
+          <MissileOverlay
+            missiles={missiles}
+            playerGridRef={playerGridRef}
+            aiGridRef={aiGridRef}
+          />
+          <SonarRadar />
+        </>
+      )}
     </div>
   )
 }

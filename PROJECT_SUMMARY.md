@@ -93,12 +93,23 @@ A fully functional Naval Command Battleships game with AI opponent, realistic sh
 
 ---
 
-## Pending Features 🔜
+## Recently Added Features ✅
 
-### Animations (Requested but Not Yet Implemented)
-1. **Missile launch animation** - Animated missile traveling from attacker to target cell when firing
+### Animations (Implemented November 13, 2025)
+1. **Missile launch animation** - Animated rocket icon traveling from attacker to target cell when firing
+   - Works for both player and AI attacks
+   - Uses CSS keyframes with dynamic positioning
+   - 800ms animation duration with proper rotation based on trajectory
 2. **Fire animations** - CSS-based flickering fire effects on sunk ships
-3. **Sonar radar animation** - Rotating radar display around the board for atmosphere
+   - Gradient fire overlay (orange/red/yellow) on all cells of sunk ships
+   - Continuous flicker and glow animations
+   - Visible on both player and enemy boards
+3. **Sunk ships visibility** - Enemy ships appear on the board when destroyed (already implemented)
+4. **Sonar radar animation** - Rotating radar display widget in bottom-right corner during battle
+   - Rotating sweep arm with 4-second rotation cycle
+   - Pulsing ping effect in center
+   - Multiple concentric circles for depth
+   - Only visible during battle phase
 
 ### Technical Debt
 - None critical - game is fully functional
