@@ -45,6 +45,7 @@ type Placement = {
 }
 
 const BOARD_SIZE = 15
+const CELL_SIZE = 40
 
 const SHIPS: Omit<Ship, 'hits' | 'sunk'>[] = [
   { id: 1, name: 'Carrier', size: 14, width: 2, length: 7 },
@@ -310,6 +311,7 @@ function App() {
   const [winner, setWinner] = useState<'player' | 'ai' | null>(null)
   const [message, setMessage] = useState('')
   const [missiles, setMissiles] = useState<MissileAnimation[]>([])
+  const [attackInProgress, setAttackInProgress] = useState(false)
   
   const aiTargetQueueRef = useRef<[number, number][]>([])
   const lastHitRef = useRef<[number, number] | null>(null)
@@ -501,10 +503,11 @@ function App() {
   }
 
   const handleAttack = async (row: number, col: number) => {
-    if (!isPlayerTurn || gamePhase !== 'battle' || aiBoard[row][col].state === 'hit' || aiBoard[row][col].state === 'miss') {
+    if (!isPlayerTurn || gamePhase !== 'battle' || aiBoard[row][col].state === 'hit' || aiBoard[row][col].state === 'miss' || attackInProgress) {
       return
     }
 
+    setAttackInProgress(true)
     launchMissile(7, 7, row, col, 'player')
     
     await new Promise(resolve => setTimeout(resolve, 600))
@@ -550,13 +553,17 @@ function App() {
     if (cell.state === 'hit' && !updatedAiShips.every(s => s.sunk)) {
       setTimeout(() => {
         setIsPlayerTurn(false)
+        setAttackInProgress(false)
         aiTurn()
       }, 1500)
     } else if (!updatedAiShips.every(s => s.sunk)) {
       setTimeout(() => {
         setIsPlayerTurn(false)
+        setAttackInProgress(false)
         aiTurn()
       }, 1500)
+    } else {
+      setAttackInProgress(false)
     }
   }
 
@@ -662,6 +669,7 @@ function App() {
         } else if (!updatedPlayerShips.every(s => s.sunk)) {
           setTimeout(() => {
             setIsPlayerTurn(true)
+            setAttackInProgress(false)
           }, 1500)
         }
       }, 600)
@@ -674,7 +682,7 @@ function App() {
   }
 
   const getCellClass = (cell: Cell, isPlayerBoard: boolean, row: number, col: number) => {
-    const baseClass = 'w-12 h-12 border border-slate-600 cursor-pointer transition-all duration-300 relative overflow-hidden'
+    const baseClass = 'border border-slate-600 cursor-pointer transition-all duration-300 relative overflow-hidden'
     const isPreview = previewCells.some(([r, c]) => r === row && c === col)
     
     let stateClass = 'bg-blue-900 hover:bg-blue-800'
@@ -710,18 +718,21 @@ function App() {
     return (
       <div className="inline-block">
         <div 
-          className="grid gap-0 bg-slate-800 p-2 rounded-lg shadow-2xl"
-          style={{ gridTemplateColumns: `repeat(${BOARD_SIZE + 1}, minmax(0, 1fr))` }}
+          className="grid gap-0 bg-slate-800 p-2 rounded-lg shadow-2xl overflow-hidden"
+          style={{ 
+            gridTemplateColumns: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
+            gridTemplateRows: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`
+          }}
         >
-          <div className="w-12 h-12"></div>
+          <div style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}></div>
           {Array.from({ length: BOARD_SIZE }, (_, i) => (
-            <div key={i} className="w-12 h-12 flex items-center justify-center text-cyan-400 font-bold text-sm">
+            <div key={i} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }} className="flex items-center justify-center text-cyan-400 font-bold text-sm">
               {i + 1}
             </div>
           ))}
           {board.map((row, rowIndex) => (
             <>
-              <div key={`label-${rowIndex}`} className="w-12 h-12 flex items-center justify-center text-cyan-400 font-bold text-sm">
+              <div key={`label-${rowIndex}`} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }} className="flex items-center justify-center text-cyan-400 font-bold text-sm">
                 {String.fromCharCode(65 + rowIndex)}
               </div>
               {row.map((cell, colIndex) => {
