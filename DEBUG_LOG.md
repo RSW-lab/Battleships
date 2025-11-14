@@ -396,3 +396,72 @@ Verified the dev server starts successfully and the game loads without errors.
 **Last Updated:** November 13, 2025  
 **Maintained By:** Devin AI  
 **Project Owner:** Rudi Willner
+
+## Stylistic Improvements Implementation
+
+**Date:** November 14, 2025  
+**Severity:** Enhancement  
+**Status:** ✅ Implemented
+
+### Requirements
+User requested stylistic improvements to make the game look more polished and realistic, based on reference screenshots showing:
+1. Animated water background in grid cells
+2. Green sonar-styled targeting overlay with crosshair and coordinates
+3. Better missile animation with trail effects
+4. Animated fire effects for burning ships
+5. Rubble/debris for destroyed ships
+
+### Implementation Details
+
+#### 1. Animated Water Background
+Added CSS keyframe animation for water flow effect with downloaded water texture from Unsplash. Applied to empty cells using `water-background` class with 20s linear infinite animation at 0.3 opacity.
+
+#### 2. Green Targeting Crosshair with Coordinates
+Added state management for crosshair position tracking. Implemented pulsing red crosshair with green coordinate display (format: A1, B5, etc.) that appears when hovering over enemy cells during player turn. Prevents display during attack animation using `attackInProgress` flag.
+
+#### 3. Enhanced Missile Animation
+Improved missile animation with 720-degree rotation, brightness effects, and animated trail. Added drop-shadow filters and gradient trail effect using CSS pseudo-element.
+
+#### 4. Enhanced Fire Effects
+Replaced static gradient with animated fire using three keyframe animations: fire-flicker (scale/position/color), fire-glow (box-shadow), and fire-dance (background-position). Uses multi-color gradient with 400% background size for realistic flame movement.
+
+#### 5. Rubble/Debris Effects
+Added 5 rubble pieces per sunk ship cell with falling animation. Each piece has staggered animation delays (0s, 0.1s, 0.15s, 0.2s, 0.25s) for realistic debris effect. Uses gradient backgrounds and rotation for visual variety.
+
+### Technical Challenges
+
+**Challenge 1: TypeScript Unused Variable Errors**
+Initial implementation had unused state variables causing build errors. Fixed by integrating `attackInProgress` flag into `handleAttack()` function.
+
+**Challenge 2: Z-Index Layering**
+Ensured proper visual stacking order: water (z-5) < rubble (z-15) < fire (z-20) < hit/miss (z-30) < ships (z-30) < missiles (z-40) < crosshair (z-1000).
+
+**Challenge 3: Performance Optimization**
+Multiple CSS animations running simultaneously. Used efficient CSS transforms and limited animation complexity to maintain smooth 60fps gameplay.
+
+### Assets
+- Water texture: Downloaded from Unsplash (free license)
+- Saved to: `/public/assets/water.jpg` (~193KB)
+
+### Testing
+Verified that:
+1. ✅ Water background animates smoothly in empty cells
+2. ✅ Crosshair appears when hovering over enemy cells during player turn
+3. ✅ Crosshair displays correct coordinates (row letter + column number)
+4. ✅ Crosshair disappears during attack animation
+5. ✅ Missile animation includes rotation and trail effects
+6. ✅ Fire effects have realistic flickering and glowing
+7. ✅ Rubble pieces appear on destroyed ships with falling animation
+8. ✅ All animations maintain smooth performance
+9. ✅ Build passes without errors
+10. ✅ Blue naval theme maintained for main game
+
+### Code Quality
+- No TypeScript errors
+- All animations use CSS keyframes for performance
+- Proper state management with React hooks
+- Clean separation of concerns (CSS for styling, React for logic)
+
+---
+
+*End of Debug Log - Updated November 14, 2025*

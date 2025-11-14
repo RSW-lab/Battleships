@@ -310,6 +310,8 @@ function App() {
   const [winner, setWinner] = useState<'player' | 'ai' | null>(null)
   const [message, setMessage] = useState('')
   const [missiles, setMissiles] = useState<MissileAnimation[]>([])
+  const [crosshairPosition, setCrosshairPosition] = useState<{ row: number; col: number } | null>(null)
+  const [attackInProgress, setAttackInProgress] = useState(false)
   
   const aiTargetQueueRef = useRef<[number, number][]>([])
   const lastHitRef = useRef<[number, number] | null>(null)
@@ -501,9 +503,12 @@ function App() {
   }
 
   const handleAttack = async (row: number, col: number) => {
-    if (!isPlayerTurn || gamePhase !== 'battle' || aiBoard[row][col].state === 'hit' || aiBoard[row][col].state === 'miss') {
+    if (!isPlayerTurn || gamePhase !== 'battle' || aiBoard[row][col].state === 'hit' || aiBoard[row][col].state === 'miss' || attackInProgress) {
       return
     }
+
+    setAttackInProgress(true)
+    setCrosshairPosition(null)
 
     launchMissile(7, 7, row, col, 'player')
     
@@ -549,14 +554,18 @@ function App() {
 
     if (cell.state === 'hit' && !updatedAiShips.every(s => s.sunk)) {
       setTimeout(() => {
+        setAttackInProgress(false)
         setIsPlayerTurn(false)
         aiTurn()
       }, 1500)
     } else if (!updatedAiShips.every(s => s.sunk)) {
       setTimeout(() => {
+        setAttackInProgress(false)
         setIsPlayerTurn(false)
         aiTurn()
       }, 1500)
+    } else {
+      setAttackInProgress(false)
     }
   }
 
@@ -679,7 +688,9 @@ function App() {
     
     let stateClass = 'bg-blue-900 hover:bg-blue-800'
     
-    if (cell.state === 'ship' && isPlayerBoard) {
+    if (cell.state === 'empty') {
+      stateClass = 'water-background'
+    } else if (cell.state === 'ship' && isPlayerBoard) {
       stateClass = 'bg-slate-700 hover:bg-slate-600'
     } else if (cell.state === 'hit') {
       stateClass = 'bg-red-600'
@@ -738,13 +749,34 @@ function App() {
                         handleAttack(rowIndex, colIndex)
                       }
                     }}
-                    onMouseEnter={() => isPlayerBoard && handleMouseEnter(rowIndex, colIndex)}
-                    onMouseLeave={() => isPlayerBoard && handleMouseLeave()}
+                    onMouseEnter={() => {
+                      if (isPlayerBoard) {
+                        handleMouseEnter(rowIndex, colIndex)
+                      } else if (gamePhase === 'battle' && isPlayerTurn && !attackInProgress) {
+                        setCrosshairPosition({ row: rowIndex, col: colIndex })
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      if (isPlayerBoard) {
+                        handleMouseLeave()
+                      } else {
+                        setCrosshairPosition(null)
+                      }
+                    }}
                   >
                     {isOnSunkShip && (
-                      <div className="absolute inset-0 z-20 pointer-events-none">
-                        <div className="fire-effect absolute inset-0 bg-gradient-to-t from-orange-600 via-red-500 to-yellow-400 opacity-60"></div>
-                      </div>
+                      <>
+                        <div className="absolute inset-0 z-20 pointer-events-none">
+                          <div className="fire-effect absolute inset-0"></div>
+                        </div>
+                        <div className="rubble-effect">
+                          <div className="rubble-piece"></div>
+                          <div className="rubble-piece"></div>
+                          <div className="rubble-piece"></div>
+                          <div className="rubble-piece"></div>
+                          <div className="rubble-piece"></div>
+                        </div>
+                      </>
                     )}
                     {cell.state === 'hit' && (
                       <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
@@ -754,6 +786,13 @@ function App() {
                     {cell.state === 'miss' && (
                       <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
                         <Waves className="w-5 h-5 text-white opacity-70" />
+                      </div>
+                    )}
+                    {!isPlayerBoard && crosshairPosition && crosshairPosition.row === rowIndex && crosshairPosition.col === colIndex && (
+                      <div className="crosshair" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
+                        <div className="coordinates-display" style={{ whiteSpace: 'nowrap' }}>
+                          {String.fromCharCode(65 + rowIndex)}{colIndex + 1}
+                        </div>
                       </div>
                     )}
                   </div>
