@@ -1,10 +1,54 @@
 # Battleships Game - Project Summary
 
 ## Overview
-A fully functional Naval Command Battleships game with AI opponent, realistic ship visuals, and immersive admiral/naval warfare theming. Built with React + TypeScript + Vite + Tailwind CSS.
+A fully functional Fleet Command Ops Battleships game with AI opponent, realistic ship visuals, and immersive modern military tactical theming. Built with React + TypeScript + Vite + Tailwind CSS.
 
 **Deployed at:** https://battleships-game-7m8gss8s.devinapps.com  
-**GitHub repo:** https://github.com/RSW-lab/Battleships
+**GitHub repo:** https://github.com/RSW-lab/Battleships  
+**Current Stable Version:** Best Version V3 (commit 436efe0, tagged as `Best-Version-V3`)
+
+---
+
+## Current Stable Baseline: Best Version V3
+
+**Status:** ✅ Active (merged to main via PR #5 on November 14, 2025)  
+**Git Tag:** `Best-Version-V3`  
+**Commit:** 436efe0593d725a11da6f273e194f3ceda98118c
+
+### What is Best Version V3?
+
+Best Version V3 represents the preferred aesthetic and gameplay experience with the cyan/blue military theme and continuous ocean backdrop. This version was confirmed by the user as the baseline to build upon for future improvements.
+
+### Key Features of Best Version V3:
+- ✅ **Cyan "ALLIED SECTOR"** and **red/orange "HOSTILE SECTOR"** titles (not green)
+- ✅ **Continuous ocean texture backdrop** spread across all grid squares
+- ✅ **Ship sprite overlays** visible during gameplay
+- ✅ **"FLEET COMMAND OPS"** military branding with animated radar icons
+- ✅ **Working turn-based combat** with consecutive turns after hits
+- ✅ **Persistent flame effects** on hit cells
+- ✅ **Rubble effects** on sunk ships
+- ✅ **Realistic missile sprite** with glow effect
+- ✅ **Green targeting crosshair** with coordinate display
+- ✅ **Animated water background** with ocean texture
+- ✅ **Modern military tactical aesthetic** (not traditional naval theme)
+
+### Why This Version?
+
+This version was selected after testing multiple iterations because it provides:
+1. The preferred cyan/blue color scheme (not the green Call of Duty theme from PR #4)
+2. All 8 critical fixes from the November 14, 2025 session
+3. Working gameplay mechanics with proper turn logic
+4. Immersive visual effects and animations
+5. Modern military aesthetic that matches user preferences
+
+### Reverting to Best Version V3
+
+If future changes need to be reverted, use:
+```bash
+git checkout Best-Version-V3
+# or
+git reset --hard 436efe0
+```
 
 ---
 
