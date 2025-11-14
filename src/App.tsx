@@ -573,9 +573,24 @@ function App() {
       const currentBoard = playerBoardRef.current
 
       if (aiTargetQueueRef.current.length > 0) {
-        const [head, ...rest] = aiTargetQueueRef.current
-        aiTargetQueueRef.current = rest
-        ;[targetRow, targetCol] = head
+        let foundTarget = false
+        while (aiTargetQueueRef.current.length > 0 && !foundTarget) {
+          const [head, ...rest] = aiTargetQueueRef.current
+          aiTargetQueueRef.current = rest
+          const [r, c] = head
+          if (currentBoard[r][c].state !== 'hit' && currentBoard[r][c].state !== 'miss') {
+            targetRow = r
+            targetCol = c
+            foundTarget = true
+          }
+        }
+        
+        if (!foundTarget) {
+          do {
+            targetRow = Math.floor(Math.random() * BOARD_SIZE)
+            targetCol = Math.floor(Math.random() * BOARD_SIZE)
+          } while (currentBoard[targetRow][targetCol].state === 'hit' || currentBoard[targetRow][targetCol].state === 'miss')
+        }
       } else if (lastHitRef.current) {
         const [lastRow, lastCol] = lastHitRef.current
         const adjacentCells = [
@@ -650,7 +665,7 @@ function App() {
             setGamePhase('gameOver')
             setMessage('💀 DEFEAT! Our fleet has been destroyed!')
           }
-        } else {
+        } else if (cell.state === 'empty') {
           cell.state = 'miss'
           cell.animation = 'miss'
           setMessage('💧 Enemy salvo missed! We remain unscathed.')
