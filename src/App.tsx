@@ -45,7 +45,7 @@ type Placement = {
 }
 
 const BOARD_SIZE = 15
-const CELL_SIZE = 40
+const CELL_SIZE = 34
 
 const SHIPS: Omit<Ship, 'hits' | 'sunk'>[] = [
   { id: 1, name: 'Carrier', size: 14, width: 2, length: 7 },
@@ -127,7 +127,7 @@ function ShipOverlays({
 }) {
   const { cell, offsetLeft, offsetTop } = useGridMetrics(gridRef, [placements])
   return (
-    <div className="absolute inset-0 pointer-events-none z-10">
+    <div className="absolute inset-0 pointer-events-none z-30">
       <div
         className="absolute"
         style={{
@@ -552,9 +552,8 @@ function App() {
 
     if (cell.state === 'hit' && !updatedAiShips.every(s => s.sunk)) {
       setTimeout(() => {
-        setIsPlayerTurn(false)
+        setIsPlayerTurn(true)
         setAttackInProgress(false)
-        aiTurn()
       }, 1500)
     } else if (!updatedAiShips.every(s => s.sunk)) {
       setTimeout(() => {
@@ -770,7 +769,7 @@ function App() {
                     onMouseLeave={() => isPlayerBoard && handleMouseLeave()}
                   >
                     {isOnSunkShip && (
-                      <div className="absolute inset-0 z-20 pointer-events-none">
+                      <div className="absolute inset-0 z-10 pointer-events-none">
                         <div className="fire-effect absolute inset-0 bg-gradient-to-t from-orange-600 via-red-500 to-yellow-400 opacity-60"></div>
                       </div>
                     )}
