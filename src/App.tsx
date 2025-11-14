@@ -3,6 +3,7 @@ import './App.css'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Waves, Trophy, RotateCcw, Info, RotateCw } from 'lucide-react'
+import BackgroundVideo from '@/components/ui/BackgroundVideo'
 
 type CellState = 'empty' | 'ship' | 'hit' | 'miss'
 type GamePhase = 'title' | 'instructions' | 'placement' | 'battle' | 'gameOver'
@@ -983,12 +984,19 @@ function App() {
   }
 
   if (gamePhase === 'title') {
-    return <TitleScreen onStart={() => setGamePhase('instructions')} />
+    return (
+      <>
+        <BackgroundVideo />
+        <TitleScreen onStart={() => setGamePhase('instructions')} />
+      </>
+    )
   }
 
   if (gamePhase === 'instructions') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-bg-deep via-panel-bg-darker to-bg-deep flex items-center justify-center p-8">
+      <>
+        <BackgroundVideo />
+        <div className="min-h-screen bg-gradient-to-br from-bg-deep via-panel-bg-darker to-bg-deep flex items-center justify-center p-8">
         <Card className="max-w-2xl w-full bg-panel-bg border-hud-accent-soft border-2 shadow-2xl shadow-hud-accent/20">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -1076,12 +1084,15 @@ function App() {
           </CardContent>
         </Card>
       </div>
+      </>
     )
   }
 
   if (gamePhase === 'gameOver') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-8">
+      <>
+        <BackgroundVideo />
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-8">
         <Card className="max-w-2xl w-full bg-slate-800 border-cyan-500 border-2 shadow-2xl">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -1146,11 +1157,14 @@ function App() {
           </CardContent>
         </Card>
       </div>
+      </>
     )
   }
 
   return (
-    <div className="theme-cod min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
+    <>
+      <BackgroundVideo />
+      <div className="theme-cod min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-cyan-400 mb-2 flex items-center justify-center gap-3 tracking-wider uppercase" style={{ fontFamily: 'monospace', letterSpacing: '0.15em' }}>
@@ -1266,6 +1280,7 @@ function App() {
           </Button>
         </div>
       </div>
+      
       {gamePhase === 'battle' && (
         <>
           <MissileOverlay
@@ -1282,7 +1297,8 @@ function App() {
           )}
         </>
       )}
-    </div>
+      </div>
+    </>
   )
 }
 
