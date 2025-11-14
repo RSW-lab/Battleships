@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 import './App.css'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Anchor, Waves, Target, Trophy, RotateCcw, Info, RotateCw, Rocket } from 'lucide-react'
+import { Anchor, Waves, Trophy, RotateCcw, Info, RotateCw, Rocket } from 'lucide-react'
 
 type CellState = 'empty' | 'ship' | 'hit' | 'miss'
 type GamePhase = 'instructions' | 'placement' | 'battle' | 'gameOver'
@@ -12,6 +12,7 @@ interface Cell {
   state: CellState
   shipId?: number
   animation?: string
+  showExplosion?: boolean
 }
 
 interface MissileAnimation {
@@ -45,6 +46,7 @@ type Placement = {
 }
 
 const BOARD_SIZE = 15
+const CELL_SIZE = 28
 
 const SHIPS: Omit<Ship, 'hits' | 'sunk'>[] = [
   { id: 1, name: 'Carrier', size: 14, width: 2, length: 7 },
@@ -297,6 +299,70 @@ function SonarRadar() {
   )
 }
 
+function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefObject<HTMLDivElement>, crosshairPosition: { row: number, col: number } | null }) {
+  const [overlayRect, setOverlayRect] = useState<{ left: number, top: number, width: number, height: number } | null>(null)
+
+  useEffect(() => {
+    const updateRect = () => {
+      if (gridRef.current) {
+        const rect = gridRef.current.getBoundingClientRect()
+        setOverlayRect({
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height
+        })
+      }
+    }
+    
+    updateRect()
+    window.addEventListener('resize', updateRect)
+    window.addEventListener('scroll', updateRect)
+    
+    return () => {
+      window.removeEventListener('resize', updateRect)
+      window.removeEventListener('scroll', updateRect)
+    }
+  }, [gridRef])
+
+  if (!overlayRect) return null
+
+  return (
+    <>
+      <div className="targeting-overlay-backdrop" />
+      <div 
+        className="targeting-overlay-frame"
+        style={{
+          left: `${overlayRect.left}px`,
+          top: `${overlayRect.top}px`,
+          width: `${overlayRect.width}px`,
+          height: `${overlayRect.height}px`
+        }}
+      >
+        <div className="targeting-scan-line" />
+        <div className="targeting-hud-text">
+          [ TARGETING SYSTEM ACTIVE ]
+        </div>
+        {crosshairPosition && (
+          <div 
+            className="crosshair"
+            style={{
+              position: 'absolute',
+              left: `${((crosshairPosition.col + 1) * (overlayRect.width / 16)) + (overlayRect.width / 32)}px`,
+              top: `${((crosshairPosition.row + 1) * (overlayRect.height / 16)) + (overlayRect.height / 32)}px`,
+              transform: 'translate(-50%, -50%)'
+            }}
+          >
+            <div className="coordinates-display" style={{ whiteSpace: 'nowrap' }}>
+              {String.fromCharCode(65 + crosshairPosition.row)}{crosshairPosition.col + 1}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
 function App() {
   const [gamePhase, setGamePhase] = useState<GamePhase>('instructions')
   const [playerBoard, setPlayerBoard] = useState<Cell[][]>([])
@@ -521,6 +587,7 @@ function App() {
     if (cell.state === 'ship') {
       cell.state = 'hit'
       cell.animation = 'hit'
+      cell.showExplosion = true
       setMessage('💥 DIRECT HIT! Enemy vessel damaged!')
       
       const shipIndex = updatedAiShips.findIndex(s => s.id === cell.shipId)
@@ -549,6 +616,7 @@ function App() {
     setTimeout(() => {
       const updatedBoard = JSON.parse(JSON.stringify(newBoard))
       updatedBoard[row][col].animation = undefined
+      updatedBoard[row][col].showExplosion = false
       setAiBoard(updatedBoard)
     }, 1000)
 
@@ -683,14 +751,12 @@ function App() {
   }
 
   const getCellClass = (cell: Cell, isPlayerBoard: boolean, row: number, col: number) => {
-    const baseClass = 'w-12 h-12 border border-slate-600 cursor-pointer transition-all duration-300 relative overflow-hidden'
+    const baseClass = 'border border-slate-600 cursor-pointer transition-all duration-300 relative overflow-hidden bg-transparent'
     const isPreview = previewCells.some(([r, c]) => r === row && c === col)
     
-    let stateClass = 'bg-blue-900 hover:bg-blue-800'
+    let stateClass = ''
     
-    if (cell.state === 'empty') {
-      stateClass = 'water-background'
-    } else if (cell.state === 'ship' && isPlayerBoard) {
+    if (cell.state === 'ship' && isPlayerBoard) {
       stateClass = 'bg-slate-700 hover:bg-slate-600'
     } else if (cell.state === 'hit') {
       stateClass = 'bg-red-600'
@@ -709,7 +775,7 @@ function App() {
     return `${baseClass} ${stateClass}`
   }
 
-  const renderBoard = (board: Cell[][], isPlayerBoard: boolean) => {
+  const renderBoard = (board: Cell[][], isPlayerBoard: boolean, gridRef?: React.RefObject<HTMLDivElement>) => {
     const ships = isPlayerBoard ? playerShips : aiShips
     
     const isCellOnSunkShip = (cell: Cell): boolean => {
@@ -719,20 +785,24 @@ function App() {
     }
     
     return (
-      <div className="inline-block">
+      <div className="inline-block bg-slate-800 p-2 rounded-lg shadow-2xl">
         <div 
-          className="grid gap-0 bg-slate-800 p-2 rounded-lg shadow-2xl"
-          style={{ gridTemplateColumns: `repeat(${BOARD_SIZE + 1}, minmax(0, 1fr))` }}
+          ref={gridRef}
+          className="grid gap-0 relative board-with-water"
+          style={{ 
+            gridTemplateColumns: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
+            gridTemplateRows: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`
+          }}
         >
-          <div className="w-12 h-12"></div>
+          <div style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}></div>
           {Array.from({ length: BOARD_SIZE }, (_, i) => (
-            <div key={i} className="w-12 h-12 flex items-center justify-center text-cyan-400 font-bold text-sm">
+            <div key={i} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }} className="flex items-center justify-center text-cyan-400 font-bold text-xs">
               {i + 1}
             </div>
           ))}
           {board.map((row, rowIndex) => (
             <>
-              <div key={`label-${rowIndex}`} className="w-12 h-12 flex items-center justify-center text-cyan-400 font-bold text-sm">
+              <div key={`label-${rowIndex}`} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }} className="flex items-center justify-center text-cyan-400 font-bold text-xs">
                 {String.fromCharCode(65 + rowIndex)}
               </div>
               {row.map((cell, colIndex) => {
@@ -742,6 +812,7 @@ function App() {
                     key={`${rowIndex}-${colIndex}`}
                     data-cell={`${rowIndex}-${colIndex}`}
                     className={getCellClass(cell, isPlayerBoard, rowIndex, colIndex)}
+                    style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}
                     onClick={() => {
                       if (gamePhase === 'placement' && isPlayerBoard) {
                         handlePlayerPlacement(rowIndex, colIndex)
@@ -778,21 +849,12 @@ function App() {
                         </div>
                       </>
                     )}
-                    {cell.state === 'hit' && (
-                      <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                        <Target className="w-6 h-6 text-white animate-spin" />
-                      </div>
+                    {cell.showExplosion && (
+                      <div className="explosion-effect"></div>
                     )}
                     {cell.state === 'miss' && (
                       <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
                         <Waves className="w-5 h-5 text-white opacity-70" />
-                      </div>
-                    )}
-                    {!isPlayerBoard && crosshairPosition && crosshairPosition.row === rowIndex && crosshairPosition.col === colIndex && (
-                      <div className="crosshair" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
-                        <div className="coordinates-display" style={{ whiteSpace: 'nowrap' }}>
-                          {String.fromCharCode(65 + rowIndex)}{colIndex + 1}
-                        </div>
                       </div>
                     )}
                   </div>
@@ -950,7 +1012,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
+    <div className="theme-cod min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-cyan-400 mb-2 flex items-center justify-center gap-3 tracking-wider">
@@ -969,8 +1031,8 @@ function App() {
         <div className="flex flex-col lg:flex-row justify-center gap-8 mb-8 items-start">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-cyan-400 mb-4 uppercase tracking-widest">⚓ Allied Waters ⚓</h2>
-            <div className="relative inline-block" ref={playerGridRef}>
-              {renderBoard(playerBoard, true)}
+            <div className="relative inline-block">
+              {renderBoard(playerBoard, true, playerGridRef)}
               {(gamePhase === 'placement' || gamePhase === 'battle') && (
                 <ShipOverlays
                   placements={playerPlacements}
@@ -1023,8 +1085,8 @@ function App() {
           {gamePhase === 'battle' && (
             <div className="text-center">
               <h2 className="text-2xl font-bold text-red-400 mb-4 uppercase tracking-widest">🎯 Enemy Waters 🎯</h2>
-              <div className="relative inline-block" ref={aiGridRef}>
-                {renderBoard(aiBoard, false)}
+              <div className="relative inline-block">
+                {renderBoard(aiBoard, false, aiGridRef)}
                 <ShipOverlays
                   placements={aiPlacements}
                   gridRef={aiGridRef}
@@ -1062,6 +1124,12 @@ function App() {
             aiGridRef={aiGridRef}
           />
           <SonarRadar />
+          {isPlayerTurn && !attackInProgress && (
+            <TargetingOverlay 
+              gridRef={aiGridRef}
+              crosshairPosition={crosshairPosition}
+            />
+          )}
         </>
       )}
     </div>
