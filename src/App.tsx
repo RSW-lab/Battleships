@@ -706,7 +706,7 @@ function App() {
     return `${baseClass} ${stateClass}`
   }
 
-  const renderBoard = (board: Cell[][], isPlayerBoard: boolean) => {
+  const renderBoard = (board: Cell[][], isPlayerBoard: boolean, gridRef?: React.RefObject<HTMLDivElement>) => {
     const ships = isPlayerBoard ? playerShips : aiShips
     
     const isCellOnSunkShip = (cell: Cell): boolean => {
@@ -718,6 +718,7 @@ function App() {
     return (
       <div className="inline-block">
         <div 
+          ref={gridRef}
           className="grid gap-0 bg-slate-800 p-2 rounded-lg shadow-2xl overflow-hidden"
           style={{ 
             gridTemplateColumns: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
@@ -941,8 +942,8 @@ function App() {
         <div className="flex flex-col lg:flex-row justify-center gap-8 mb-8 items-start">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-cyan-400 mb-4 uppercase tracking-widest">⚓ Allied Waters ⚓</h2>
-            <div className="relative inline-block" ref={playerGridRef}>
-              {renderBoard(playerBoard, true)}
+            <div className="relative inline-block">
+              {renderBoard(playerBoard, true, playerGridRef)}
               {(gamePhase === 'placement' || gamePhase === 'battle') && (
                 <ShipOverlays
                   placements={playerPlacements}
@@ -995,8 +996,8 @@ function App() {
           {gamePhase === 'battle' && (
             <div className="text-center">
               <h2 className="text-2xl font-bold text-red-400 mb-4 uppercase tracking-widest">🎯 Enemy Waters 🎯</h2>
-              <div className="relative inline-block" ref={aiGridRef}>
-                {renderBoard(aiBoard, false)}
+              <div className="relative inline-block">
+                {renderBoard(aiBoard, false, aiGridRef)}
                 <ShipOverlays
                   placements={aiPlacements}
                   gridRef={aiGridRef}
