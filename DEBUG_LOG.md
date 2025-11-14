@@ -393,6 +393,132 @@ Verified the dev server starts successfully and the game loads without errors.
 
 ---
 
+## Error 12: Premature Ship Sinking Bug
+
+**Date:** November 13, 2025  
+**Severity:** Critical  
+**Status:** ✅ Fixed
+
+### Problem
+Ships were being marked as sunk before all their cells were hit. User reported seeing fire effects on partially-hit ships in the deployed game.
+
+### Root Cause
+The `handleAttack` function had a race condition. During the 600ms missile animation delay, the `isPlayerTurn` flag remained true and the board state wasn't updated yet, allowing multiple clicks on the same cell or different cells of the same ship. Each click would increment the ship's hit counter, causing the ship to be marked as sunk prematurely.
+
+### Solution
+Added an `attackInProgress` state flag to prevent multiple attacks during the animation:
+```typescript
+const [attackInProgress, setAttackInProgress] = useState(false)
+
+const handleAttack = async (row: number, col: number) => {
+  if (!isPlayerTurn || gamePhase !== 'battle' || ... || attackInProgress) {
+    return
+  }
+  setAttackInProgress(true)
+  // ... attack logic ...
+  // Reset flag after attack completes or AI turn starts
+  setAttackInProgress(false)
+}
+```
+
+Also updated `aiTurn` to reset the flag when the AI finishes its turn.
+
+### Testing
+Verified that clicking multiple times during missile animation no longer increments hit counter multiple times.
+
+---
+
+## Error 13: Rectangular Grid Cells Instead of Squares
+
+**Date:** November 13, 2025  
+**Severity:** High  
+**Status:** ✅ Fixed
+
+### Problem
+Grid cells were appearing rectangular/stretched instead of square, making the game look distorted.
+
+### Root Cause
+The grid was using `gridTemplateColumns: repeat(BOARD_SIZE + 1, minmax(0, 1fr))` which creates fluid columns that adapt to available space. Without explicit row heights, the cells became rectangular. Individual cells had `w-12 h-12` classes, but CSS Grid track sizing takes precedence over child element sizing.
+
+### Solution
+Changed to explicit pixel-based square cells:
+1. Added `CELL_SIZE = 40` constant
+2. Updated grid template to use fixed pixel sizes:
+```typescript
+style={{ 
+  gridTemplateColumns: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
+  gridTemplateRows: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`
+}}
+```
+3. Removed `w-12 h-12` from cell classes since grid tracks now enforce size
+4. Updated all header cells to use explicit pixel sizing
+
+### Testing
+Verified that all grid cells are now perfect squares.
+
+---
+
+## Error 14: Ship Image Positioning Offset
+
+**Date:** November 13, 2025  
+**Severity:** High  
+**Status:** ✅ Fixed
+
+### Problem
+Ship images were appearing offset to the right of their actual grid positions, sometimes extending outside the grid boundaries.
+
+### Root Cause
+The `gridRef` was attached to a wrapper div (`<div className="relative inline-block" ref={playerGridRef}>`) instead of the actual grid container. When `useGridMetrics` calculated offsets, it measured from the wrapper's bounding rect, but the actual grid was inside that wrapper with additional padding/margins. This caused `ShipOverlays` to position ships relative to the wrong element, creating a consistent rightward offset.
+
+### Solution
+1. Modified `renderBoard` to accept an optional `gridRef` parameter
+2. Attached the ref directly to the grid container (the div with `gridTemplateColumns/Rows`)
+3. Removed ref from the wrapper div
+4. Updated all `renderBoard` calls to pass the appropriate gridRef
+
+```typescript
+const renderBoard = (board: Cell[][], isPlayerBoard: boolean, gridRef?: React.RefObject<HTMLDivElement>) => {
+  return (
+    <div className="inline-block">
+      <div ref={gridRef} className="grid ...">
+        {/* grid content */}
+      </div>
+    </div>
+  )
+}
+
+// Usage:
+{renderBoard(playerBoard, true, playerGridRef)}
+```
+
+### Testing
+Verified that ship images now align perfectly with their grid cells during placement and battle phases.
+
+---
+
+## Error 15: Grid Taking Too Much Screen Space
+
+**Date:** November 13, 2025  
+**Severity:** Medium  
+**Status:** ✅ Fixed
+
+### Problem
+The grids were taking up too much screen real estate, making it difficult to see content below the grids.
+
+### Root Cause
+Cells were using `w-12 h-12` (48px / 3rem) which made the 15x15 grid very large: 15 * 48 = 720px per grid, plus headers and padding.
+
+### Solution
+Reduced `CELL_SIZE` from 48px to 40px, making the grid more compact:
+- Grid size reduced from ~720px to ~600px per board
+- Total space savings: ~240px across both boards
+- Still large enough for comfortable interaction on desktop and mobile
+
+### Testing
+Verified that the smaller grid size improves layout while maintaining usability.
+
+---
+
 **Last Updated:** November 13, 2025  
 **Maintained By:** Devin AI  
 **Project Owner:** Rudi Willner
