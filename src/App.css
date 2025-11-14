@@ -245,11 +245,11 @@
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url('/assets/ocean-waves.jpg');
-  background-size: 250% 250%;
+  background-image: url('/assets/ocean-top.jpg');
+  background-size: 300% 300%;
   background-position: 0 0;
-  animation: water-flow 30s linear infinite;
-  opacity: 0.5;
+  animation: water-flow 40s linear infinite;
+  opacity: 0.6;
   z-index: 0;
   pointer-events: none;
 }

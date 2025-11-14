@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 import './App.css'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Anchor, Waves, Trophy, RotateCcw, Info, RotateCw, Rocket } from 'lucide-react'
+import { Waves, Trophy, RotateCcw, Info, RotateCw } from 'lucide-react'
 
 type CellState = 'empty' | 'ship' | 'hit' | 'miss'
 type GamePhase = 'instructions' | 'placement' | 'battle' | 'gameOver'
@@ -265,8 +265,8 @@ function MissileOverlay({
               '--missile-y': `${deltaY}px`,
             } as React.CSSProperties}
           >
-            <div className="missile-animation">
-              <Rocket className="w-6 h-6 text-red-500" style={{ transform: `rotate(${Math.atan2(deltaY, deltaX) * 180 / Math.PI + 90}deg)` }} />
+            <div className="missile-animation" style={{ transform: `rotate(${Math.atan2(deltaY, deltaX) * 180 / Math.PI + 90}deg)` }}>
+              <img src="/assets/rocket.png" alt="missile" className="w-8 h-8" style={{ filter: 'drop-shadow(0 0 8px rgba(255, 100, 0, 0.8))' }} />
             </div>
           </div>
         )
@@ -623,8 +623,6 @@ function App() {
     if (cell.state === 'hit' && !updatedAiShips.every(s => s.sunk)) {
       setTimeout(() => {
         setAttackInProgress(false)
-        setIsPlayerTurn(false)
-        aiTurn()
       }, 1500)
     } else if (!updatedAiShips.every(s => s.sunk)) {
       setTimeout(() => {
@@ -686,6 +684,7 @@ function App() {
         if (cell.state === 'ship') {
           cell.state = 'hit'
           cell.animation = 'hit'
+          cell.showExplosion = true
           setMessage('🚨 INCOMING FIRE! Our vessel is hit!')
           lastHitRef.current = [targetRow, targetCol]
           
@@ -731,6 +730,7 @@ function App() {
         setTimeout(() => {
           const updatedBoard = JSON.parse(JSON.stringify(newBoard))
           updatedBoard[targetRow][targetCol].animation = undefined
+          updatedBoard[targetRow][targetCol].showExplosion = false
           setPlayerBoard(updatedBoard)
         }, 1000)
 
@@ -835,22 +835,22 @@ function App() {
                       }
                     }}
                   >
-                    {isOnSunkShip && (
-                      <>
-                        <div className="absolute inset-0 z-20 pointer-events-none">
-                          <div className="fire-effect absolute inset-0"></div>
-                        </div>
-                        <div className="rubble-effect">
-                          <div className="rubble-piece"></div>
-                          <div className="rubble-piece"></div>
-                          <div className="rubble-piece"></div>
-                          <div className="rubble-piece"></div>
-                          <div className="rubble-piece"></div>
-                        </div>
-                      </>
-                    )}
                     {cell.showExplosion && (
                       <div className="explosion-effect"></div>
+                    )}
+                    {cell.state === 'hit' && !cell.showExplosion && !isOnSunkShip && (
+                      <div className="absolute inset-0 z-20 pointer-events-none">
+                        <div className="fire-effect absolute inset-0"></div>
+                      </div>
+                    )}
+                    {isOnSunkShip && (
+                      <div className="rubble-effect">
+                        <div className="rubble-piece"></div>
+                        <div className="rubble-piece"></div>
+                        <div className="rubble-piece"></div>
+                        <div className="rubble-piece"></div>
+                        <div className="rubble-piece"></div>
+                      </div>
                     )}
                     {cell.state === 'miss' && (
                       <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
@@ -873,19 +873,26 @@ function App() {
         <Card className="max-w-2xl w-full bg-slate-800 border-cyan-500 border-2 shadow-2xl">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <Anchor className="w-16 h-16 text-cyan-400 animate-pulse" />
+              <div className="relative w-20 h-20">
+                <div className="absolute inset-0 rounded-full border-4 border-cyan-400 opacity-60 animate-ping"></div>
+                <div className="absolute inset-2 rounded-full border-2 border-cyan-400 opacity-80"></div>
+                <div className="absolute inset-4 rounded-full border border-cyan-400"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-1 h-8 bg-gradient-to-t from-cyan-400 to-transparent animate-spin" style={{ transformOrigin: 'center center' }}></div>
+                </div>
+              </div>
             </div>
-            <CardTitle className="text-5xl font-bold text-cyan-400 mb-2 tracking-wider">
-              ⚓ NAVAL COMMAND ⚓
+            <CardTitle className="text-5xl font-bold text-cyan-400 mb-2 tracking-wider uppercase" style={{ fontFamily: 'monospace', letterSpacing: '0.2em' }}>
+              FLEET COMMAND OPS
             </CardTitle>
-            <CardDescription className="text-slate-300 text-xl font-semibold mb-2">
-              BATTLESHIPS
+            <CardDescription className="text-slate-300 text-xl font-semibold mb-2 uppercase tracking-widest">
+              TACTICAL STRIKE MISSION
             </CardDescription>
             <CardDescription className="text-amber-400 text-sm font-bold uppercase tracking-widest">
-              Admiral on Deck
+              Operator Standing By
             </CardDescription>
-            <CardDescription className="text-slate-400 text-base mt-4 italic">
-              Command your fleet. Destroy the enemy. Claim victory on the high seas.
+            <CardDescription className="text-slate-400 text-base mt-4" style={{ fontFamily: 'monospace' }}>
+              &gt; PRIMARY OBJECTIVE: Locate and neutralize all hostile vessels
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 text-slate-200">
@@ -923,7 +930,12 @@ function App() {
               <div className="grid grid-cols-1 gap-2">
                 {SHIPS.map(ship => (
                   <div key={ship.id} className="flex items-center gap-3 bg-slate-700 p-3 rounded-lg border border-slate-600 hover:border-cyan-500 transition-colors">
-                    <Anchor className="w-5 h-5 text-cyan-400" />
+                    <div className="relative w-5 h-5">
+                      <div className="absolute inset-0 rounded-full border border-cyan-400 opacity-60"></div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-0.5 h-2 bg-gradient-to-t from-cyan-400 to-transparent" style={{ transformOrigin: 'center center' }}></div>
+                      </div>
+                    </div>
                     <span className="font-semibold text-slate-100">{ship.name}</span>
                     <span className="text-slate-400">({ship.size} grid units)</span>
                   </div>
@@ -935,7 +947,7 @@ function App() {
               onClick={startGame}
               className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold text-xl py-7 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/50 uppercase tracking-wider"
             >
-              ⚓ COMMENCE OPERATIONS ⚓
+              ◈ COMMENCE OPERATIONS ◈
             </Button>
             
             <div className="text-center pt-4 border-t border-slate-700">
@@ -956,11 +968,17 @@ function App() {
               {winner === 'player' ? (
                 <Trophy className="w-20 h-20 text-yellow-400 animate-bounce" />
               ) : (
-                <Anchor className="w-20 h-20 text-red-400" />
+                <div className="relative w-20 h-20">
+                  <div className="absolute inset-0 rounded-full border-4 border-red-400 opacity-60"></div>
+                  <div className="absolute inset-2 rounded-full border-2 border-red-400 opacity-80"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-1 h-8 bg-gradient-to-t from-red-400 to-transparent" style={{ transformOrigin: 'center center' }}></div>
+                  </div>
+                </div>
               )}
             </div>
             <CardTitle className="text-5xl font-bold text-cyan-400 mb-2 tracking-wider">
-              {winner === 'player' ? '⭐ NAVAL SUPREMACY ⭐' : '💀 FLEET DESTROYED 💀'}
+              {winner === 'player' ? '⭐ TACTICAL VICTORY ⭐' : '💀 MISSION FAILED 💀'}
             </CardTitle>
             <CardDescription className="text-slate-300 text-xl font-semibold">
               {winner === 'player' 
@@ -1015,10 +1033,22 @@ function App() {
     <div className="theme-cod min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-cyan-400 mb-2 flex items-center justify-center gap-3 tracking-wider">
-            <Anchor className="w-12 h-12 animate-pulse" />
-            NAVAL COMMAND
-            <Anchor className="w-12 h-12 animate-pulse" />
+          <h1 className="text-5xl font-bold text-cyan-400 mb-2 flex items-center justify-center gap-3 tracking-wider uppercase" style={{ fontFamily: 'monospace', letterSpacing: '0.15em' }}>
+            <div className="relative w-12 h-12">
+              <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-60 animate-ping"></div>
+              <div className="absolute inset-1 rounded-full border border-cyan-400 opacity-80"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-0.5 h-5 bg-gradient-to-t from-cyan-400 to-transparent animate-spin" style={{ transformOrigin: 'center center' }}></div>
+              </div>
+            </div>
+            FLEET COMMAND OPS
+            <div className="relative w-12 h-12">
+              <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-60 animate-ping"></div>
+              <div className="absolute inset-1 rounded-full border border-cyan-400 opacity-80"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-0.5 h-5 bg-gradient-to-t from-cyan-400 to-transparent animate-spin" style={{ transformOrigin: 'center center' }}></div>
+              </div>
+            </div>
           </h1>
           <p className="text-2xl text-slate-200 font-semibold">{message}</p>
           {gamePhase === 'placement' && (
@@ -1030,7 +1060,7 @@ function App() {
 
         <div className="flex flex-col lg:flex-row justify-center gap-8 mb-8 items-start">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-cyan-400 mb-4 uppercase tracking-widest">⚓ Allied Waters ⚓</h2>
+            <h2 className="text-2xl font-bold text-cyan-400 mb-4 uppercase tracking-widest" style={{ fontFamily: 'monospace' }}>◈ ALLIED SECTOR ◈</h2>
             <div className="relative inline-block">
               {renderBoard(playerBoard, true, playerGridRef)}
               {(gamePhase === 'placement' || gamePhase === 'battle') && (
@@ -1084,7 +1114,7 @@ function App() {
 
           {gamePhase === 'battle' && (
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-red-400 mb-4 uppercase tracking-widest">🎯 Enemy Waters 🎯</h2>
+              <h2 className="text-2xl font-bold text-red-400 mb-4 uppercase tracking-widest" style={{ fontFamily: 'monospace' }}>◈ HOSTILE SECTOR ◈</h2>
               <div className="relative inline-block">
                 {renderBoard(aiBoard, false, aiGridRef)}
                 <ShipOverlays

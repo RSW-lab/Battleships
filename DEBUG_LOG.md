@@ -465,3 +465,248 @@ Verified that:
 ---
 
 *End of Debug Log - Updated November 14, 2025*
+
+---
+
+## Error 20: Turn Logic Bug - Player Not Getting Consecutive Turns After Hits
+
+**Date:** November 14, 2025  
+**Severity:** Critical  
+**Status:** ✅ Fixed
+
+### Problem
+Player would only get one shot per turn even after hitting enemy ships, while AI correctly got consecutive turns after hits. This violated standard Battleship rules where hitting a ship grants another turn.
+
+### Root Cause
+In `handleAttack()` function (lines 622-627), the code was calling `aiTurn()` and setting `isPlayerTurn = false` on BOTH hits and misses. The conditional logic treated hits the same as misses, immediately switching to AI turn.
+
+### Solution
+Modified the hit handling logic to keep `isPlayerTurn = true` and NOT call `aiTurn()` when player hits:
+```typescript
+if (cell.state === 'hit' && !updatedAiShips.every(s => s.sunk)) {
+  setTimeout(() => {
+    setAttackInProgress(false)
+  }, 1500)
+}
+```
+
+### Testing
+Verified player gets consecutive turns after each hit until they miss, matching AI behavior.
+
+---
+
+## Error 21: Hit Markers Not Persisting
+
+**Date:** November 14, 2025  
+**Severity:** High  
+**Status:** ✅ Fixed
+
+### Problem
+When hitting enemy ships, explosion animation would play but no visual marker remained to show which cells had been hit. Players couldn't track their successful hits.
+
+### Root Cause
+Fire effects were only rendered on fully sunk ships (`isOnSunkShip` condition). Hit cells that weren't part of sunk ships had no persistent visual indicator after the explosion animation ended.
+
+### Solution
+Added persistent flame rendering for all hit cells that aren't on sunk ships:
+```typescript
+{cell.state === 'hit' && !cell.showExplosion && !isOnSunkShip && (
+  <div className="absolute inset-0 z-20 pointer-events-none">
+    <div className="fire-effect absolute inset-0"></div>
+  </div>
+)}
+```
+
+Also added `cell.showExplosion = true` to AI attacks on player board to mirror the explosion behavior.
+
+### Testing
+Verified flames persist on all hit cells until ship is fully sunk, then rubble appears.
+
+---
+
+## Error 22: Beach Sand Texture in Water Animation
+
+**Date:** November 14, 2025  
+**Severity:** Medium  
+**Status:** ✅ Fixed
+
+### Problem
+Water animation background used a beach/shore texture (`ocean-waves.jpg`) instead of pure ocean water from bird's eye view. This broke immersion as the game is set in open ocean.
+
+### Root Cause
+Original water texture asset showed beach sand and shoreline instead of deep ocean waves.
+
+### Solution
+1. Downloaded new ocean texture from Unsplash showing top-down ocean view
+2. Updated CSS to use new texture:
+```css
+.board-with-water::before {
+  background-image: url('/assets/ocean-top.jpg');
+  background-size: 300% 300%;
+  animation: water-flow 40s linear infinite;
+  opacity: 0.6;
+}
+```
+
+### Testing
+Verified water animation shows realistic ocean texture without beach elements.
+
+---
+
+## Error 23: Missing Animated Missile Asset
+
+**Date:** November 14, 2025  
+**Severity:** Medium  
+**Status:** ✅ Fixed
+
+### Problem
+Missile animation used a simple Lucide React icon (`<Rocket>`) which didn't look realistic or visually appealing.
+
+### Root Cause
+No custom missile asset was implemented - relied on basic icon library.
+
+### Solution
+1. Downloaded rocket emoji PNG from Twemoji (1.1KB)
+2. Replaced icon with image element:
+```typescript
+<img src="/assets/rocket.png" alt="missile" className="w-8 h-8" 
+  style={{ filter: 'drop-shadow(0 0 8px rgba(255, 100, 0, 0.8))' }} />
+```
+3. Added orange glow effect via CSS filter
+4. Maintained rotation calculation for proper missile trajectory
+
+### Testing
+Verified missile appears as realistic rocket with glow effect, rotates correctly for both player→AI and AI→player attacks.
+
+---
+
+## Error 24: Naval Command Branding Not Modern Warfare Themed
+
+**Date:** November 14, 2025  
+**Severity:** Medium  
+**Status:** ✅ Fixed
+
+### Problem
+Game used "NAVAL COMMAND" branding with anchor icons (⚓), giving it a traditional sailor/naval theme instead of modern Call of Duty Black Ops tactical warfare aesthetic.
+
+### Root Cause
+Original design choices favored classic naval theme over modern military operations theme.
+
+### Solution
+1. Rebranded to "FLEET COMMAND OPS" throughout UI
+2. Replaced all anchor icons with animated radar icons:
+```typescript
+<div className="relative w-12 h-12">
+  <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-60 animate-ping"></div>
+  <div className="absolute inset-1 rounded-full border border-cyan-400 opacity-80"></div>
+  <div className="absolute inset-0 flex items-center justify-center">
+    <div className="w-0.5 h-5 bg-gradient-to-t from-cyan-400 to-transparent animate-spin"></div>
+  </div>
+</div>
+```
+3. Updated section headers: "Allied Waters" → "ALLIED SECTOR", "Enemy Waters" → "HOSTILE SECTOR"
+4. Changed victory text: "NAVAL SUPREMACY" → "TACTICAL VICTORY"
+5. Applied monospace font for military console aesthetic
+
+### Testing
+Verified all branding updated consistently across intro, battle, and game over screens.
+
+---
+
+## Error 25: Intro Screen Not Black Ops Styled
+
+**Date:** November 14, 2025  
+**Severity:** Medium  
+**Status:** ✅ Fixed
+
+### Problem
+Intro screen had generic naval theme styling instead of Call of Duty Black Ops modern warfare aesthetic with tactical HUD elements.
+
+### Root Cause
+Original design didn't incorporate Black Ops visual language (monospace fonts, radar icons, tactical terminology).
+
+### Solution
+1. Added animated radar icon to intro screen header
+2. Changed title to "FLEET COMMAND OPS" with monospace font and wide letter spacing
+3. Updated subtitle: "BATTLESHIPS" → "TACTICAL STRIKE MISSION"
+4. Changed role text: "Admiral on Deck" → "Operator Standing By"
+5. Updated mission briefing with terminal-style prompt:
+```
+> PRIMARY OBJECTIVE: Locate and neutralize all hostile vessels
+```
+6. Changed button text: "⚓ COMMENCE OPERATIONS ⚓" → "◈ COMMENCE OPERATIONS ◈"
+
+### Testing
+Verified intro screen has modern military tactical aesthetic matching Black Ops theme.
+
+---
+
+## Error 26: Green Targeting Overlay Not Appearing Every Shot
+
+**Date:** November 14, 2025  
+**Severity:** Medium  
+**Status:** ✅ Fixed
+
+### Problem
+Green targeting overlay with crosshair and coordinates would not consistently appear for every player shot.
+
+### Root Cause
+Turn logic bug (Error #20) was causing `isPlayerTurn` to be set to false immediately after hits, which disabled the targeting overlay. The overlay only renders when `isPlayerTurn && !attackInProgress`.
+
+### Solution
+Fixed by resolving Error #20 - keeping `isPlayerTurn = true` after hits ensures the targeting overlay reappears for the next shot.
+
+### Testing
+Verified targeting overlay appears for every player shot, including consecutive shots after hits.
+
+---
+
+## Error 27: No Rubble Effect for Sunk Ships
+
+**Date:** November 14, 2025  
+**Severity:** Low  
+**Status:** ✅ Fixed
+
+### Problem
+When ships were fully sunk, no rubble/debris visual appeared to distinguish sunk ships from ships that were just hit.
+
+### Root Cause
+Rubble rendering logic existed but was only shown on cells where `isOnSunkShip` returned true. The logic was working correctly but flames were rendering on top of rubble (z-index issue).
+
+### Solution
+Reordered rendering logic to show rubble instead of flames when ship is sunk:
+```typescript
+{cell.state === 'hit' && !cell.showExplosion && !isOnSunkShip && (
+  <div className="fire-effect"></div>
+)}
+{isOnSunkShip && (
+  <div className="rubble-effect">
+    <div className="rubble-piece"></div>
+  </div>
+)}
+```
+
+### Testing
+Verified rubble appears on all cells of sunk ships, replacing flame effects.
+
+---
+
+## Summary of Session 3 Fixes (November 14, 2025)
+
+**Total Issues Fixed:** 8 (Errors #20-27)
+
+**Critical Issues:**
+- Turn logic bug preventing consecutive player turns after hits
+- Hit markers not persisting after explosions
+
+**Visual Improvements:**
+- Replaced beach water texture with pure ocean view
+- Added realistic animated missile asset with glow effect
+- Complete rebrand to "Fleet Command Ops" with radar icons
+- Updated intro screen to Black Ops tactical theme
+- Fixed green targeting overlay appearance
+- Added rubble effects for sunk ships
+
+**Impact:**
+All 8 user-reported issues resolved. Game now has proper turn-based mechanics, persistent visual feedback for hits, modern military aesthetic, and improved asset quality. Ready for deployment and user testing.
+
