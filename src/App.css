@@ -1,3 +1,13 @@
+:root {
+  --hud-green: #39ff14;
+  --hud-green-dim: rgba(57, 255, 20, 0.6);
+  --hud-green-glow: rgba(57, 255, 20, 0.35);
+  --hud-bg: #0a0d0a;
+  --hud-panel: #101410;
+  --hud-text: #e8f5e9;
+  --hud-grid-line: rgba(57, 255, 20, 0.22);
+}
+
 #root {
   max-width: none;
   width: 100%;
@@ -222,10 +232,18 @@
 }
 
 .water-background {
-  background-image: url('/assets/water.jpg');
-  background-size: 200% 200%;
-  animation: water-flow 20s linear infinite;
-  opacity: 0.3;
+  display: none;
+}
+
+.board-surface {
+  position: relative;
+  background: url('/assets/ocean-dark.jpg') center/cover no-repeat;
+  animation: water-flow 60s linear infinite;
+  overflow: hidden;
+}
+
+.grid-cell {
+  background: transparent !important;
 }
 
 .targeting-overlay {
@@ -515,21 +533,22 @@
   position: absolute;
   width: 100%;
   height: 2px;
-  background: linear-gradient(to bottom, transparent, rgba(0, 255, 0, 0.8), transparent);
+  background: linear-gradient(to bottom, transparent, var(--hud-green), transparent);
   animation: tactical-scan 4s linear infinite;
   pointer-events: none;
-  box-shadow: 0 0 10px rgba(0, 255, 0, 0.6);
+  box-shadow: 0 0 10px var(--hud-green-dim);
 }
 
 .hud-grid-overlay {
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(0, 255, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 0, 0.03) 1px, transparent 1px);
+    linear-gradient(var(--hud-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--hud-grid-line) 1px, transparent 1px);
   background-size: 20px 20px;
   pointer-events: none;
   z-index: 5;
+  mix-blend-mode: screen;
 }
 
 .glitch-text {
@@ -557,13 +576,13 @@
 
 .intro-glitch::before {
   animation: glitch 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
-  color: rgba(0, 255, 255, 0.8);
+  color: var(--hud-green-dim);
   z-index: -1;
 }
 
 .intro-glitch::after {
   animation: glitch 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) reverse infinite;
-  color: rgba(255, 0, 255, 0.8);
+  color: var(--hud-green-glow);
   z-index: -2;
 }
 
@@ -586,7 +605,7 @@
   position: absolute;
   width: 30px;
   height: 30px;
-  border: 2px solid rgba(0, 255, 0, 0.6);
+  border: 2px solid var(--hud-green-dim);
   pointer-events: none;
   animation: corner-sweep 2s ease-in-out infinite;
 }
