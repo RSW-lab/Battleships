@@ -584,6 +584,130 @@ Verified that the AI no longer attacks already-hit cells, and if it somehow does
 
 ---
 
+## Error 17: Excessive Screen Space Usage
+
+**Date:** November 14, 2025  
+**Severity:** High  
+**Status:** ✅ Fixed
+
+### Problem
+The game grids were taking up too much screen space, requiring users to scroll up and down to see content below the grids. Even after reducing cell size from 48px to 40px in the previous fix, the grids were still too large for comfortable viewing on typical laptop screens.
+
+### Root Cause
+The `CELL_SIZE` constant was set to 40px, which for a 15x15 grid resulted in a board size of 600px (plus padding and borders). Combined with two boards side-by-side and headers, this exceeded the comfortable viewport height for most users.
+
+### Solution
+Reduced `CELL_SIZE` from 40px to 34px:
+```typescript
+const CELL_SIZE = 34  // Previously 40
+```
+
+This reduces each board's height by 90px (6px × 15 cells), providing 180px more vertical space for the overall layout. The 34px cell size still maintains good visibility and usability while fitting better on standard laptop screens (typically 768-900px viewport height).
+
+### Testing
+Verified that the smaller grid size improves screen layout and reduces the need for scrolling while maintaining playability and readability.
+
+---
+
+## Error 18: Player Turn Logic Asymmetry
+
+**Date:** November 14, 2025  
+**Severity:** Critical  
+**Status:** ✅ Fixed
+
+### Problem
+When the player hit an enemy ship, they only got one shot before the AI took its turn. However, when the AI hit a player ship, the AI continued shooting until it missed. This created an unfair gameplay asymmetry where the AI had a significant advantage.
+
+### Root Cause
+In the `handleAttack` function (lines 553-567), both branches of the conditional called `aiTurn()`:
+
+```typescript
+if (cell.state === 'hit' && !updatedAiShips.every(s => s.sunk)) {
+  setTimeout(() => {
+    setIsPlayerTurn(false)  // Wrong! Should stay player's turn
+    setAttackInProgress(false)
+    aiTurn()  // Wrong! Should let player shoot again
+  }, 1500)
+} else if (!updatedAiShips.every(s => s.sunk)) {
+  setTimeout(() => {
+    setIsPlayerTurn(false)
+    setAttackInProgress(false)
+    aiTurn()
+  }, 1500)
+}
+```
+
+The AI's `aiTurn` function correctly implemented consecutive shots on hit (line 683-684), but the player's logic didn't mirror this behavior.
+
+### Solution
+Modified the first branch to keep the player's turn active after a hit:
+
+```typescript
+if (cell.state === 'hit' && !updatedAiShips.every(s => s.sunk)) {
+  setTimeout(() => {
+    setIsPlayerTurn(true)  // Keep player's turn!
+    setAttackInProgress(false)
+    // Don't call aiTurn() - let player shoot again
+  }, 1500)
+} else if (!updatedAiShips.every(s => s.sunk)) {
+  setTimeout(() => {
+    setIsPlayerTurn(false)
+    setAttackInProgress(false)
+    aiTurn()
+  }, 1500)
+}
+```
+
+Now the player gets consecutive shots after hitting enemy ships, just like the AI does, creating fair and balanced gameplay.
+
+### Testing
+Verified that the player can now take multiple consecutive shots after hitting enemy ships, and the turn only switches to the AI after a miss.
+
+---
+
+## Error 19: Sunk Ship Images Hidden Behind Fire Effects
+
+**Date:** November 14, 2025  
+**Severity:** High  
+**Status:** ✅ Fixed
+
+### Problem
+When enemy ships were sunk, the ship images should have appeared on top of the fire effects to show which ship was destroyed. Instead, the ship images were rendering behind the fire effects, making them invisible or barely visible.
+
+### Root Cause
+Z-index stacking order was inverted:
+- `ShipOverlays` component had `z-10` (line 130)
+- Fire effect overlay had `z-20` (line 772)
+
+This meant fire effects (z-20) appeared above ship images (z-10), hiding the ships.
+
+### Solution
+Inverted the z-index values to create proper layering:
+
+1. **Increased ShipOverlays z-index** from z-10 to z-30:
+```typescript
+<div className="absolute inset-0 pointer-events-none z-30">
+```
+
+2. **Decreased fire effect z-index** from z-20 to z-10:
+```typescript
+<div className="absolute inset-0 z-10 pointer-events-none">
+  <div className="fire-effect absolute inset-0 bg-gradient-to-t from-orange-600 via-red-500 to-yellow-400 opacity-60"></div>
+</div>
+```
+
+The final stacking order is now:
+- Grid cells: z-0 (base layer)
+- Fire effects: z-10
+- Hit/miss icons: z-30
+- Ship images: z-30 (same level as icons, appears above fire)
+- Missiles: z-40 (MissileOverlay component)
+
+### Testing
+Verified that sunk ship images now appear clearly above fire effects on the enemy board, making it easy to see which ships have been destroyed.
+
+---
+
 **Last Updated:** November 14, 2025  
 **Maintained By:** Devin AI  
 **Project Owner:** Rudi Willner
