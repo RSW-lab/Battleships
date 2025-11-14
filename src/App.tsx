@@ -869,8 +869,8 @@ function App() {
 
   if (gamePhase === 'instructions') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-8">
-        <Card className="max-w-2xl w-full bg-slate-800 border-cyan-500 border-2 shadow-2xl">
+      <div className="min-h-screen bg-gradient-to-br from-bg-deep via-panel-bg-darker to-bg-deep flex items-center justify-center p-8">
+        <Card className="max-w-2xl w-full bg-panel-bg border-hud-accent-soft border-2 shadow-2xl shadow-hud-accent/20">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <div className="relative w-20 h-20">
@@ -882,62 +882,62 @@ function App() {
                 </div>
               </div>
             </div>
-            <CardTitle className="text-5xl font-bold text-cyan-400 mb-2 tracking-wider uppercase" style={{ fontFamily: 'monospace', letterSpacing: '0.2em' }}>
+            <CardTitle className="text-5xl font-bold text-hud-accent-glow mb-2 tracking-wider uppercase" style={{ letterSpacing: '0.2em', textShadow: '0 0 20px rgba(0, 255, 0, 0.5)' }}>
               FLEET COMMAND OPS
             </CardTitle>
-            <CardDescription className="text-slate-300 text-xl font-semibold mb-2 uppercase tracking-widest">
+            <CardDescription className="text-text-primary text-xl font-semibold mb-2 uppercase tracking-widest">
               TACTICAL STRIKE MISSION
             </CardDescription>
-            <CardDescription className="text-amber-400 text-sm font-bold uppercase tracking-widest">
+            <CardDescription className="text-hud-accent-soft text-sm font-bold uppercase tracking-widest">
               Operator Standing By
             </CardDescription>
-            <CardDescription className="text-slate-400 text-base mt-4" style={{ fontFamily: 'monospace' }}>
+            <CardDescription className="text-text-subtle text-base mt-4 monospace">
               &gt; PRIMARY OBJECTIVE: Locate and neutralize all hostile vessels
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6 text-slate-200">
+          <CardContent className="space-y-6 text-text-primary">
             <div className="space-y-4">
-              <h3 className="text-xl font-bold text-cyan-400 flex items-center gap-2 uppercase tracking-wide">
+              <h3 className="text-xl font-bold text-hud-accent flex items-center gap-2 uppercase tracking-wide">
                 <Info className="w-5 h-5" />
                 Mission Briefing
               </h3>
               <div className="space-y-3 text-base">
                 <p className="flex items-start gap-2">
-                  <span className="text-cyan-400 font-bold">1.</span>
+                  <span className="text-hud-accent font-bold">1.</span>
                   <span>Deploy your naval fleet of 5 warships across the tactical grid. Maintain operational spacing - vessels cannot be adjacent, even diagonally.</span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <span className="text-cyan-400 font-bold">2.</span>
+                  <span className="text-hud-accent font-bold">2.</span>
                   <span>Press R to rotate ship orientation between horizontal and vertical during deployment phase.</span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <span className="text-cyan-400 font-bold">3.</span>
+                  <span className="text-hud-accent font-bold">3.</span>
                   <span>Engage in tactical combat. Select coordinates on enemy waters to launch strikes.</span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <span className="text-cyan-400 font-bold">4.</span>
+                  <span className="text-hud-accent font-bold">4.</span>
                   <span>💥 Direct hits marked in red. 💧 Missed shots marked in blue.</span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <span className="text-cyan-400 font-bold">5.</span>
+                  <span className="text-hud-accent font-bold">5.</span>
                   <span>Sink the entire enemy armada to achieve total naval supremacy!</span>
                 </p>
               </div>
             </div>
             
             <div className="space-y-3">
-              <h3 className="text-xl font-bold text-cyan-400 uppercase tracking-wide">Your Naval Armada</h3>
+              <h3 className="text-xl font-bold text-hud-accent uppercase tracking-wide">Your Naval Armada</h3>
               <div className="grid grid-cols-1 gap-2">
                 {SHIPS.map(ship => (
-                  <div key={ship.id} className="flex items-center gap-3 bg-slate-700 p-3 rounded-lg border border-slate-600 hover:border-cyan-500 transition-colors">
+                  <div key={ship.id} className="flex items-center gap-3 bg-panel-bg-darker p-3 rounded-lg border border-panel-stroke hover:border-hud-accent transition-colors">
                     <div className="relative w-5 h-5">
-                      <div className="absolute inset-0 rounded-full border border-cyan-400 opacity-60"></div>
+                      <div className="absolute inset-0 rounded-full border border-hud-accent opacity-60"></div>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-0.5 h-2 bg-gradient-to-t from-cyan-400 to-transparent" style={{ transformOrigin: 'center center' }}></div>
+                        <div className="w-0.5 h-2 bg-gradient-to-t from-hud-accent to-transparent" style={{ transformOrigin: 'center center' }}></div>
                       </div>
                     </div>
-                    <span className="font-semibold text-slate-100">{ship.name}</span>
-                    <span className="text-slate-400">({ship.size} grid units)</span>
+                    <span className="font-semibold text-text-primary">{ship.name}</span>
+                    <span className="text-text-subtle">({ship.size} grid units)</span>
                   </div>
                 ))}
               </div>
@@ -945,13 +945,14 @@ function App() {
             
             <Button 
               onClick={startGame}
-              className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold text-xl py-7 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/50 uppercase tracking-wider"
+              className="w-full bg-gradient-to-r from-hud-accent to-hud-accent-soft hover:from-hud-accent-glow hover:to-hud-accent text-white font-bold text-xl py-7 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-hud-accent/50 uppercase tracking-wider"
+              style={{ textShadow: '0 0 10px rgba(0, 255, 0, 0.5)' }}
             >
               ◈ COMMENCE OPERATIONS ◈
             </Button>
             
-            <div className="text-center pt-4 border-t border-slate-700">
-              <p className="text-slate-500 text-sm">Created by <span className="text-cyan-400 font-semibold">Rudi Willner</span></p>
+            <div className="text-center pt-4 border-t border-panel-stroke">
+              <p className="text-text-subtle text-sm">Created by <span className="text-hud-accent font-semibold">Rudi Willner</span></p>
             </div>
           </CardContent>
         </Card>
