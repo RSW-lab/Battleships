@@ -519,6 +519,71 @@ Verified that the smaller grid size improves layout while maintaining usability.
 
 ---
 
-**Last Updated:** November 13, 2025  
+## Error 16: AI Re-attacking Already-Hit Cells
+
+**Date:** November 14, 2025  
+**Severity:** Critical  
+**Status:** ✅ Fixed
+
+### Problem
+The AI was attacking cells that had already been hit, and when it did, the cell state would change from 'hit' (red) back to 'empty' (blue), effectively erasing previous hits. This made it appear as if ships were being un-damaged.
+
+### Root Cause
+Two issues in the `aiTurn` function:
+
+1. **Queue filtering**: When dequeuing from `aiTargetQueueRef`, the code didn't check if the cell had already been attacked. Adjacent cells were added to the queue when a ship was hit, but if those cells were attacked before being dequeued, they would still be in the queue.
+
+2. **State overwriting**: The attack logic had:
+```typescript
+if (cell.state === 'ship') {
+  cell.state = 'hit'
+} else {
+  cell.state = 'miss'  // This overwrites 'hit' cells!
+}
+```
+When the AI attacked an already-hit cell, `cell.state === 'ship'` was false, so it fell into the else block and set the cell to 'miss', overwriting the previous 'hit' state.
+
+### Solution
+Implemented two fixes:
+
+1. **Skip already-attacked cells in queue**:
+```typescript
+if (aiTargetQueueRef.current.length > 0) {
+  let foundTarget = false
+  while (aiTargetQueueRef.current.length > 0 && !foundTarget) {
+    const [head, ...rest] = aiTargetQueueRef.current
+    aiTargetQueueRef.current = rest
+    const [r, c] = head
+    if (currentBoard[r][c].state !== 'hit' && currentBoard[r][c].state !== 'miss') {
+      targetRow = r
+      targetCol = c
+      foundTarget = true
+    }
+  }
+  // Fall back to random if all queued cells are already attacked
+  if (!foundTarget) {
+    // ... random targeting ...
+  }
+}
+```
+
+2. **Only set 'miss' for empty cells**:
+```typescript
+if (cell.state === 'ship') {
+  cell.state = 'hit'
+  // ... hit logic ...
+} else if (cell.state === 'empty') {
+  cell.state = 'miss'
+  // ... miss logic ...
+}
+// If cell is already hit or miss, don't change it
+```
+
+### Testing
+Verified that the AI no longer attacks already-hit cells, and if it somehow does, the cell state is not overwritten.
+
+---
+
+**Last Updated:** November 14, 2025  
 **Maintained By:** Devin AI  
 **Project Owner:** Rudi Willner
