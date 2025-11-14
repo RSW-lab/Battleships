@@ -569,7 +569,8 @@ function App() {
 
   const aiTurn = () => {
     setTimeout(() => {
-      let targetRow: number, targetCol: number
+      let targetRow = 0
+      let targetCol = 0
       const currentBoard = playerBoardRef.current
 
       if (aiTargetQueueRef.current.length > 0) {
