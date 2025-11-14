@@ -1,10 +1,29 @@
+/* Import COD-style fonts from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
   :root {
-    --radius: 0.5rem
-  ;
+    --radius: 0.5rem;
+    
+    /* COD Modern Warfare Theme Tokens */
+    --hud-accent: 120 100% 35%;           /* MW green accent */
+    --hud-accent-soft: 120 60% 45%;       /* Softer green */
+    --hud-accent-glow: 120 100% 50%;      /* Bright green glow */
+    --panel-bg: 210 20% 12%;              /* Dark steel blue */
+    --panel-bg-darker: 210 25% 8%;        /* Deeper background */
+    --panel-stroke: 210 15% 25%;          /* Border/stroke color */
+    --bg-deep: 210 30% 6%;                /* Deepest background */
+    --text-primary: 0 0% 95%;             /* Off-white text */
+    --text-subtle: 0 0% 65%;              /* Muted text */
+    --text-accent: 120 100% 45%;          /* Green text accent */
+    --allied-accent: 180 80% 50%;         /* Cyan for allied (toned down) */
+    --hostile-accent: 0 85% 55%;          /* Red for hostile */
+    
+    /* Legacy sidebar tokens */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -12,7 +31,9 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%}
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  
   .dark {
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -21,7 +42,31 @@
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  
+  /* Apply COD-style fonts globally */
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background-color: hsl(var(--bg-deep));
+    color: hsl(var(--text-primary));
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Teko', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  
+  button {
+    font-family: 'Teko', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .monospace {
+    font-family: 'Share Tech Mono', monospace;
   }
 }
 
