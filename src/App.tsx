@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 import './App.css'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Anchor, Waves, Target, Trophy, RotateCcw, Info, RotateCw, Rocket } from 'lucide-react'
+import { Anchor, Waves, Target, Trophy, RotateCcw, RotateCw, Rocket } from 'lucide-react'
 
 type CellState = 'empty' | 'ship' | 'hit' | 'miss'
 type GamePhase = 'instructions' | 'placement' | 'battle' | 'gameOver'
@@ -312,6 +312,8 @@ function App() {
   const [missiles, setMissiles] = useState<MissileAnimation[]>([])
   const [crosshairPosition, setCrosshairPosition] = useState<{ row: number; col: number } | null>(null)
   const [attackInProgress, setAttackInProgress] = useState(false)
+  const [showHitFlash, setShowHitFlash] = useState(false)
+  const [screenShake, setScreenShake] = useState(false)
   
   const aiTargetQueueRef = useRef<[number, number][]>([])
   const lastHitRef = useRef<[number, number] | null>(null)
@@ -521,6 +523,12 @@ function App() {
     if (cell.state === 'ship') {
       cell.state = 'hit'
       cell.animation = 'hit'
+      
+      setShowHitFlash(true)
+      setScreenShake(true)
+      setTimeout(() => setShowHitFlash(false), 400)
+      setTimeout(() => setScreenShake(false), 300)
+      
       setMessage('💥 DIRECT HIT! Enemy vessel damaged!')
       
       const shipIndex = updatedAiShips.findIndex(s => s.id === cell.shipId)
@@ -813,24 +821,27 @@ function App() {
             <div className="flex justify-center mb-4">
               <Anchor className="w-16 h-16 text-cyan-400 animate-pulse" />
             </div>
-            <CardTitle className="text-5xl font-bold text-cyan-400 mb-2 tracking-wider">
-              ⚓ NAVAL COMMAND ⚓
+            <CardTitle className="text-5xl font-bold text-cyan-400 mb-2 tracking-wider intro-glitch" data-text="FLEET COMMAND OPS">
+              FLEET COMMAND OPS
             </CardTitle>
-            <CardDescription className="text-slate-300 text-xl font-semibold mb-2">
-              BATTLESHIPS
+            <CardDescription className="text-slate-300 text-xl font-semibold mb-2 uppercase tracking-widest">
+              TACTICAL STRIKE MISSION
             </CardDescription>
-            <CardDescription className="text-amber-400 text-sm font-bold uppercase tracking-widest">
-              Admiral on Deck
+            <CardDescription className="text-amber-400 text-sm font-bold uppercase tracking-widest hud-element">
+              &gt; OPERATOR STANDING BY
             </CardDescription>
-            <CardDescription className="text-slate-400 text-base mt-4 italic">
-              Command your fleet. Destroy the enemy. Claim victory on the high seas.
+            <CardDescription className="text-slate-400 text-base mt-4 font-mono">
+              &gt; PRIMARY OBJECTIVE: Locate and neutralize all hostile vessels
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 text-slate-200">
             <div className="space-y-4">
-              <h3 className="text-xl font-bold text-cyan-400 flex items-center gap-2 uppercase tracking-wide">
-                <Info className="w-5 h-5" />
-                Mission Briefing
+              <h3 className="text-xl font-bold text-cyan-400 flex items-center gap-2 uppercase tracking-wide hud-element">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                  <path d="M12 8v4M12 16h.01" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                MISSION BRIEFING
               </h3>
               <div className="space-y-3 text-base">
                 <p className="flex items-start gap-2">
@@ -950,7 +961,8 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
+    <div className={`min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8 ${screenShake ? 'screen-shake' : ''}`}>
+      {showHitFlash && <div className="hit-flash-overlay" />}
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-cyan-400 mb-2 flex items-center justify-center gap-3 tracking-wider">
@@ -968,8 +980,14 @@ function App() {
 
         <div className="flex flex-col lg:flex-row justify-center gap-8 mb-8 items-start">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-cyan-400 mb-4 uppercase tracking-widest">⚓ Allied Waters ⚓</h2>
+            <h2 className="text-2xl font-bold text-cyan-400 mb-4 uppercase tracking-widest hud-element">◈ ALLIED SECTOR ◈</h2>
             <div className="relative inline-block" ref={playerGridRef}>
+              <div className="hud-grid-overlay" />
+              <div className="tactical-scan-line" />
+              <div className="tactical-corner top-left" />
+              <div className="tactical-corner top-right" />
+              <div className="tactical-corner bottom-left" />
+              <div className="tactical-corner bottom-right" />
               {renderBoard(playerBoard, true)}
               {(gamePhase === 'placement' || gamePhase === 'battle') && (
                 <ShipOverlays
@@ -1022,8 +1040,14 @@ function App() {
 
           {gamePhase === 'battle' && (
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-red-400 mb-4 uppercase tracking-widest">🎯 Enemy Waters 🎯</h2>
+              <h2 className="text-2xl font-bold text-red-400 mb-4 uppercase tracking-widest hud-element">◈ HOSTILE SECTOR ◈</h2>
               <div className="relative inline-block" ref={aiGridRef}>
+                <div className="hud-grid-overlay" />
+                <div className="tactical-scan-line" style={{ animationDelay: '2s' }} />
+                <div className="tactical-corner top-left" style={{ animationDelay: '0.5s' }} />
+                <div className="tactical-corner top-right" style={{ animationDelay: '0.5s' }} />
+                <div className="tactical-corner bottom-left" style={{ animationDelay: '0.5s' }} />
+                <div className="tactical-corner bottom-right" style={{ animationDelay: '0.5s' }} />
                 {renderBoard(aiBoard, false)}
                 <ShipOverlays
                   placements={aiPlacements}
