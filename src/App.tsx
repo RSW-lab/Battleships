@@ -406,17 +406,29 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
   const gridRect = gridRef.current?.getBoundingClientRect()
   if (!gridRect) return null
   
+  const EXPLOSION_SCALE = 4.0  // Increased from 2.5 to compensate for transparent padding in video
+  const FIRE_SCALE = 2.0       // Increased from 1.0 to make fire more visible
+  
   return (
     <div className="effects-overlay" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 35 }}>
       {Array.from(effects.entries()).map(([key, effect]) => {
         const [row, col] = key.split('-').map(Number)
         
         const isExplosion = effect.type === 'explosion'
-        const size = isExplosion ? cellSize * 2.5 : cellSize
+        const size = isExplosion ? cellSize * EXPLOSION_SCALE : cellSize * FIRE_SCALE
         const cellCenterX = gridRect.left + gridLeft + col * cellSize + cellSize / 2
         const cellCenterY = gridRect.top + gridTop + row * cellSize + cellSize / 2
         const left = cellCenterX - size / 2
         const top = cellCenterY - size / 2
+        
+        if (effects.size <= 3) {
+          console.log(`[EffectsOverlay] Rendering ${effect.type} at ${key}:`, { 
+            cellSize, 
+            size, 
+            scale: isExplosion ? EXPLOSION_SCALE : FIRE_SCALE,
+            position: { left, top }
+          })
+        }
         
         return (
           <div
@@ -427,7 +439,8 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
               top: `${top}px`,
               width: `${size}px`,
               height: `${size}px`,
-              pointerEvents: 'none'
+              pointerEvents: 'none',
+              outline: '2px solid rgba(0,255,0,0.3)'  // Debug border to verify size/position
             }}
           >
             {isExplosion ? (
@@ -446,6 +459,7 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
                   console.log(`[EffectsOverlay] Explosion video loaded for ${key}`)
                   setTimeout(() => onExplosionEnd(key), 1100)
                 }}
+                onPlaying={() => console.log(`[EffectsOverlay] Explosion video playing for ${key}`)}
                 onError={(e) => console.error(`[EffectsOverlay] Explosion video error for ${key}:`, e)}
               >
                 <source src="/fx/explosion.webm" type="video/webm" />
@@ -460,6 +474,13 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
                 preload="auto"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 onLoadedData={() => console.log(`[EffectsOverlay] Fire video loaded for ${key}`)}
+                onPlaying={() => console.log(`[EffectsOverlay] Fire video playing for ${key}`)}
+                onTimeUpdate={(e) => {
+                  const video = e.target as HTMLVideoElement
+                  if (video.currentTime > 0 && video.currentTime < 0.1) {
+                    console.log(`[EffectsOverlay] Fire video time update for ${key}: ${video.currentTime.toFixed(2)}s`)
+                  }
+                }}
                 onError={(e) => console.error(`[EffectsOverlay] Fire video error for ${key}:`, e)}
               >
                 <source src="/fx/fire.webm" type="video/webm" />
@@ -936,8 +957,12 @@ function App() {
   }
 
   const getCellClass = (cell: Cell, isPlayerBoard: boolean, row: number, col: number) => {
-    const baseClass = 'cursor-pointer transition-all duration-300 relative overflow-hidden bg-transparent'
     const isPreview = previewCells.some(([r, c]) => r === row && c === col)
+    const isAlreadyAttacked = cell.state === 'hit' || cell.state === 'miss'
+    
+    const baseClass = isAlreadyAttacked 
+      ? 'cursor-not-allowed transition-all duration-300 relative overflow-hidden bg-transparent'
+      : 'cursor-pointer transition-all duration-300 relative overflow-hidden bg-transparent'
     
     let stateClass = ''
     let borderStyle = 'border border-white/10'
@@ -1040,6 +1065,11 @@ function App() {
                         <div className="rubble-piece"></div>
                         <div className="rubble-piece"></div>
                         <div className="rubble-piece"></div>
+                      </div>
+                    )}
+                    {cell.state === 'miss' && (
+                      <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                        <div className="w-2 h-2 rounded-full bg-white/50" style={{ boxShadow: '0 0 4px rgba(255,255,255,0.3)' }}></div>
                       </div>
                     )}
                   </div>
