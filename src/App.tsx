@@ -414,10 +414,15 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
       {Array.from(effects.entries()).map(([key, effect]) => {
         const [row, col] = key.split('-').map(Number)
         
+        const cellEl = gridRef.current?.querySelector(`[data-cell="${row}-${col}"]`) as HTMLElement | null
+        if (!cellEl) return null
+        
+        const cellRect = cellEl.getBoundingClientRect()
+        const cellCenterX = cellRect.left + cellRect.width / 2
+        const cellCenterY = cellRect.top + cellRect.height / 2
+        
         const isExplosion = effect.type === 'explosion'
         const size = isExplosion ? cellSize * EXPLOSION_SCALE : cellSize * FIRE_SCALE
-        const cellCenterX = gridRect.left + gridLeft + col * cellSize + cellSize / 2
-        const cellCenterY = gridRect.top + gridTop + row * cellSize + cellSize / 2
         const left = cellCenterX - size / 2
         const top = cellCenterY - size / 2
         
