@@ -394,7 +394,7 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
   )
 }
 
-function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefObject<HTMLDivElement>, crosshairPosition: { row: number, col: number } | null }) {
+function TargetingOverlay({ gridRef, crosshairPosition, crosshairPixel }: { gridRef: React.RefObject<HTMLDivElement>, crosshairPosition: { row: number, col: number } | null, crosshairPixel: { x: number, y: number } | null }) {
   const [overlayRect, setOverlayRect] = useState<{ left: number, top: number, width: number, height: number } | null>(null)
 
   useEffect(() => {
@@ -438,13 +438,13 @@ function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefOb
         <div className="targeting-hud-text">
           [ TARGETING SYSTEM ACTIVE ]
         </div>
-        {crosshairPosition && (
+        {crosshairPixel && crosshairPosition && (
           <div 
             className="crosshair"
             style={{
               position: 'absolute',
-              left: `${((crosshairPosition.col + 1) * (overlayRect.width / 16)) + (overlayRect.width / 32)}px`,
-              top: `${((crosshairPosition.row + 1) * (overlayRect.height / 16)) + (overlayRect.height / 32)}px`,
+              left: `${crosshairPixel.x - overlayRect.left}px`,
+              top: `${crosshairPixel.y - overlayRect.top}px`,
               transform: 'translate(-50%, -50%)'
             }}
           >
@@ -472,6 +472,7 @@ function App() {
   const [message, setMessage] = useState('')
   const [missiles, setMissiles] = useState<MissileAnimation[]>([])
   const [crosshairPosition, setCrosshairPosition] = useState<{ row: number; col: number } | null>(null)
+  const [crosshairPixel, setCrosshairPixel] = useState<{ x: number; y: number } | null>(null)
   const [attackInProgress, setAttackInProgress] = useState(false)
   
   const aiTargetQueueRef = useRef<[number, number][]>([])
@@ -881,23 +882,42 @@ function App() {
     
     return (
       <div className="inline-block bg-slate-800 p-2 rounded-lg shadow-2xl">
-        <div 
-          ref={gridRef}
-          className="grid gap-0 relative board-with-water"
-          style={{ 
-            gridTemplateColumns: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
-            gridTemplateRows: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`
-          }}
-        >
+        <div ref={gridRef} className="relative inline-block">
+          {/* Grid video background */}
+          <video 
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-50"
+            style={{ zIndex: 0 }}
+            src="/video/grid_surf.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            onTimeUpdate={(e) => {
+              if (e.currentTarget.currentTime > 7) {
+                e.currentTarget.currentTime = 0;
+              }
+            }}
+          />
+          {/* Dark overlay for contrast */}
+          <div className="absolute inset-0 pointer-events-none bg-black/40" style={{ zIndex: 0 }}></div>
+          
+          <div 
+            className="grid gap-0 relative board-with-water"
+            style={{ 
+              gridTemplateColumns: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
+              gridTemplateRows: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
+              zIndex: 1
+            }}
+          >
           <div style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}></div>
           {Array.from({ length: BOARD_SIZE }, (_, i) => (
-            <div key={i} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }} className="flex items-center justify-center text-cyan-400 font-bold text-xs">
+            <div key={i} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px`, fontFamily: 'Rajdhani, sans-serif', color: '#ffffff', fontWeight: 700 }} className="flex items-center justify-center text-xs">
               {i + 1}
             </div>
           ))}
           {board.map((row, rowIndex) => (
             <>
-              <div key={`label-${rowIndex}`} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }} className="flex items-center justify-center text-cyan-400 font-bold text-xs">
+              <div key={`label-${rowIndex}`} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px`, fontFamily: 'Rajdhani, sans-serif', color: '#ffffff', fontWeight: 700 }} className="flex items-center justify-center text-xs">
                 {String.fromCharCode(65 + rowIndex)}
               </div>
               {row.map((cell, colIndex) => {
@@ -958,6 +978,7 @@ function App() {
             </>
           ))}
         </div>
+        </div>
       </div>
     )
   }
@@ -991,13 +1012,13 @@ function App() {
               &gt; PRIMARY OBJECTIVE: Locate and neutralize all hostile vessels
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-text-primary py-4">
+          <CardContent className="space-y-4 py-4">
             <div className="space-y-3">
               <h3 className="text-lg font-bold text-hud-accent flex items-center gap-2 uppercase tracking-wide">
                 <Info className="w-4 h-4" />
                 Mission Briefing
               </h3>
-              <div className="space-y-2 text-sm leading-snug">
+              <div className="space-y-2 text-sm leading-snug text-white">
                 <p className="flex items-start gap-2">
                   <span className="text-hud-accent font-bold">1.</span>
                   <span>Deploy your naval fleet of 5 warships across the tactical grid. Maintain operational spacing - vessels cannot be adjacent, even diagonally.</span>
@@ -1114,30 +1135,20 @@ function App() {
 
   return (
     <>
-      <BackgroundVideo />
-      <div className="theme-cod min-h-screen p-8" style={{ background: 'transparent' }}>
+      <div className="theme-cod min-h-screen p-8" style={{ 
+        background: 'linear-gradient(180deg, #0c0f12 0%, #0a0d10 60%, #080a0c 100%)',
+        backgroundAttachment: 'fixed'
+      }}>
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-cyan-400 mb-2 flex items-center justify-center gap-3 tracking-wider uppercase" style={{ fontFamily: 'monospace', letterSpacing: '0.15em' }}>
-            <div className="relative w-12 h-12">
-              <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-60 animate-ping"></div>
-              <div className="absolute inset-1 rounded-full border border-cyan-400 opacity-80"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-0.5 h-5 bg-gradient-to-t from-cyan-400 to-transparent animate-spin" style={{ transformOrigin: 'center center' }}></div>
-              </div>
-            </div>
+          <h1 className="text-5xl font-bold mb-2 flex items-center justify-center gap-3 tracking-wider uppercase" style={{ fontFamily: 'Teko, sans-serif', letterSpacing: '0.15em', color: '#8cff4f', textShadow: '0 0 20px rgba(140, 255, 79, 0.5)' }}>
+            <SonarRadar />
             FLEET COMMAND OPS
-            <div className="relative w-12 h-12">
-              <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-60 animate-ping"></div>
-              <div className="absolute inset-1 rounded-full border border-cyan-400 opacity-80"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-0.5 h-5 bg-gradient-to-t from-cyan-400 to-transparent animate-spin" style={{ transformOrigin: 'center center' }}></div>
-              </div>
-            </div>
+            <SonarRadar />
           </h1>
-          <p className="text-2xl text-slate-200 font-semibold">{message}</p>
+          <p className="text-2xl text-white font-semibold" style={{ fontFamily: 'Rajdhani, sans-serif' }}>{message}</p>
           {gamePhase === 'placement' && (
-            <p className="text-lg text-yellow-400 mt-2 font-bold">
+            <p className="text-lg mt-2 font-bold" style={{ fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }}>
               Press R to rotate • Orientation: {shipOrientation.toUpperCase()}
             </p>
           )}
@@ -1145,7 +1156,7 @@ function App() {
 
         <div className="flex flex-col lg:flex-row justify-center gap-8 mb-8 items-start">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-cyan-400 mb-4 uppercase tracking-widest" style={{ fontFamily: 'monospace' }}>◈ ALLIED SECTOR ◈</h2>
+            <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ ALLIED SECTOR ◈</h2>
             <div className="relative inline-block">
               {renderBoard(playerBoard, true, playerGridRef)}
               {(gamePhase === 'placement' || gamePhase === 'battle') && (
@@ -1159,7 +1170,8 @@ function App() {
               {playerShips.map(ship => (
                 <div 
                   key={ship.id} 
-                  className={`text-sm font-semibold ${ship.sunk ? 'text-red-400 line-through' : 'text-green-400'}`}
+                  className={`text-sm font-semibold ${ship.sunk ? 'text-red-400 line-through' : ''}`}
+                  style={{ fontFamily: 'Rajdhani, sans-serif', color: ship.sunk ? '#f87171' : '#8cff4f' }}
                 >
                   {ship.name}: {ship.sunk ? '💀 SUNK' : `${ship.hits}/${ship.size} hits`}
                 </div>
@@ -1169,27 +1181,30 @@ function App() {
               <div className="mt-4 flex justify-center gap-2">
                 <Button
                   onClick={() => setShipOrientation('horizontal')}
-                  className={`${
-                    shipOrientation === 'horizontal'
-                      ? 'bg-cyan-600 hover:bg-cyan-700'
-                      : 'bg-slate-600 hover:bg-slate-500'
-                  } text-white font-bold px-4 py-2`}
+                  className={`text-white font-bold px-4 py-2`}
+                  style={{ 
+                    fontFamily: 'Rajdhani, sans-serif',
+                    backgroundColor: shipOrientation === 'horizontal' ? '#8cff4f' : '#475569',
+                    color: shipOrientation === 'horizontal' ? '#000' : '#fff'
+                  }}
                 >
-                  Horizontal
+                  HORIZONTAL
                 </Button>
                 <Button
                   onClick={() => setShipOrientation('vertical')}
-                  className={`${
-                    shipOrientation === 'vertical'
-                      ? 'bg-cyan-600 hover:bg-cyan-700'
-                      : 'bg-slate-600 hover:bg-slate-500'
-                  } text-white font-bold px-4 py-2`}
+                  className={`text-white font-bold px-4 py-2`}
+                  style={{ 
+                    fontFamily: 'Rajdhani, sans-serif',
+                    backgroundColor: shipOrientation === 'vertical' ? '#8cff4f' : '#475569',
+                    color: shipOrientation === 'vertical' ? '#000' : '#fff'
+                  }}
                 >
-                  Vertical
+                  VERTICAL
                 </Button>
                 <Button
                   onClick={() => setShipOrientation(prev => prev === 'horizontal' ? 'vertical' : 'horizontal')}
-                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2"
+                  className="text-white font-bold px-4 py-2"
+                  style={{ fontFamily: 'Rajdhani, sans-serif', backgroundColor: '#f59e0b' }}
                 >
                   <RotateCw className="w-4 h-4" />
                 </Button>
@@ -1199,8 +1214,18 @@ function App() {
 
           {gamePhase === 'battle' && (
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-red-400 mb-4 uppercase tracking-widest" style={{ fontFamily: 'monospace' }}>◈ HOSTILE SECTOR ◈</h2>
-              <div className="relative inline-block">
+              <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ fontFamily: 'Teko, sans-serif', color: '#ef4444' }}>◈ HOSTILE SECTOR ◈</h2>
+              <div 
+                className="relative inline-block"
+                onMouseMove={(e) => {
+                  if (isPlayerTurn && !attackInProgress) {
+                    setCrosshairPixel({ x: e.clientX, y: e.clientY });
+                  }
+                }}
+                onMouseLeave={() => {
+                  setCrosshairPixel(null);
+                }}
+              >
                 {renderBoard(aiBoard, false, aiGridRef)}
                 <ShipOverlays
                   placements={aiPlacements}
@@ -1211,7 +1236,8 @@ function App() {
                 {aiShips.map(ship => (
                   <div 
                     key={ship.id} 
-                    className={`text-sm font-semibold ${ship.sunk ? 'text-red-400' : 'text-slate-400'}`}
+                    className={`text-sm font-semibold`}
+                    style={{ fontFamily: 'Rajdhani, sans-serif', color: ship.sunk ? '#ef4444' : '#94a3b8' }}
                   >
                     {ship.name}: {ship.sunk ? '💀 SUNK' : '❓ UNKNOWN'}
                   </div>
@@ -1244,6 +1270,7 @@ function App() {
             <TargetingOverlay 
               gridRef={aiGridRef}
               crosshairPosition={crosshairPosition}
+              crosshairPixel={crosshairPixel}
             />
           )}
         </>
