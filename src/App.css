@@ -212,6 +212,34 @@
   animation: radar-ping 2s ease-out infinite;
 }
 
+.radar-sweep {
+  animation: radar-sweep 3.2s linear infinite;
+  pointer-events: none;
+}
+
+.radar-glow {
+  animation: radar-glow-pulse 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes radar-glow-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radar-sweep,
+  .radar-glow {
+    animation: none;
+  }
+}
+
 @keyframes water-flow {
   0% {
     background-position: 0% 0%;

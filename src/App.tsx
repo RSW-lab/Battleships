@@ -278,32 +278,31 @@ function MissileOverlay({
 
 function SonarRadar() {
   return (
-    <div className="relative w-32 h-32 pointer-events-none">
-      <div className="relative w-full h-full">
-        {/* Outer rings with green MW color */}
-        <div className="absolute inset-0 rounded-full border-2 opacity-50" style={{ borderColor: '#8cff4f' }}></div>
-        <div className="absolute inset-2 rounded-full border opacity-40" style={{ borderColor: '#8cff4f' }}></div>
-        <div className="absolute inset-4 rounded-full border opacity-30" style={{ borderColor: '#8cff4f' }}></div>
-        
-        {/* Rotating radar sweep arm */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="radar-arm absolute w-1 h-16 origin-bottom" style={{ 
-            background: 'linear-gradient(to top, #8cff4f, transparent)',
-            transformOrigin: 'center center', 
-            bottom: '50%' 
-          }}></div>
-        </div>
-        
-        {/* Center ping */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="radar-ping absolute w-2 h-2 rounded-full" style={{ backgroundColor: '#8cff4f' }}></div>
-        </div>
-        
-        {/* SONAR label */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-xs font-bold opacity-70" style={{ color: '#8cff4f' }}>SONAR</div>
-        </div>
-      </div>
+    <div className="relative w-28 h-28 pointer-events-none">
+      {/* Base radar image */}
+      <img 
+        src="/img/sonar_radar.png" 
+        alt="Sonar Radar"
+        className="absolute inset-0 w-full h-full object-contain opacity-85"
+      />
+      
+      {/* Rotating sweep overlay */}
+      <div 
+        className="absolute inset-0 rounded-full radar-sweep"
+        style={{
+          background: 'conic-gradient(from 0deg, rgba(140,255,79,0) 0deg, rgba(140,255,79,0.55) 6deg, rgba(140,255,79,0) 12deg)',
+          maskImage: 'radial-gradient(circle at center, transparent 15%, black 16%)',
+          WebkitMaskImage: 'radial-gradient(circle at center, transparent 15%, black 16%)'
+        }}
+      />
+      
+      {/* Pulsing glow effect */}
+      <div 
+        className="absolute inset-0 rounded-full radar-glow"
+        style={{
+          boxShadow: '0 0 20px rgba(140,255,79,0.3), inset 0 0 20px rgba(140,255,79,0.2)'
+        }}
+      />
     </div>
   )
 }
@@ -443,8 +442,8 @@ function TargetingOverlay({ gridRef, crosshairPosition, crosshairPixel }: { grid
             className="crosshair"
             style={{
               position: 'absolute',
-              left: `${crosshairPixel.x - overlayRect.left}px`,
-              top: `${crosshairPixel.y - overlayRect.top}px`,
+              left: `${crosshairPixel.x}px`,
+              top: `${crosshairPixel.y}px`,
               transform: 'translate(-50%, -50%)'
             }}
           >
@@ -847,13 +846,15 @@ function App() {
   }
 
   const getCellClass = (cell: Cell, isPlayerBoard: boolean, row: number, col: number) => {
-    const baseClass = 'border border-slate-600 cursor-pointer transition-all duration-300 relative overflow-hidden bg-transparent'
+    const baseClass = 'cursor-pointer transition-all duration-300 relative overflow-hidden bg-transparent'
     const isPreview = previewCells.some(([r, c]) => r === row && c === col)
     
     let stateClass = ''
+    let borderStyle = 'border border-white/[0.07]'
     
     if (cell.state === 'ship' && isPlayerBoard) {
-      stateClass = 'bg-slate-700 hover:bg-slate-600'
+      stateClass = 'hover:bg-white/5'
+      borderStyle = 'border border-white/10'
     } else if (cell.state === 'hit') {
       stateClass = 'bg-red-600'
     } else if (cell.state === 'miss') {
@@ -868,7 +869,7 @@ function App() {
       stateClass += ' animate-pulse'
     }
     
-    return `${baseClass} ${stateClass}`
+    return `${baseClass} ${borderStyle} ${stateClass}`
   }
 
   const renderBoard = (board: Cell[][], isPlayerBoard: boolean, gridRef?: React.RefObject<HTMLDivElement>) => {
@@ -881,7 +882,7 @@ function App() {
     }
     
     return (
-      <div className="inline-block bg-slate-800 p-2 rounded-lg shadow-2xl">
+      <div className="inline-block p-2 rounded-lg shadow-2xl" style={{ backgroundColor: 'rgba(11, 15, 18, 0.88)' }}>
         <div ref={gridRef} className="relative inline-block">
           {/* Grid video background */}
           <video 
@@ -1146,7 +1147,7 @@ function App() {
             FLEET COMMAND OPS
             <SonarRadar />
           </h1>
-          <p className="text-2xl text-white font-semibold" style={{ fontFamily: 'Rajdhani, sans-serif' }}>{message}</p>
+          <p className="text-2xl font-semibold tracking-wide text-zinc-200" style={{ fontFamily: 'Rajdhani, sans-serif' }}>{message}</p>
           {gamePhase === 'placement' && (
             <p className="text-lg mt-2 font-bold" style={{ fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }}>
               Press R to rotate • Orientation: {shipOrientation.toUpperCase()}
@@ -1166,51 +1167,72 @@ function App() {
                 />
               )}
             </div>
-            <div className="mt-4 space-y-2">
-              {playerShips.map(ship => (
-                <div 
-                  key={ship.id} 
-                  className={`text-sm font-semibold ${ship.sunk ? 'text-red-400 line-through' : ''}`}
-                  style={{ fontFamily: 'Rajdhani, sans-serif', color: ship.sunk ? '#f87171' : '#8cff4f' }}
-                >
-                  {ship.name}: {ship.sunk ? '💀 SUNK' : `${ship.hits}/${ship.size} hits`}
-                </div>
-              ))}
-            </div>
-            {gamePhase === 'placement' && (
-              <div className="mt-4 flex justify-center gap-2">
-                <Button
-                  onClick={() => setShipOrientation('horizontal')}
-                  className={`text-white font-bold px-4 py-2`}
-                  style={{ 
-                    fontFamily: 'Rajdhani, sans-serif',
-                    backgroundColor: shipOrientation === 'horizontal' ? '#8cff4f' : '#475569',
-                    color: shipOrientation === 'horizontal' ? '#000' : '#fff'
-                  }}
-                >
-                  HORIZONTAL
-                </Button>
-                <Button
-                  onClick={() => setShipOrientation('vertical')}
-                  className={`text-white font-bold px-4 py-2`}
-                  style={{ 
-                    fontFamily: 'Rajdhani, sans-serif',
-                    backgroundColor: shipOrientation === 'vertical' ? '#8cff4f' : '#475569',
-                    color: shipOrientation === 'vertical' ? '#000' : '#fff'
-                  }}
-                >
-                  VERTICAL
-                </Button>
-                <Button
-                  onClick={() => setShipOrientation(prev => prev === 'horizontal' ? 'vertical' : 'horizontal')}
-                  className="text-white font-bold px-4 py-2"
-                  style={{ fontFamily: 'Rajdhani, sans-serif', backgroundColor: '#f59e0b' }}
-                >
-                  <RotateCw className="w-4 h-4" />
-                </Button>
+            {gamePhase === 'battle' && (
+              <div className="mt-4 space-y-2">
+                {playerShips.map(ship => (
+                  <div 
+                    key={ship.id} 
+                    className={`text-sm font-semibold ${ship.sunk ? 'text-red-400 line-through' : ''}`}
+                    style={{ fontFamily: 'Rajdhani, sans-serif', color: ship.sunk ? '#f87171' : '#8cff4f' }}
+                  >
+                    {ship.name}: {ship.sunk ? '💀 SUNK' : `${ship.hits}/${ship.size} hits`}
+                  </div>
+                ))}
               </div>
             )}
           </div>
+
+          {gamePhase === 'placement' && (
+            <div className="w-full lg:w-[360px] text-left space-y-4 self-start">
+              <h3 className="text-xl font-bold uppercase tracking-wider" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ FLEET STATUS ◈</h3>
+              <div className="space-y-2">
+                {playerShips.map(ship => (
+                  <div 
+                    key={ship.id} 
+                    className="text-sm font-semibold"
+                    style={{ fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }}
+                  >
+                    {ship.name}: {ship.size} grid units
+                  </div>
+                ))}
+              </div>
+              <div className="pt-4 space-y-3">
+                <h3 className="text-lg font-bold uppercase tracking-wider" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ ORIENTATION ◈</h3>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={() => setShipOrientation('horizontal')}
+                    className={`text-white font-bold px-4 py-3 w-full`}
+                    style={{ 
+                      fontFamily: 'Rajdhani, sans-serif',
+                      backgroundColor: shipOrientation === 'horizontal' ? '#8cff4f' : '#475569',
+                      color: shipOrientation === 'horizontal' ? '#000' : '#fff'
+                    }}
+                  >
+                    HORIZONTAL
+                  </Button>
+                  <Button
+                    onClick={() => setShipOrientation('vertical')}
+                    className={`text-white font-bold px-4 py-3 w-full`}
+                    style={{ 
+                      fontFamily: 'Rajdhani, sans-serif',
+                      backgroundColor: shipOrientation === 'vertical' ? '#8cff4f' : '#475569',
+                      color: shipOrientation === 'vertical' ? '#000' : '#fff'
+                    }}
+                  >
+                    VERTICAL
+                  </Button>
+                  <Button
+                    onClick={() => setShipOrientation(prev => prev === 'horizontal' ? 'vertical' : 'horizontal')}
+                    className="text-white font-bold px-4 py-3 w-full flex items-center justify-center gap-2"
+                    style={{ fontFamily: 'Rajdhani, sans-serif', backgroundColor: '#f59e0b' }}
+                  >
+                    <RotateCw className="w-4 h-4" />
+                    ROTATE
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {gamePhase === 'battle' && (
             <div className="text-center">
@@ -1218,8 +1240,9 @@ function App() {
               <div 
                 className="relative inline-block"
                 onMouseMove={(e) => {
-                  if (isPlayerTurn && !attackInProgress) {
-                    setCrosshairPixel({ x: e.clientX, y: e.clientY });
+                  if (isPlayerTurn && !attackInProgress && aiGridRef.current) {
+                    const rect = aiGridRef.current.getBoundingClientRect();
+                    setCrosshairPixel({ x: e.clientX - rect.left, y: e.clientY - rect.top });
                   }
                 }}
                 onMouseLeave={() => {
