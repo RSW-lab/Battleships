@@ -412,20 +412,11 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
         const [row, col] = key.split('-').map(Number)
         
         const cellEl = gridRef.current?.querySelector(`[data-cell="${row}-${col}"]`) as HTMLElement | null
-        if (!cellEl) {
-          console.error(`[EffectsOverlay] Cell element not found for ${key}`)
-          return null
-        }
+        if (!cellEl) return null
         
         const cellRect = cellEl.getBoundingClientRect()
         const cellCenterX = cellRect.left + cellRect.width / 2
         const cellCenterY = cellRect.top + cellRect.height / 2
-        
-        console.log(`[EffectsOverlay] ${key}:`, {
-          cellRect: { left: cellRect.left, top: cellRect.top, width: cellRect.width, height: cellRect.height },
-          center: { x: cellCenterX, y: cellCenterY },
-          elementAtCenter: document.elementFromPoint(cellCenterX, cellCenterY)?.tagName
-        })
         
         const isExplosion = effect.type === 'explosion'
         const size = isExplosion ? cellSize * EXPLOSION_SCALE : cellSize * FIRE_SCALE
@@ -444,20 +435,6 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
               pointerEvents: 'none'
             }}
           >
-            {/* Debug crosshair at computed center */}
-            <div style={{
-              position: 'absolute',
-              left: '50%',
-              top: '50%',
-              width: '20px',
-              height: '20px',
-              transform: 'translate(-50%, -50%)',
-              pointerEvents: 'none',
-              zIndex: 100
-            }}>
-              <div style={{ position: 'absolute', left: '50%', top: '0', width: '2px', height: '100%', background: 'lime', transform: 'translateX(-50%)' }}></div>
-              <div style={{ position: 'absolute', left: '0', top: '50%', width: '100%', height: '2px', background: 'lime', transform: 'translateY(-50%)' }}></div>
-            </div>
             {isExplosion ? (
               <video
                 key={`${key}-explosion`}
@@ -465,7 +442,7 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
                 muted
                 playsInline
                 preload="auto"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'translateY(-15%)' }}
                 onEnded={() => onExplosionEnd(key)}
                 onLoadedData={() => setTimeout(() => onExplosionEnd(key), 1100)}
                 onError={(e) => console.error(`[EffectsOverlay] Explosion video error for ${key}:`, e)}
@@ -480,7 +457,7 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
                 muted
                 playsInline
                 preload="auto"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'screen' }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'screen', transform: 'translateY(-15%)' }}
                 onError={(e) => console.error(`[EffectsOverlay] Fire video error for ${key}:`, e)}
               >
                 <source src="/fx/fire.webm" type="video/webm" />
