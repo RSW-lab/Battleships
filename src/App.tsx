@@ -399,12 +399,9 @@ interface CellEffect {
 }
 
 function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.RefObject<HTMLDivElement>, effects: Map<string, CellEffect>, onExplosionEnd: (key: string) => void }) {
-  const { cell: cellSize, offsetLeft: gridLeft, offsetTop: gridTop } = useGridMetrics(gridRef, [effects.size])
+  const { cell: cellSize } = useGridMetrics(gridRef, [effects.size])
   
   if (!cellSize || effects.size === 0) return null
-  
-  const gridRect = gridRef.current?.getBoundingClientRect()
-  if (!gridRect) return null
   
   const EXPLOSION_SCALE = 6.0
   const FIRE_SCALE = 2.5
