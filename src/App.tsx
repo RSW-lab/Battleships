@@ -13,7 +13,6 @@ interface Cell {
   state: CellState
   shipId?: number
   animation?: string
-  showExplosion?: boolean
 }
 
 interface MissileAnimation {
@@ -439,7 +438,15 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
                 playsInline
                 preload="auto"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onEnded={() => onExplosionEnd(key)}
+                onEnded={() => {
+                  console.log(`[EffectsOverlay] Explosion onEnded fired for ${key}`)
+                  onExplosionEnd(key)
+                }}
+                onLoadedData={() => {
+                  console.log(`[EffectsOverlay] Explosion video loaded for ${key}`)
+                  setTimeout(() => onExplosionEnd(key), 1100)
+                }}
+                onError={(e) => console.error(`[EffectsOverlay] Explosion video error for ${key}:`, e)}
               >
                 <source src="/fx/explosion.webm" type="video/webm" />
               </video>
@@ -452,6 +459,8 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
                 playsInline
                 preload="auto"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onLoadedData={() => console.log(`[EffectsOverlay] Fire video loaded for ${key}`)}
+                onError={(e) => console.error(`[EffectsOverlay] Fire video error for ${key}:`, e)}
               >
                 <source src="/fx/fire.webm" type="video/webm" />
               </video>
@@ -595,6 +604,7 @@ function App() {
   const addEffect = (isPlayerBoard: boolean, row: number, col: number, type: EffectType) => {
     const key = `${row}-${col}`
     const setter = isPlayerBoard ? setPlayerEffects : setAiEffects
+    console.log(`[addEffect] Adding ${type} effect at ${key} on ${isPlayerBoard ? 'player' : 'AI'} board`)
     setter(prev => {
       if (prev.has(key)) return prev
       const newMap = new Map(prev)
@@ -605,8 +615,11 @@ function App() {
 
   const swapToFire = (isPlayerBoard: boolean, key: string) => {
     const setter = isPlayerBoard ? setPlayerEffects : setAiEffects
+    console.log(`[swapToFire] Swapping to fire at ${key} on ${isPlayerBoard ? 'player' : 'AI'} board`)
     setter(prev => {
       if (!prev.has(key)) return prev
+      const current = prev.get(key)
+      if (current?.type !== 'explosion') return prev
       const newMap = new Map(prev)
       newMap.set(key, { type: 'fire', startedAt: Date.now() })
       return newMap
@@ -1020,14 +1033,6 @@ function App() {
                       }
                     }}
                   >
-                    {cell.showExplosion && (
-                      <div className="explosion-effect"></div>
-                    )}
-                    {cell.state === 'hit' && !cell.showExplosion && !isOnSunkShip && (
-                      <div className="absolute inset-0 z-20 pointer-events-none">
-                        <div className="fire-effect absolute inset-0"></div>
-                      </div>
-                    )}
                     {isOnSunkShip && (
                       <div className="rubble-effect">
                         <div className="rubble-piece"></div>
@@ -1035,11 +1040,6 @@ function App() {
                         <div className="rubble-piece"></div>
                         <div className="rubble-piece"></div>
                         <div className="rubble-piece"></div>
-                      </div>
-                    )}
-                    {cell.state === 'miss' && (
-                      <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                        <Waves className="w-5 h-5 text-white opacity-70" />
                       </div>
                     )}
                   </div>

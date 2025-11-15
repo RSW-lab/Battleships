@@ -198,11 +198,6 @@
   pointer-events: none;
 }
 
-.fire-effect {
-  background: linear-gradient(45deg, #ff4500, #ff8c00, #ffd700, #ff6347, #ff4500);
-  background-size: 400% 400%;
-  animation: fire-flicker 0.3s ease-in-out infinite, fire-glow 0.8s ease-in-out infinite, fire-dance 1.5s ease-in-out infinite;
-}
 
 .radar-arm {
   animation: radar-sweep 4s linear infinite;
@@ -456,16 +451,6 @@
   }
 }
 
-.explosion-effect {
-  position: absolute;
-  inset: -10px;
-  background: radial-gradient(circle, #ffff00 0%, #ff8800 30%, #ff0000 60%, transparent 100%);
-  border-radius: 50%;
-  animation: explosion 0.6s ease-out forwards;
-  z-index: 25;
-  pointer-events: none;
-  box-shadow: 0 0 30px rgba(255, 150, 0, 1), 0 0 60px rgba(255, 100, 0, 0.8);
-}
 
 /* Green Radar Targeting Overlay */
 .targeting-overlay-backdrop {
