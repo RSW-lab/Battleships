@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 import './App.css'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Waves, Trophy, RotateCcw, Info, RotateCw } from 'lucide-react'
+import { Trophy, RotateCcw, Info, RotateCw } from 'lucide-react'
 import BackgroundVideo from '@/components/ui/BackgroundVideo'
 
 type CellState = 'empty' | 'ship' | 'hit' | 'miss'
