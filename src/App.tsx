@@ -411,8 +411,13 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
     <div className="effects-overlay" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 35 }}>
       {Array.from(effects.entries()).map(([key, effect]) => {
         const [row, col] = key.split('-').map(Number)
-        const left = gridRect.left + gridLeft + (col + 1) * cellSize
-        const top = gridRect.top + gridTop + (row + 1) * cellSize
+        
+        const isExplosion = effect.type === 'explosion'
+        const size = isExplosion ? cellSize * 2.5 : cellSize
+        const cellCenterX = gridRect.left + gridLeft + col * cellSize + cellSize / 2
+        const cellCenterY = gridRect.top + gridTop + row * cellSize + cellSize / 2
+        const left = cellCenterX - size / 2
+        const top = cellCenterY - size / 2
         
         return (
           <div
@@ -421,13 +426,14 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
               position: 'absolute',
               left: `${left}px`,
               top: `${top}px`,
-              width: `${cellSize}px`,
-              height: `${cellSize}px`,
+              width: `${size}px`,
+              height: `${size}px`,
               pointerEvents: 'none'
             }}
           >
-            {effect.type === 'explosion' ? (
+            {isExplosion ? (
               <video
+                key={`${key}-explosion`}
                 autoPlay
                 muted
                 playsInline
@@ -439,6 +445,7 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
               </video>
             ) : (
               <video
+                key={`${key}-fire`}
                 autoPlay
                 loop
                 muted
@@ -536,6 +543,8 @@ function App() {
   const [crosshairPosition, setCrosshairPosition] = useState<{ row: number; col: number } | null>(null)
   const [crosshairPixel, setCrosshairPixel] = useState<{ x: number; y: number } | null>(null)
   const [attackInProgress, setAttackInProgress] = useState(false)
+  const [playerEffects, setPlayerEffects] = useState<Map<string, CellEffect>>(new Map())
+  const [aiEffects, setAiEffects] = useState<Map<string, CellEffect>>(new Map())
   
   const aiTargetQueueRef = useRef<[number, number][]>([])
   const lastHitRef = useRef<[number, number] | null>(null)
@@ -544,8 +553,6 @@ function App() {
   const playerGridRef = useRef<HTMLDivElement>(null)
   const aiGridRef = useRef<HTMLDivElement>(null)
   const missileIdRef = useRef(0)
-  const playerEffectsRef = useRef<Map<string, CellEffect>>(new Map())
-  const aiEffectsRef = useRef<Map<string, CellEffect>>(new Map())
   
   useEffect(() => {
     playerBoardRef.current = playerBoard
@@ -585,15 +592,25 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [gamePhase])
 
-  const addEffect = (effectsMap: Map<string, CellEffect>, row: number, col: number, type: EffectType) => {
+  const addEffect = (isPlayerBoard: boolean, row: number, col: number, type: EffectType) => {
     const key = `${row}-${col}`
-    effectsMap.set(key, { type, startedAt: Date.now() })
+    const setter = isPlayerBoard ? setPlayerEffects : setAiEffects
+    setter(prev => {
+      if (prev.has(key)) return prev
+      const newMap = new Map(prev)
+      newMap.set(key, { type, startedAt: Date.now() })
+      return newMap
+    })
   }
 
-  const swapToFire = (effectsMap: Map<string, CellEffect>, key: string) => {
-    if (effectsMap.has(key)) {
-      effectsMap.set(key, { type: 'fire', startedAt: Date.now() })
-    }
+  const swapToFire = (isPlayerBoard: boolean, key: string) => {
+    const setter = isPlayerBoard ? setPlayerEffects : setAiEffects
+    setter(prev => {
+      if (!prev.has(key)) return prev
+      const newMap = new Map(prev)
+      newMap.set(key, { type: 'fire', startedAt: Date.now() })
+      return newMap
+    })
   }
 
   const initializeGame = () => {
@@ -603,8 +620,8 @@ function App() {
     setPlayerBoard(JSON.parse(JSON.stringify(emptyBoard)))
     setAiBoard(JSON.parse(JSON.stringify(emptyBoard)))
     setPlayerShips(SHIPS.map(s => ({ ...s, hits: 0, sunk: false })))
-    playerEffectsRef.current.clear()
-    aiEffectsRef.current.clear()
+    setPlayerEffects(new Map())
+    setAiEffects(new Map())
     setAiShips(SHIPS.map(s => ({ ...s, hits: 0, sunk: false })))
     setCurrentShipIndex(0)
     setIsPlayerTurn(true)
@@ -753,16 +770,13 @@ function App() {
     
     await new Promise(resolve => setTimeout(resolve, 600))
 
-    addEffect(aiEffectsRef.current, row, col, 'explosion')
-
     const newBoard = JSON.parse(JSON.stringify(aiBoard))
     const cell = newBoard[row][col]
     const updatedAiShips = [...aiShips]
     
     if (cell.state === 'ship') {
       cell.state = 'hit'
-      cell.animation = 'hit'
-      cell.showExplosion = true
+      addEffect(false, row, col, 'explosion')
       setMessage('💥 DIRECT HIT! Enemy vessel damaged!')
       
       const shipIndex = updatedAiShips.findIndex(s => s.id === cell.shipId)
@@ -782,18 +796,10 @@ function App() {
       }
     } else {
       cell.state = 'miss'
-      cell.animation = 'miss'
       setMessage('💧 MISS! Shells hit open water.')
     }
     
     setAiBoard(newBoard)
-    
-    setTimeout(() => {
-      const updatedBoard = JSON.parse(JSON.stringify(newBoard))
-      updatedBoard[row][col].animation = undefined
-      updatedBoard[row][col].showExplosion = false
-      setAiBoard(updatedBoard)
-    }, 1000)
 
     if (cell.state === 'hit' && !updatedAiShips.every(s => s.sunk)) {
       setTimeout(() => {
@@ -852,16 +858,13 @@ function App() {
       launchMissile(7, 7, targetRow, targetCol, 'ai')
       
       setTimeout(() => {
-        addEffect(playerEffectsRef.current, targetRow, targetCol, 'explosion')
-        
         const newBoard = JSON.parse(JSON.stringify(currentBoard))
         const cell = newBoard[targetRow][targetCol]
         const updatedPlayerShips = [...playerShipsRef.current]
         
         if (cell.state === 'ship') {
           cell.state = 'hit'
-          cell.animation = 'hit'
-          cell.showExplosion = true
+          addEffect(true, targetRow, targetCol, 'explosion')
           setMessage('🚨 INCOMING FIRE! Our vessel is hit!')
           lastHitRef.current = [targetRow, targetCol]
           
@@ -898,18 +901,10 @@ function App() {
           }
         } else {
           cell.state = 'miss'
-          cell.animation = 'miss'
           setMessage('💧 Enemy salvo missed! We remain unscathed.')
         }
         
         setPlayerBoard(newBoard)
-        
-        setTimeout(() => {
-          const updatedBoard = JSON.parse(JSON.stringify(newBoard))
-          updatedBoard[targetRow][targetCol].animation = undefined
-          updatedBoard[targetRow][targetCol].showExplosion = false
-          setPlayerBoard(updatedBoard)
-        }, 1000)
 
         if (cell.state === 'hit' && !updatedPlayerShips.every(s => s.sunk)) {
           aiTurn()
@@ -941,10 +936,6 @@ function App() {
     
     if (isPreview) {
       stateClass += ' ring-2 ring-yellow-400'
-    }
-    
-    if (cell.animation === 'hit') {
-      stateClass += ' animate-pulse'
     }
     
     return `${baseClass} ${borderStyle} ${stateClass}`
@@ -1367,13 +1358,13 @@ function App() {
           />
           <EffectsOverlay
             gridRef={playerGridRef}
-            effects={playerEffectsRef.current}
-            onExplosionEnd={(key) => swapToFire(playerEffectsRef.current, key)}
+            effects={playerEffects}
+            onExplosionEnd={(key) => swapToFire(true, key)}
           />
           <EffectsOverlay
             gridRef={aiGridRef}
-            effects={aiEffectsRef.current}
-            onExplosionEnd={(key) => swapToFire(aiEffectsRef.current, key)}
+            effects={aiEffects}
+            onExplosionEnd={(key) => swapToFire(false, key)}
           />
           <SonarRadar />
           {isPlayerTurn && !attackInProgress && (
