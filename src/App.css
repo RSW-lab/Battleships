@@ -563,3 +563,35 @@
 
 /* Ensure app content stays above the background */
 .app, .boards, .board { position: relative; z-index: 2; }
+
+/* Soldier Overlays - Battle Screen */
+@keyframes soldier-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+
+.soldier-overlay {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: auto;
+  pointer-events: none;
+  opacity: 0.4;
+  mix-blend-mode: screen;
+  animation: soldier-breathe 3s ease-in-out infinite;
+  z-index: 0;
+}
+
+.soldier-overlay-allied {
+  left: -200px;
+}
+
+.soldier-overlay-hostile {
+  right: -200px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .soldier-overlay {
+    animation: none;
+  }
+}

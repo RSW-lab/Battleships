@@ -1233,6 +1233,13 @@ function App() {
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ ALLIED SECTOR ◈</h2>
             <div className="relative inline-block">
+              {gamePhase === 'battle' && (
+                <img 
+                  src="/img/allied_overlay.png" 
+                  alt="" 
+                  className="soldier-overlay soldier-overlay-allied"
+                />
+              )}
               {renderBoard(playerBoard, true, playerGridRef)}
               {(gamePhase === 'placement' || gamePhase === 'battle') && (
                 <ShipOverlays
@@ -1322,6 +1329,11 @@ function App() {
                   setCrosshairPixel(null);
                 }}
               >
+                <img 
+                  src="/img/hostile_overlay.png" 
+                  alt="" 
+                  className="soldier-overlay soldier-overlay-hostile"
+                />
                 {renderBoard(aiBoard, false, aiGridRef)}
                 <ShipOverlays
                   placements={aiPlacements}
