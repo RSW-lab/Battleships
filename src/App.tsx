@@ -278,22 +278,30 @@ function MissileOverlay({
 
 function SonarRadar() {
   return (
-    <div className="fixed bottom-8 right-8 w-32 h-32 pointer-events-none z-40">
+    <div className="relative w-32 h-32 pointer-events-none">
       <div className="relative w-full h-full">
-        <div className="absolute inset-0 rounded-full border-2 border-cyan-500 opacity-50"></div>
-        <div className="absolute inset-2 rounded-full border border-cyan-400 opacity-40"></div>
-        <div className="absolute inset-4 rounded-full border border-cyan-300 opacity-30"></div>
+        {/* Outer rings with green MW color */}
+        <div className="absolute inset-0 rounded-full border-2 opacity-50" style={{ borderColor: '#8cff4f' }}></div>
+        <div className="absolute inset-2 rounded-full border opacity-40" style={{ borderColor: '#8cff4f' }}></div>
+        <div className="absolute inset-4 rounded-full border opacity-30" style={{ borderColor: '#8cff4f' }}></div>
         
+        {/* Rotating radar sweep arm */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="radar-arm absolute w-1 h-16 bg-gradient-to-t from-cyan-400 to-transparent origin-bottom" style={{ transformOrigin: 'center center', bottom: '50%' }}></div>
+          <div className="radar-arm absolute w-1 h-16 origin-bottom" style={{ 
+            background: 'linear-gradient(to top, #8cff4f, transparent)',
+            transformOrigin: 'center center', 
+            bottom: '50%' 
+          }}></div>
         </div>
         
+        {/* Center ping */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="radar-ping absolute w-2 h-2 bg-cyan-400 rounded-full"></div>
+          <div className="radar-ping absolute w-2 h-2 rounded-full" style={{ backgroundColor: '#8cff4f' }}></div>
         </div>
         
+        {/* SONAR label */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-cyan-400 text-xs font-bold opacity-70">SONAR</div>
+          <div className="text-xs font-bold opacity-70" style={{ color: '#8cff4f' }}>SONAR</div>
         </div>
       </div>
     </div>
@@ -323,7 +331,7 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
 
   return (
     <div 
-      className={`relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center cursor-pointer transition-opacity duration-700 ${isFading ? 'opacity-0' : 'opacity-100'}`}
+      className={`relative min-h-screen w-full overflow-hidden flex items-center justify-center cursor-pointer transition-opacity duration-700 ${isFading ? 'opacity-0' : 'opacity-100'}`}
       onClick={handleStart}
       role="button"
       tabIndex={0}
@@ -333,30 +341,9 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
           handleStart()
         }
       }}
+      style={{ background: 'transparent' }}
     >
-      {/* Smoky battlefield background with CSS gradients */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-black opacity-90" />
-      <div className="absolute inset-0 bg-gradient-radial from-transparent via-slate-900/50 to-black" />
-      
-      {/* Vignette overlay */}
-      <div 
-        className="absolute inset-0" 
-        style={{
-          background: 'radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.85) 100%)'
-        }}
-      />
-      
-      {/* Subtle fog/noise overlay with animation */}
-      <div 
-        className="absolute inset-0 opacity-10 mix-blend-screen"
-        style={{
-          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 400 400\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' /%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' /%3E%3C/svg%3E")',
-          backgroundSize: '200px 200px',
-          animation: 'fog-pan 60s linear infinite'
-        }}
-      />
-      
-      {/* Content */}
+      {/* Content - background video and vignette are rendered globally */}
       <div className="relative z-30 text-center px-8 max-w-4xl">
         {/* Main title */}
         <h1 
@@ -403,14 +390,6 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
           Press START
         </p>
       </div>
-      
-      {/* CSS animation for fog pan */}
-      <style>{`
-        @keyframes fog-pan {
-          0% { background-position: 0% 0%; }
-          100% { background-position: 100% 100%; }
-        }
-      `}</style>
     </div>
   )
 }
@@ -996,39 +975,29 @@ function App() {
     return (
       <>
         <BackgroundVideo />
-        <div className="min-h-screen bg-gradient-to-br from-bg-deep via-panel-bg-darker to-bg-deep flex items-center justify-center p-8">
-        <Card className="max-w-2xl w-full bg-panel-bg border-hud-accent-soft border-2 shadow-2xl shadow-hud-accent/20">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="relative w-20 h-20">
-                <div className="absolute inset-0 rounded-full border-4 border-cyan-400 opacity-60 animate-ping"></div>
-                <div className="absolute inset-2 rounded-full border-2 border-cyan-400 opacity-80"></div>
-                <div className="absolute inset-4 rounded-full border border-cyan-400"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-1 h-8 bg-gradient-to-t from-cyan-400 to-transparent animate-spin" style={{ transformOrigin: 'center center' }}></div>
-                </div>
-              </div>
+        <div className="min-h-screen flex items-center justify-center p-4 overflow-hidden" style={{ background: 'transparent' }}>
+        <Card className="max-w-2xl w-full bg-panel-bg/80 backdrop-blur-sm border-hud-accent-soft border-2 shadow-2xl shadow-hud-accent/20">
+          <CardHeader className="text-center py-4">
+            <div className="flex justify-center mb-3">
+              <SonarRadar />
             </div>
-            <CardTitle className="text-5xl font-bold text-hud-accent-glow mb-2 tracking-wider uppercase" style={{ letterSpacing: '0.2em', textShadow: '0 0 20px rgba(0, 255, 0, 0.5)' }}>
+            <CardTitle className="text-4xl font-bold text-hud-accent-glow mb-2 tracking-wider uppercase" style={{ letterSpacing: '0.2em', textShadow: '0 0 20px rgba(0, 255, 0, 0.5)' }}>
               FLEET COMMAND OPS
             </CardTitle>
-            <CardDescription className="text-text-primary text-xl font-semibold mb-2 uppercase tracking-widest">
+            <CardDescription className="text-text-primary text-lg font-semibold mb-1 uppercase tracking-widest">
               TACTICAL STRIKE MISSION
             </CardDescription>
-            <CardDescription className="text-hud-accent-soft text-sm font-bold uppercase tracking-widest">
-              Operator Standing By
-            </CardDescription>
-            <CardDescription className="text-text-subtle text-base mt-4 monospace">
+            <CardDescription className="text-text-subtle text-sm mt-2 monospace">
               &gt; PRIMARY OBJECTIVE: Locate and neutralize all hostile vessels
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6 text-text-primary">
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold text-hud-accent flex items-center gap-2 uppercase tracking-wide">
-                <Info className="w-5 h-5" />
+          <CardContent className="space-y-4 text-text-primary py-4">
+            <div className="space-y-3">
+              <h3 className="text-lg font-bold text-hud-accent flex items-center gap-2 uppercase tracking-wide">
+                <Info className="w-4 h-4" />
                 Mission Briefing
               </h3>
-              <div className="space-y-3 text-base">
+              <div className="space-y-2 text-sm leading-snug">
                 <p className="flex items-start gap-2">
                   <span className="text-hud-accent font-bold">1.</span>
                   <span>Deploy your naval fleet of 5 warships across the tactical grid. Maintain operational spacing - vessels cannot be adjacent, even diagonally.</span>
@@ -1052,27 +1021,9 @@ function App() {
               </div>
             </div>
             
-            <div className="space-y-3">
-              <h3 className="text-xl font-bold text-hud-accent uppercase tracking-wide">Your Naval Armada</h3>
-              <div className="grid grid-cols-1 gap-2">
-                {SHIPS.map(ship => (
-                  <div key={ship.id} className="flex items-center gap-3 bg-panel-bg-darker p-3 rounded-lg border border-panel-stroke hover:border-hud-accent transition-colors">
-                    <div className="relative w-5 h-5">
-                      <div className="absolute inset-0 rounded-full border border-hud-accent opacity-60"></div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-0.5 h-2 bg-gradient-to-t from-hud-accent to-transparent" style={{ transformOrigin: 'center center' }}></div>
-                      </div>
-                    </div>
-                    <span className="font-semibold text-text-primary">{ship.name}</span>
-                    <span className="text-text-subtle">({ship.size} grid units)</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
             <Button 
               onClick={startGame}
-              className="w-full bg-gradient-to-r from-hud-accent to-hud-accent-soft hover:from-hud-accent-glow hover:to-hud-accent text-white font-bold text-xl py-7 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-hud-accent/50 uppercase tracking-wider"
+              className="w-full bg-gradient-to-r from-hud-accent to-hud-accent-soft hover:from-hud-accent-glow hover:to-hud-accent text-white font-bold text-lg py-5 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-hud-accent/50 uppercase tracking-wider"
               style={{ textShadow: '0 0 10px rgba(0, 255, 0, 0.5)' }}
             >
               ◈ COMMENCE OPERATIONS ◈
@@ -1092,8 +1043,8 @@ function App() {
     return (
       <>
         <BackgroundVideo />
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-8">
-        <Card className="max-w-2xl w-full bg-slate-800 border-cyan-500 border-2 shadow-2xl">
+        <div className="min-h-screen flex items-center justify-center p-8" style={{ background: 'transparent' }}>
+        <Card className="max-w-2xl w-full bg-slate-800/90 backdrop-blur-sm border-cyan-500 border-2 shadow-2xl">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               {winner === 'player' ? (
@@ -1164,7 +1115,7 @@ function App() {
   return (
     <>
       <BackgroundVideo />
-      <div className="theme-cod min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8">
+      <div className="theme-cod min-h-screen p-8" style={{ background: 'transparent' }}>
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-cyan-400 mb-2 flex items-center justify-center gap-3 tracking-wider uppercase" style={{ fontFamily: 'monospace', letterSpacing: '0.15em' }}>
