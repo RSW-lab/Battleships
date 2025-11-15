@@ -572,8 +572,8 @@
 
 .soldier-overlay {
   position: absolute;
-  top: -12vh;
-  height: 110vh;
+  top: -20%;
+  height: 90%;
   width: auto;
   pointer-events: none;
   opacity: 0.4;
@@ -585,11 +585,11 @@
 }
 
 .soldier-overlay-allied {
-  left: -34vh;
+  left: -25%;
 }
 
 .soldier-overlay-hostile {
-  right: -34vh;
+  right: -25%;
 }
 
 @media (prefers-reduced-motion: reduce) {

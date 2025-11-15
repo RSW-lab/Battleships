@@ -442,7 +442,7 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
                 muted
                 playsInline
                 preload="auto"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'translateY(-15%)' }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'translateY(-20%)' }}
                 onEnded={() => onExplosionEnd(key)}
                 onLoadedData={() => setTimeout(() => onExplosionEnd(key), 1100)}
                 onError={(e) => console.error(`[EffectsOverlay] Explosion video error for ${key}:`, e)}
@@ -457,7 +457,7 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
                 muted
                 playsInline
                 preload="auto"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'screen', transform: 'translateY(-15%)' }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'screen', transform: 'translateY(-20%)' }}
                 onError={(e) => console.error(`[EffectsOverlay] Fire video error for ${key}:`, e)}
               >
                 <source src="/fx/fire.webm" type="video/webm" />
