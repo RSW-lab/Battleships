@@ -119,6 +119,60 @@ function useGridMetrics(gridRef: React.RefObject<HTMLElement>, deps: unknown[]) 
   return metrics
 }
 
+const biasCache = new Map<string, { dx: number; dy: number; w: number; h: number }>()
+
+function measureImageBias(src: string): Promise<{ dx: number; dy: number; w: number; h: number }> {
+  return new Promise((resolve, reject) => {
+    if (biasCache.has(src)) {
+      resolve(biasCache.get(src)!)
+      return
+    }
+    
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'))
+        return
+      }
+      
+      ctx.drawImage(img, 0, 0)
+      const imageData = ctx.getImageData(0, 0, img.naturalWidth, img.naturalHeight)
+      const data = imageData.data
+      
+      let minX = img.naturalWidth, maxX = 0, minY = img.naturalHeight, maxY = 0
+      
+      for (let y = 0; y < img.naturalHeight; y++) {
+        for (let x = 0; x < img.naturalWidth; x++) {
+          const alpha = data[(y * img.naturalWidth + x) * 4 + 3]
+          if (alpha > 10) {
+            if (x < minX) minX = x
+            if (x > maxX) maxX = x
+            if (y < minY) minY = y
+            if (y > maxY) maxY = y
+          }
+        }
+      }
+      
+      const contentCenterX = (minX + maxX) / 2
+      const contentCenterY = (minY + maxY) / 2
+      const imageCenterX = img.naturalWidth / 2
+      const imageCenterY = img.naturalHeight / 2
+      const dx = contentCenterX - imageCenterX
+      const dy = contentCenterY - imageCenterY
+      
+      const result = { dx, dy, w: img.naturalWidth, h: img.naturalHeight }
+      biasCache.set(src, result)
+      resolve(result)
+    }
+    img.onerror = () => reject(new Error(`Failed to load image: ${src}`))
+    img.src = src
+  })
+}
+
 function ShipOverlays({
   placements,
   gridRef,
@@ -127,26 +181,49 @@ function ShipOverlays({
   gridRef: React.RefObject<HTMLElement>
 }) {
   const { cell, offsetLeft, offsetTop } = useGridMetrics(gridRef, [placements])
+  const [, setBiasVersion] = useState(0)
+  
+  useEffect(() => {
+    const uniqueSrcs = [...new Set(placements.map(p => SHIP_IMG[p.name]).filter(Boolean))]
+    Promise.all(uniqueSrcs.map(src => measureImageBias(src)))
+      .then(() => setBiasVersion(v => v + 1))
+      .catch(err => console.error('Failed to measure image bias:', err))
+  }, [placements])
+  
   return (
     <div className="absolute inset-0 pointer-events-none z-10">
       <div
         className="absolute"
         style={{
-          left: offsetLeft,
-          top: offsetTop,
-          width: cell * BOARD_SIZE,
-          height: cell * BOARD_SIZE,
+          left: Math.round(offsetLeft),
+          top: Math.round(offsetTop),
+          width: Math.round(cell * BOARD_SIZE),
+          height: Math.round(cell * BOARD_SIZE),
         }}
       >
         {placements.map((p) => {
-          const left = p.startCol * cell
-          const top = p.startRow * cell
+          const left = Math.round(p.startCol * cell)
+          const top = Math.round(p.startRow * cell)
           const footprintWidth = p.orientation === 'horizontal' ? p.length * cell : p.width * cell
           const footprintHeight = p.orientation === 'horizontal' ? p.width * cell : p.length * cell
           const src = SHIP_IMG[p.name]
           if (!src) return null
           
+          const bias = biasCache.get(src)
+          let corrX = 0, corrY = 0
+          
+          if (bias) {
+            const wrapperW = p.orientation === 'horizontal' ? footprintHeight : footprintWidth
+            const wrapperH = p.orientation === 'horizontal' ? footprintWidth : footprintHeight
+            const scale = Math.min(wrapperW / bias.w, wrapperH / bias.h)
+            corrX = Math.round(-bias.dx * scale)
+            corrY = Math.round(-bias.dy * scale)
+          }
+          
           if (p.orientation === 'horizontal') {
+            const corrRotX = -corrY
+            const corrRotY = corrX
+            
             return (
               <div
                 key={p.shipId}
@@ -154,16 +231,16 @@ function ShipOverlays({
                 style={{
                   left,
                   top,
-                  width: footprintWidth,
-                  height: footprintHeight,
+                  width: Math.round(footprintWidth),
+                  height: Math.round(footprintHeight),
                   overflow: 'visible',
                 }}
               >
                 <div
                   style={{
-                    width: footprintHeight,
-                    height: footprintWidth,
-                    transform: 'rotate(90deg)',
+                    width: Math.round(footprintHeight),
+                    height: Math.round(footprintWidth),
+                    transform: `rotate(90deg) translate(${corrRotX}px, ${corrRotY}px)`,
                     transformOrigin: 'center center',
                     display: 'flex',
                     alignItems: 'center',
@@ -193,8 +270,8 @@ function ShipOverlays({
                 style={{
                   left,
                   top,
-                  width: footprintWidth,
-                  height: footprintHeight,
+                  width: Math.round(footprintWidth),
+                  height: Math.round(footprintHeight),
                   overflow: 'visible',
                 }}
               >
@@ -207,6 +284,7 @@ function ShipOverlays({
                     width: '100%',
                     objectFit: 'contain',
                     objectPosition: 'center',
+                    transform: `translate(${corrX}px, ${corrY}px)`,
                   }}
                   draggable={false}
                 />
