@@ -881,23 +881,37 @@ function App() {
     
     return (
       <div className="inline-block bg-slate-800 p-2 rounded-lg shadow-2xl">
-        <div 
-          ref={gridRef}
-          className="grid gap-0 relative board-with-water"
-          style={{ 
-            gridTemplateColumns: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
-            gridTemplateRows: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`
-          }}
-        >
+        <div ref={gridRef} className="relative inline-block">
+          {/* Ocean video background for grids */}
+          <video 
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-60"
+            style={{ zIndex: 0 }}
+            src="/video/ocean_aerial.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+          {/* Dark overlay for contrast */}
+          <div className="absolute inset-0 pointer-events-none bg-black/30" style={{ zIndex: 0 }}></div>
+          
+          <div 
+            className="grid gap-0 relative board-with-water"
+            style={{ 
+              gridTemplateColumns: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
+              gridTemplateRows: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
+              zIndex: 1
+            }}
+          >
           <div style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}></div>
           {Array.from({ length: BOARD_SIZE }, (_, i) => (
-            <div key={i} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }} className="flex items-center justify-center text-cyan-400 font-bold text-xs">
+            <div key={i} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px`, fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }} className="flex items-center justify-center font-bold text-xs">
               {i + 1}
             </div>
           ))}
           {board.map((row, rowIndex) => (
             <>
-              <div key={`label-${rowIndex}`} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }} className="flex items-center justify-center text-cyan-400 font-bold text-xs">
+              <div key={`label-${rowIndex}`} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px`, fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }} className="flex items-center justify-center font-bold text-xs">
                 {String.fromCharCode(65 + rowIndex)}
               </div>
               {row.map((cell, colIndex) => {
@@ -957,6 +971,7 @@ function App() {
               })}
             </>
           ))}
+        </div>
         </div>
       </div>
     )
