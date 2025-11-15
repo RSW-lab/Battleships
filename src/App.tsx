@@ -204,8 +204,7 @@ function ShipOverlays({
                   className="opacity-90 select-none block"
                   style={{
                     height: '100%',
-                    width: 'auto',
-                    maxWidth: '100%',
+                    width: '100%',
                     objectFit: 'contain',
                     objectPosition: 'center',
                   }}
@@ -403,7 +402,7 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
   
   if (!cellSize || effects.size === 0) return null
   
-  const EXPLOSION_SCALE = 6.0
+  const EXPLOSION_SCALE = 12.0
   const FIRE_SCALE = 2.5
   
   return (
@@ -476,13 +475,20 @@ function TargetingOverlay({ gridRef, crosshairPosition, crosshairPixel }: { grid
   useEffect(() => {
     const updateRect = () => {
       if (gridRef.current) {
-        const rect = gridRef.current.getBoundingClientRect()
-        setOverlayRect({
-          left: rect.left,
-          top: rect.top,
-          width: rect.width,
-          height: rect.height
-        })
+        const firstCell = gridRef.current.querySelector('[data-cell="0-0"]')
+        const lastCell = gridRef.current.querySelector('[data-cell="14-14"]')
+        
+        if (firstCell && lastCell) {
+          const r1 = firstCell.getBoundingClientRect()
+          const r2 = lastCell.getBoundingClientRect()
+          
+          setOverlayRect({
+            left: r1.left,
+            top: r1.top,
+            width: r2.right - r1.left,
+            height: r2.bottom - r1.top
+          })
+        }
       }
     }
     
@@ -1046,7 +1052,10 @@ function App() {
                     )}
                     {cell.state === 'miss' && (
                       <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                        <div className="w-2 h-2 rounded-full bg-white/50" style={{ boxShadow: '0 0 4px rgba(255,255,255,0.3)' }}></div>
+                        <div style={{ position: 'relative', width: '24px', height: '24px' }}>
+                          <div style={{ position: 'absolute', left: '50%', top: '50%', width: '20px', height: '2px', background: 'rgba(100, 200, 255, 0.8)', transform: 'translate(-50%, -50%) rotate(45deg)', boxShadow: '0 0 8px rgba(100, 200, 255, 0.6)' }}></div>
+                          <div style={{ position: 'absolute', left: '50%', top: '50%', width: '20px', height: '2px', background: 'rgba(100, 200, 255, 0.8)', transform: 'translate(-50%, -50%) rotate(-45deg)', boxShadow: '0 0 8px rgba(100, 200, 255, 0.6)' }}></div>
+                        </div>
                       </div>
                     )}
                   </div>
