@@ -991,13 +991,13 @@ function App() {
               &gt; PRIMARY OBJECTIVE: Locate and neutralize all hostile vessels
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-text-primary py-4">
+          <CardContent className="space-y-4 py-4">
             <div className="space-y-3">
               <h3 className="text-lg font-bold text-hud-accent flex items-center gap-2 uppercase tracking-wide">
                 <Info className="w-4 h-4" />
                 Mission Briefing
               </h3>
-              <div className="space-y-2 text-sm leading-snug">
+              <div className="space-y-2 text-sm leading-snug text-white">
                 <p className="flex items-start gap-2">
                   <span className="text-hud-accent font-bold">1.</span>
                   <span>Deploy your naval fleet of 5 warships across the tactical grid. Maintain operational spacing - vessels cannot be adjacent, even diagonally.</span>
@@ -1114,30 +1114,20 @@ function App() {
 
   return (
     <>
-      <BackgroundVideo />
-      <div className="theme-cod min-h-screen p-8" style={{ background: 'transparent' }}>
+      <div className="theme-cod min-h-screen p-8" style={{ 
+        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)',
+        backgroundAttachment: 'fixed'
+      }}>
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-cyan-400 mb-2 flex items-center justify-center gap-3 tracking-wider uppercase" style={{ fontFamily: 'monospace', letterSpacing: '0.15em' }}>
-            <div className="relative w-12 h-12">
-              <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-60 animate-ping"></div>
-              <div className="absolute inset-1 rounded-full border border-cyan-400 opacity-80"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-0.5 h-5 bg-gradient-to-t from-cyan-400 to-transparent animate-spin" style={{ transformOrigin: 'center center' }}></div>
-              </div>
-            </div>
+          <h1 className="text-5xl font-bold mb-2 flex items-center justify-center gap-3 tracking-wider uppercase" style={{ fontFamily: 'Teko, sans-serif', letterSpacing: '0.15em', color: '#8cff4f', textShadow: '0 0 20px rgba(140, 255, 79, 0.5)' }}>
+            <SonarRadar />
             FLEET COMMAND OPS
-            <div className="relative w-12 h-12">
-              <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-60 animate-ping"></div>
-              <div className="absolute inset-1 rounded-full border border-cyan-400 opacity-80"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-0.5 h-5 bg-gradient-to-t from-cyan-400 to-transparent animate-spin" style={{ transformOrigin: 'center center' }}></div>
-              </div>
-            </div>
+            <SonarRadar />
           </h1>
-          <p className="text-2xl text-slate-200 font-semibold">{message}</p>
+          <p className="text-2xl text-white font-semibold" style={{ fontFamily: 'Rajdhani, sans-serif' }}>{message}</p>
           {gamePhase === 'placement' && (
-            <p className="text-lg text-yellow-400 mt-2 font-bold">
+            <p className="text-lg mt-2 font-bold" style={{ fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }}>
               Press R to rotate • Orientation: {shipOrientation.toUpperCase()}
             </p>
           )}
@@ -1145,7 +1135,7 @@ function App() {
 
         <div className="flex flex-col lg:flex-row justify-center gap-8 mb-8 items-start">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-cyan-400 mb-4 uppercase tracking-widest" style={{ fontFamily: 'monospace' }}>◈ ALLIED SECTOR ◈</h2>
+            <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ ALLIED SECTOR ◈</h2>
             <div className="relative inline-block">
               {renderBoard(playerBoard, true, playerGridRef)}
               {(gamePhase === 'placement' || gamePhase === 'battle') && (
@@ -1159,7 +1149,8 @@ function App() {
               {playerShips.map(ship => (
                 <div 
                   key={ship.id} 
-                  className={`text-sm font-semibold ${ship.sunk ? 'text-red-400 line-through' : 'text-green-400'}`}
+                  className={`text-sm font-semibold ${ship.sunk ? 'text-red-400 line-through' : ''}`}
+                  style={{ fontFamily: 'Rajdhani, sans-serif', color: ship.sunk ? '#f87171' : '#8cff4f' }}
                 >
                   {ship.name}: {ship.sunk ? '💀 SUNK' : `${ship.hits}/${ship.size} hits`}
                 </div>
@@ -1169,27 +1160,30 @@ function App() {
               <div className="mt-4 flex justify-center gap-2">
                 <Button
                   onClick={() => setShipOrientation('horizontal')}
-                  className={`${
-                    shipOrientation === 'horizontal'
-                      ? 'bg-cyan-600 hover:bg-cyan-700'
-                      : 'bg-slate-600 hover:bg-slate-500'
-                  } text-white font-bold px-4 py-2`}
+                  className={`text-white font-bold px-4 py-2`}
+                  style={{ 
+                    fontFamily: 'Rajdhani, sans-serif',
+                    backgroundColor: shipOrientation === 'horizontal' ? '#8cff4f' : '#475569',
+                    color: shipOrientation === 'horizontal' ? '#000' : '#fff'
+                  }}
                 >
-                  Horizontal
+                  HORIZONTAL
                 </Button>
                 <Button
                   onClick={() => setShipOrientation('vertical')}
-                  className={`${
-                    shipOrientation === 'vertical'
-                      ? 'bg-cyan-600 hover:bg-cyan-700'
-                      : 'bg-slate-600 hover:bg-slate-500'
-                  } text-white font-bold px-4 py-2`}
+                  className={`text-white font-bold px-4 py-2`}
+                  style={{ 
+                    fontFamily: 'Rajdhani, sans-serif',
+                    backgroundColor: shipOrientation === 'vertical' ? '#8cff4f' : '#475569',
+                    color: shipOrientation === 'vertical' ? '#000' : '#fff'
+                  }}
                 >
-                  Vertical
+                  VERTICAL
                 </Button>
                 <Button
                   onClick={() => setShipOrientation(prev => prev === 'horizontal' ? 'vertical' : 'horizontal')}
-                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2"
+                  className="text-white font-bold px-4 py-2"
+                  style={{ fontFamily: 'Rajdhani, sans-serif', backgroundColor: '#f59e0b' }}
                 >
                   <RotateCw className="w-4 h-4" />
                 </Button>
@@ -1199,7 +1193,7 @@ function App() {
 
           {gamePhase === 'battle' && (
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-red-400 mb-4 uppercase tracking-widest" style={{ fontFamily: 'monospace' }}>◈ HOSTILE SECTOR ◈</h2>
+              <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ fontFamily: 'Teko, sans-serif', color: '#ef4444' }}>◈ HOSTILE SECTOR ◈</h2>
               <div className="relative inline-block">
                 {renderBoard(aiBoard, false, aiGridRef)}
                 <ShipOverlays
@@ -1211,7 +1205,8 @@ function App() {
                 {aiShips.map(ship => (
                   <div 
                     key={ship.id} 
-                    className={`text-sm font-semibold ${ship.sunk ? 'text-red-400' : 'text-slate-400'}`}
+                    className={`text-sm font-semibold`}
+                    style={{ fontFamily: 'Rajdhani, sans-serif', color: ship.sunk ? '#ef4444' : '#94a3b8' }}
                   >
                     {ship.name}: {ship.sunk ? '💀 SUNK' : '❓ UNKNOWN'}
                   </div>
