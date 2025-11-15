@@ -394,7 +394,7 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
   )
 }
 
-function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefObject<HTMLDivElement>, crosshairPosition: { row: number, col: number } | null }) {
+function TargetingOverlay({ gridRef, crosshairPosition, crosshairPixel }: { gridRef: React.RefObject<HTMLDivElement>, crosshairPosition: { row: number, col: number } | null, crosshairPixel: { x: number, y: number } | null }) {
   const [overlayRect, setOverlayRect] = useState<{ left: number, top: number, width: number, height: number } | null>(null)
 
   useEffect(() => {
@@ -438,13 +438,13 @@ function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefOb
         <div className="targeting-hud-text">
           [ TARGETING SYSTEM ACTIVE ]
         </div>
-        {crosshairPosition && (
+        {crosshairPixel && crosshairPosition && (
           <div 
             className="crosshair"
             style={{
               position: 'absolute',
-              left: `${((crosshairPosition.col + 1) * (overlayRect.width / 16)) + (overlayRect.width / 32)}px`,
-              top: `${((crosshairPosition.row + 1) * (overlayRect.height / 16)) + (overlayRect.height / 32)}px`,
+              left: `${crosshairPixel.x - overlayRect.left}px`,
+              top: `${crosshairPixel.y - overlayRect.top}px`,
               transform: 'translate(-50%, -50%)'
             }}
           >
@@ -472,6 +472,7 @@ function App() {
   const [message, setMessage] = useState('')
   const [missiles, setMissiles] = useState<MissileAnimation[]>([])
   const [crosshairPosition, setCrosshairPosition] = useState<{ row: number; col: number } | null>(null)
+  const [crosshairPixel, setCrosshairPixel] = useState<{ x: number; y: number } | null>(null)
   const [attackInProgress, setAttackInProgress] = useState(false)
   
   const aiTargetQueueRef = useRef<[number, number][]>([])
@@ -882,18 +883,23 @@ function App() {
     return (
       <div className="inline-block bg-slate-800 p-2 rounded-lg shadow-2xl">
         <div ref={gridRef} className="relative inline-block">
-          {/* Ocean video background for grids */}
+          {/* Grid video background */}
           <video 
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-60"
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-50"
             style={{ zIndex: 0 }}
-            src="/video/ocean_aerial.mp4"
+            src="/video/grid_surf.mp4"
             autoPlay
             muted
             loop
             playsInline
+            onTimeUpdate={(e) => {
+              if (e.currentTarget.currentTime > 7) {
+                e.currentTarget.currentTime = 0;
+              }
+            }}
           />
           {/* Dark overlay for contrast */}
-          <div className="absolute inset-0 pointer-events-none bg-black/30" style={{ zIndex: 0 }}></div>
+          <div className="absolute inset-0 pointer-events-none bg-black/40" style={{ zIndex: 0 }}></div>
           
           <div 
             className="grid gap-0 relative board-with-water"
@@ -905,13 +911,13 @@ function App() {
           >
           <div style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}></div>
           {Array.from({ length: BOARD_SIZE }, (_, i) => (
-            <div key={i} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px`, fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }} className="flex items-center justify-center font-bold text-xs">
+            <div key={i} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px`, fontFamily: 'Rajdhani, sans-serif', color: '#ffffff', fontWeight: 700 }} className="flex items-center justify-center text-xs">
               {i + 1}
             </div>
           ))}
           {board.map((row, rowIndex) => (
             <>
-              <div key={`label-${rowIndex}`} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px`, fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }} className="flex items-center justify-center font-bold text-xs">
+              <div key={`label-${rowIndex}`} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px`, fontFamily: 'Rajdhani, sans-serif', color: '#ffffff', fontWeight: 700 }} className="flex items-center justify-center text-xs">
                 {String.fromCharCode(65 + rowIndex)}
               </div>
               {row.map((cell, colIndex) => {
@@ -1130,7 +1136,7 @@ function App() {
   return (
     <>
       <div className="theme-cod min-h-screen p-8" style={{ 
-        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)',
+        background: 'linear-gradient(180deg, #0c0f12 0%, #0a0d10 60%, #080a0c 100%)',
         backgroundAttachment: 'fixed'
       }}>
       <div className="max-w-7xl mx-auto">
@@ -1209,7 +1215,17 @@ function App() {
           {gamePhase === 'battle' && (
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ fontFamily: 'Teko, sans-serif', color: '#ef4444' }}>◈ HOSTILE SECTOR ◈</h2>
-              <div className="relative inline-block">
+              <div 
+                className="relative inline-block"
+                onMouseMove={(e) => {
+                  if (isPlayerTurn && !attackInProgress) {
+                    setCrosshairPixel({ x: e.clientX, y: e.clientY });
+                  }
+                }}
+                onMouseLeave={() => {
+                  setCrosshairPixel(null);
+                }}
+              >
                 {renderBoard(aiBoard, false, aiGridRef)}
                 <ShipOverlays
                   placements={aiPlacements}
@@ -1254,6 +1270,7 @@ function App() {
             <TargetingOverlay 
               gridRef={aiGridRef}
               crosshairPosition={crosshairPosition}
+              crosshairPixel={crosshairPixel}
             />
           )}
         </>
