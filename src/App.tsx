@@ -400,16 +400,19 @@ interface CellEffect {
 }
 
 function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.RefObject<HTMLDivElement>, effects: Map<string, CellEffect>, onExplosionEnd: (key: string) => void }) {
-  const { cellSize, gridLeft, gridTop } = useGridMetrics(gridRef)
+  const { cell: cellSize, offsetLeft: gridLeft, offsetTop: gridTop } = useGridMetrics(gridRef, [effects.size])
   
   if (!cellSize || effects.size === 0) return null
+  
+  const gridRect = gridRef.current?.getBoundingClientRect()
+  if (!gridRect) return null
   
   return (
     <div className="effects-overlay" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 35 }}>
       {Array.from(effects.entries()).map(([key, effect]) => {
         const [row, col] = key.split('-').map(Number)
-        const left = gridLeft + (col + 1) * cellSize
-        const top = gridTop + (row + 1) * cellSize
+        const left = gridRect.left + gridLeft + (col + 1) * cellSize
+        const top = gridRect.top + gridTop + (row + 1) * cellSize
         
         return (
           <div
@@ -533,7 +536,6 @@ function App() {
   const [crosshairPosition, setCrosshairPosition] = useState<{ row: number; col: number } | null>(null)
   const [crosshairPixel, setCrosshairPixel] = useState<{ x: number; y: number } | null>(null)
   const [attackInProgress, setAttackInProgress] = useState(false)
-  const [effectsVersion, setEffectsVersion] = useState(0)
   
   const aiTargetQueueRef = useRef<[number, number][]>([])
   const lastHitRef = useRef<[number, number] | null>(null)
@@ -586,13 +588,11 @@ function App() {
   const addEffect = (effectsMap: Map<string, CellEffect>, row: number, col: number, type: EffectType) => {
     const key = `${row}-${col}`
     effectsMap.set(key, { type, startedAt: Date.now() })
-    setEffectsVersion(v => v + 1)
   }
 
   const swapToFire = (effectsMap: Map<string, CellEffect>, key: string) => {
     if (effectsMap.has(key)) {
       effectsMap.set(key, { type: 'fire', startedAt: Date.now() })
-      setEffectsVersion(v => v + 1)
     }
   }
 
@@ -605,7 +605,6 @@ function App() {
     setPlayerShips(SHIPS.map(s => ({ ...s, hits: 0, sunk: false })))
     playerEffectsRef.current.clear()
     aiEffectsRef.current.clear()
-    setEffectsVersion(0)
     setAiShips(SHIPS.map(s => ({ ...s, hits: 0, sunk: false })))
     setCurrentShipIndex(0)
     setIsPlayerTurn(true)
