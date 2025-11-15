@@ -290,7 +290,7 @@ function SonarRadar() {
       <div 
         className="absolute inset-0 rounded-full radar-sweep"
         style={{
-          background: 'conic-gradient(from 0deg, rgba(140,255,79,0) 0deg, rgba(140,255,79,0.55) 6deg, rgba(140,255,79,0) 12deg)',
+          background: 'conic-gradient(from 0deg, rgba(220,225,230,0) 0deg, rgba(220,225,230,0.55) 6deg, rgba(220,225,230,0) 12deg)',
           maskImage: 'radial-gradient(circle at center, transparent 15%, black 16%)',
           WebkitMaskImage: 'radial-gradient(circle at center, transparent 15%, black 16%)'
         }}
@@ -300,7 +300,7 @@ function SonarRadar() {
       <div 
         className="absolute inset-0 rounded-full radar-glow"
         style={{
-          boxShadow: '0 0 20px rgba(140,255,79,0.3), inset 0 0 20px rgba(140,255,79,0.2)'
+          boxShadow: '0 0 20px rgba(220,225,230,0.25), inset 0 0 20px rgba(220,225,230,0.18)'
         }}
       />
     </div>
@@ -442,8 +442,8 @@ function TargetingOverlay({ gridRef, crosshairPosition, crosshairPixel }: { grid
             className="crosshair"
             style={{
               position: 'absolute',
-              left: `${crosshairPixel.x}px`,
-              top: `${crosshairPixel.y}px`,
+              left: `${crosshairPixel.x - overlayRect.left}px`,
+              top: `${crosshairPixel.y - overlayRect.top}px`,
               transform: 'translate(-50%, -50%)'
             }}
           >
@@ -850,11 +850,11 @@ function App() {
     const isPreview = previewCells.some(([r, c]) => r === row && c === col)
     
     let stateClass = ''
-    let borderStyle = 'border border-white/[0.07]'
+    let borderStyle = 'border border-white/10'
     
     if (cell.state === 'ship' && isPlayerBoard) {
       stateClass = 'hover:bg-white/5'
-      borderStyle = 'border border-white/10'
+      borderStyle = 'border border-white/[0.12]'
     } else if (cell.state === 'hit') {
       stateClass = 'bg-red-600'
     } else if (cell.state === 'miss') {
@@ -882,7 +882,7 @@ function App() {
     }
     
     return (
-      <div className="inline-block p-2 rounded-lg shadow-2xl" style={{ backgroundColor: 'rgba(11, 15, 18, 0.88)' }}>
+      <div className="inline-block p-2 rounded-lg shadow-2xl" style={{ backgroundColor: 'rgba(28, 32, 36, 0.9)' }}>
         <div ref={gridRef} className="relative inline-block">
           {/* Grid video background */}
           <video 
@@ -1147,7 +1147,7 @@ function App() {
             FLEET COMMAND OPS
             <SonarRadar />
           </h1>
-          <p className="text-2xl font-semibold tracking-wide text-zinc-200" style={{ fontFamily: 'Rajdhani, sans-serif' }}>{message}</p>
+          <p className="text-3xl md:text-4xl font-bold uppercase tracking-[0.08em] text-zinc-100" style={{ fontFamily: 'Teko, sans-serif' }}>{message}</p>
           {gamePhase === 'placement' && (
             <p className="text-lg mt-2 font-bold" style={{ fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }}>
               Press R to rotate • Orientation: {shipOrientation.toUpperCase()}
@@ -1183,9 +1183,9 @@ function App() {
           </div>
 
           {gamePhase === 'placement' && (
-            <div className="w-full lg:w-[360px] text-left space-y-4 self-start">
-              <h3 className="text-xl font-bold uppercase tracking-wider" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ FLEET STATUS ◈</h3>
-              <div className="space-y-2">
+            <div className="w-full lg:w-[380px] xl:w-[420px] text-left space-y-6 self-start">
+              <h3 className="text-xl font-bold uppercase tracking-wider mt-2" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ FLEET STATUS ◈</h3>
+              <div className="space-y-3">
                 {playerShips.map(ship => (
                   <div 
                     key={ship.id} 
@@ -1196,12 +1196,12 @@ function App() {
                   </div>
                 ))}
               </div>
-              <div className="pt-4 space-y-3">
-                <h3 className="text-lg font-bold uppercase tracking-wider" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ ORIENTATION ◈</h3>
-                <div className="flex flex-col gap-2">
+              <div className="pt-4 space-y-4 border-t border-white/5">
+                <h3 className="text-lg font-bold uppercase tracking-wider mt-2" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ ORIENTATION ◈</h3>
+                <div className="flex flex-col gap-3">
                   <Button
                     onClick={() => setShipOrientation('horizontal')}
-                    className={`text-white font-bold px-4 py-3 w-full`}
+                    className={`text-white font-bold px-4 py-3.5 w-full rounded-lg`}
                     style={{ 
                       fontFamily: 'Rajdhani, sans-serif',
                       backgroundColor: shipOrientation === 'horizontal' ? '#8cff4f' : '#475569',
@@ -1212,7 +1212,7 @@ function App() {
                   </Button>
                   <Button
                     onClick={() => setShipOrientation('vertical')}
-                    className={`text-white font-bold px-4 py-3 w-full`}
+                    className={`text-white font-bold px-4 py-3.5 w-full rounded-lg`}
                     style={{ 
                       fontFamily: 'Rajdhani, sans-serif',
                       backgroundColor: shipOrientation === 'vertical' ? '#8cff4f' : '#475569',
@@ -1223,7 +1223,7 @@ function App() {
                   </Button>
                   <Button
                     onClick={() => setShipOrientation(prev => prev === 'horizontal' ? 'vertical' : 'horizontal')}
-                    className="text-white font-bold px-4 py-3 w-full flex items-center justify-center gap-2"
+                    className="text-white font-bold px-4 py-3.5 w-full flex items-center justify-center gap-2 rounded-lg"
                     style={{ fontFamily: 'Rajdhani, sans-serif', backgroundColor: '#f59e0b' }}
                   >
                     <RotateCw className="w-4 h-4" />
@@ -1240,9 +1240,8 @@ function App() {
               <div 
                 className="relative inline-block"
                 onMouseMove={(e) => {
-                  if (isPlayerTurn && !attackInProgress && aiGridRef.current) {
-                    const rect = aiGridRef.current.getBoundingClientRect();
-                    setCrosshairPixel({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                  if (isPlayerTurn && !attackInProgress) {
+                    setCrosshairPixel({ x: e.clientX, y: e.clientY });
                   }
                 }}
                 onMouseLeave={() => {
