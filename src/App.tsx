@@ -358,12 +358,14 @@ function AnimatedMissile({
     const endX = toGridRect.left + toMetrics.offsetLeft + missile.toCol * toMetrics.cell + toMetrics.cell / 2
     const endY = toGridRect.top + toMetrics.offsetTop + missile.toRow * toMetrics.cell + toMetrics.cell / 2
 
-    const duration = 600 // 600ms for punchy but readable animation
+    const duration = 600
     const startTime = startTimeRef.current
 
-    const arcHeight = -150 // Negative for upward arc
+    const arcHeight = -150
     const midX = (startX + endX) / 2
     const midY = (startY + endY) / 2 + arcHeight
+
+    const fixedAngle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI + 90
 
     const animate = () => {
       const elapsed = Date.now() - startTime
@@ -375,11 +377,7 @@ function AnimatedMissile({
       const x = oneMinusT * oneMinusT * startX + 2 * oneMinusT * t * midX + t * t * endX
       const y = oneMinusT * oneMinusT * startY + 2 * oneMinusT * t * midY + t * t * endY
 
-      const vx = 2 * oneMinusT * (midX - startX) + 2 * t * (endX - midX)
-      const vy = 2 * oneMinusT * (midY - startY) + 2 * t * (endY - midY)
-      const angle = Math.atan2(vy, vx) * 180 / Math.PI + 90 // +90 to point nose forward
-
-      setPosition({ x, y, angle })
+      setPosition({ x, y, angle: fixedAngle })
 
       if (progress < 1) {
         animationFrameRef.current = requestAnimationFrame(animate)
@@ -1259,23 +1257,23 @@ function App() {
               <div className="space-y-2 text-sm leading-snug mw-type-white--muted">
                 <p className="flex items-start gap-2">
                   <span className="font-bold mw-type-green">1.</span>
-                  <span>Deploy your naval fleet of 5 warships across the tactical grid. Maintain operational spacing - vessels cannot be adjacent, even diagonally.</span>
+                  <span>Deploy your fleet of 7 warships across the tactical grid. Ships cannot overlap or be adjacent (including diagonally).</span>
                 </p>
                 <p className="flex items-start gap-2">
                   <span className="font-bold mw-type-green">2.</span>
-                  <span>Press R to rotate ship orientation between horizontal and vertical during deployment phase.</span>
+                  <span>Press R to rotate ship orientation between horizontal and vertical during deployment.</span>
                 </p>
                 <p className="flex items-start gap-2">
                   <span className="font-bold mw-type-green">3.</span>
-                  <span>Engage in tactical combat. Select coordinates on enemy waters to launch strikes.</span>
+                  <span>Launch missile strikes on enemy grid coordinates. Watch for arc trajectory and impact effects.</span>
                 </p>
                 <p className="flex items-start gap-2">
                   <span className="font-bold mw-type-green">4.</span>
-                  <span>💥 Direct hits marked in red. 💧 Missed shots marked in blue.</span>
+                  <span>Direct hits trigger explosions followed by persistent fire. Misses create white water ripple effects.</span>
                 </p>
                 <p className="flex items-start gap-2">
                   <span className="font-bold mw-type-green">5.</span>
-                  <span>Sink the entire enemy armada to achieve total naval supremacy!</span>
+                  <span>Sink all enemy vessels to complete the mission. Monitor sonar radar for tactical awareness.</span>
                 </p>
               </div>
             </div>
