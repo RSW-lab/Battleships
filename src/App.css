@@ -25,44 +25,33 @@
   font-size: clamp(44px, 4.6vw, 70px);
 }
 
-/* Main title word - stronger white to green gradient */
+/* Main title word - white with neon green glow outline */
 .mw2-title-main {
-  background: linear-gradient(
-    to bottom,
-    #ffffff 0%,
-    #f5fff2 40%,
-    #b4ffb5 70%,
-    #4bff6f 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #FFFFFF;
   text-shadow:
     0 0 2px rgba(0, 0, 0, 0.95),
     0 0 4px rgba(255, 255, 255, 0.8),
-    0 0 10px rgba(0, 255, 120, 0.85),
-    0 0 22px rgba(0, 255, 120, 0.6);
+    0 0 8px rgba(0, 255, 120, 0.7),
+    0 0 16px rgba(0, 255, 120, 0.4);
 }
 
-/* OPS - the hero word (larger, greener) */
+/* OPS - the hero word (gold color like MW2 "2") */
 .mw2-title-ops {
   margin-left: 0.35em;
   transform: translateY(1px);
   background: linear-gradient(
     to bottom,
-    #f9fff0 0%,
-    #d4ff9a 40%,
-    #8bff4f 80%,
-    #45ff4b 100%
+    #F9F2B4 0%,
+    #E9C85C 55%,
+    #D4AF37 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   text-shadow:
     0 0 2px rgba(0, 0, 0, 0.95),
-    0 0 5px rgba(255, 255, 255, 0.9),
-    0 0 14px rgba(0, 255, 120, 0.95),
-    0 0 28px rgba(0, 255, 120, 0.7);
+    0 0 6px rgba(212, 175, 55, 0.85),
+    0 0 14px rgba(212, 175, 55, 0.5);
 }
 
 /* MW2 Subtitle Styling - Non-glowing white */
@@ -81,25 +70,7 @@
   text-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
 }
 
-/* Title overlay - darken fog behind text */
-.title-overlay {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at 50% 45%,
-    rgba(0, 0, 0, 0.2) 0%,
-    rgba(0, 0, 0, 0.75) 55%,
-    rgba(0, 0, 0, 0.95) 100%
-  );
-  pointer-events: none;
-  z-index: 5;
-}
-
-/* Title screen soldier - darker and desaturated */
-.title-soldier-overlay-mw2 {
-  opacity: 0.35 !important;
-  filter: brightness(0.6) contrast(1.1) saturate(0.8) !important;
-}
+/* Title screen - simple smoke background */
 
 /* Modern Warfare Typography Styles - MW2 HUD Green (#00FF66) */
 .mw-type-white {
@@ -356,8 +327,37 @@
   animation: radar-ping 2s ease-out infinite;
 }
 
-.radar-sweep {
-  animation: radar-sweep 3.2s linear infinite;
+/* White sweep trace (afterglow wedge) */
+.radar-sweep-trace {
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(255, 255, 255, 0.16) 0deg,
+    rgba(255, 255, 255, 0) 40deg
+  );
+  animation: radar-rotate 2.8s linear infinite;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  filter: blur(0.5px);
+  pointer-events: none;
+}
+
+/* White sweep line from center */
+.radar-sweep-line {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 50%;
+  height: 2px;
+  background: radial-gradient(
+    circle at 100% 50%,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0.2)
+  );
+  transform-origin: 0 50%;
+  animation: radar-rotate 2.8s linear infinite;
+  mix-blend-mode: screen;
   pointer-events: none;
 }
 

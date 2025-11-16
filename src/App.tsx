@@ -407,12 +407,12 @@ function AnimatedMissile({
     >
       <div className="missile-sprite">
         <img 
-          src="/assets/missile.png" 
+          src="/assets/missile-body.png" 
           alt="missile" 
           style={{ 
-            width: '32px',
+            width: '48px',
             height: 'auto',
-            filter: 'drop-shadow(0 0 8px rgba(255, 100, 0, 0.8)) blur(0.5px)',
+            filter: 'drop-shadow(0 0 8px rgba(255, 100, 0, 0.8))',
           }} 
         />
         {/* Flame trail */}
@@ -432,9 +432,10 @@ function SonarRadar() {
           alt="Sonar Radar"
           className="absolute inset-0 w-full h-full object-contain opacity-75"
         />
+        {/* White sweep line from center with trace */}
+        <div className="radar-sweep-trace" />
+        <div className="radar-sweep-line" />
       </div>
-      {/* Rotating sweep overlay */}
-      <div className="radar-sweep" />
     </div>
   )
 }
@@ -474,29 +475,6 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
       }}
       style={{ background: 'transparent' }}
     >
-      {/* Title overlay - darken fog behind text */}
-      <div className="title-overlay" />
-      
-      {/* Allied soldier image - on top of smoke, behind text */}
-      <img 
-        src="/img/allied_overlay.png" 
-        alt="" 
-        className="title-soldier-overlay title-soldier-overlay-mw2"
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          height: '105vh',
-          width: 'auto',
-          objectFit: 'contain',
-          pointerEvents: 'none',
-          zIndex: 10,
-          maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 50%, rgba(0,0,0,0.7) 75%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 50%, rgba(0,0,0,0.7) 75%, rgba(0,0,0,0) 100%)'
-        }}
-      />
-      
       {/* Content - background video and vignette are rendered globally */}
       <div className="relative z-30 text-center px-8 max-w-4xl">
         {/* Main title */}
@@ -1261,10 +1239,9 @@ function App() {
             <div className="flex justify-center mb-3">
               <SonarRadar />
             </div>
-            <CardTitle className="mw2-title uppercase mb-2" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
-              <span className="core">FLEET COMMAND OPS</span>
-              <span className="glow" aria-hidden="true">FLEET COMMAND OPS</span>
-              <span className="haze" aria-hidden="true">FLEET COMMAND OPS</span>
+            <CardTitle className="mw2-title uppercase mb-2" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: '1' }}>
+              <span className="mw2-title-main">FLEET COMMAND </span>
+              <span className="mw2-title-ops">OPS</span>
             </CardTitle>
             <CardDescription className="mw2-subtitle uppercase mb-1">
               TACTICAL STRIKE MISSION
@@ -1423,10 +1400,9 @@ function App() {
           <div className="header-inner">
             <div className="header-text-block">
               <div className="header-text-smoke" />
-              <h1 className="cod-heading header-title mw2-title">
-                <span className="core">FLEET COMMAND OPS</span>
-                <span className="glow" aria-hidden="true">FLEET COMMAND OPS</span>
-                <span className="haze" aria-hidden="true">FLEET COMMAND OPS</span>
+              <h1 className="cod-heading header-title mw2-title" style={{ lineHeight: '1' }}>
+                <span className="mw2-title-main">FLEET COMMAND </span>
+                <span className="mw2-title-ops">OPS</span>
               </h1>
               <h2 className="cod-subheading header-subtitle mw2-subtitle">{message}</h2>
               {gamePhase === 'placement' && (
@@ -1529,7 +1505,11 @@ function App() {
 
           {gamePhase === 'battle' && (
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest mw-type-white" style={{ fontFamily: 'Teko, sans-serif', color: '#ef4444' }}>◈ HOSTILE SECTOR ◈</h2>
+              <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ 
+              fontFamily: 'Teko, sans-serif', 
+              color: '#ef4444',
+              textShadow: '0 0 2px rgba(0, 0, 0, 0.95), 0 0 6px rgba(239, 68, 68, 0.7), 0 0 12px rgba(239, 68, 68, 0.4)'
+            }}>◈ HOSTILE SECTOR ◈</h2>
               <div 
                 className="relative inline-block"
                 onMouseMove={() => {
