@@ -1117,7 +1117,7 @@ function App() {
     }
     
     return (
-      <div className="inline-block p-2 rounded-lg shadow-2xl grid-frame" style={{ backgroundColor: 'rgba(28, 32, 36, 0.9)' }}>
+      <div className="inline-block p-2 rounded-lg shadow-2xl grid-frame" style={{ backgroundColor: 'rgba(28, 32, 36, 0.15)' }}>
         <div ref={gridRef} className="relative inline-block">
           
           <div 
@@ -1364,7 +1364,7 @@ function App() {
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              zIndex: -2,
+              zIndex: 0,
               filter: 'grayscale(1) saturate(0.6) brightness(0.45) contrast(1.08)'
             }}
           >
