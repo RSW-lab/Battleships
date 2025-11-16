@@ -361,31 +361,17 @@ function MissileOverlay({
 
 function SonarRadar() {
   return (
-    <div className="relative w-28 h-28 pointer-events-none">
-      {/* Base radar image */}
-      <img 
-        src="/img/sonar_radar.png" 
-        alt="Sonar Radar"
-        className="absolute inset-0 w-full h-full object-contain opacity-85"
-      />
-      
+    <div className="hud-radar">
+      <div className="radar-ring">
+        {/* Base radar image */}
+        <img 
+          src="/img/sonar_radar.png" 
+          alt="Sonar Radar"
+          className="absolute inset-0 w-full h-full object-contain opacity-75"
+        />
+      </div>
       {/* Rotating sweep overlay */}
-      <div 
-        className="absolute inset-0 rounded-full radar-sweep"
-        style={{
-          background: 'conic-gradient(from 0deg, rgba(220,225,230,0) 0deg, rgba(220,225,230,0.55) 6deg, rgba(220,225,230,0) 12deg)',
-          maskImage: 'radial-gradient(circle at center, transparent 15%, black 16%)',
-          WebkitMaskImage: 'radial-gradient(circle at center, transparent 15%, black 16%)'
-        }}
-      />
-      
-      {/* Pulsing glow effect */}
-      <div 
-        className="absolute inset-0 rounded-full radar-glow"
-        style={{
-          boxShadow: '0 0 20px rgba(220,225,230,0.25), inset 0 0 20px rgba(220,225,230,0.18)'
-        }}
-      />
+      <div className="radar-sweep" />
     </div>
   )
 }
@@ -1088,7 +1074,7 @@ function App() {
     }
     
     return (
-      <div className="inline-block p-2 rounded-lg shadow-2xl" style={{ backgroundColor: 'rgba(28, 32, 36, 0.9)' }}>
+      <div className="inline-block p-2 rounded-lg shadow-2xl grid-frame" style={{ backgroundColor: 'rgba(28, 32, 36, 0.9)' }}>
         <div ref={gridRef} className="relative inline-block">
           {/* Grid video background */}
           <video 
@@ -1350,19 +1336,20 @@ function App() {
         </div>
       )}
       <div className="max-w-7xl mx-auto">
-        <header className="header-banner mb-8">
+        <header className="header-banner mb-6">
           <div className="header-smoke-layer" />
           <div className="header-inner">
             <div className="header-radar left">
               <SonarRadar />
             </div>
             <div className="header-text-block">
+              <div className="header-text-smoke" />
               <h1 className="cod-heading header-title">
                 Fleet Command <span style={{ color: 'var(--cod-green)' }}>Ops</span>
               </h1>
-              <h2 className="cod-subheading header-subtitle">{message}</h2>
+              <h2 className="cod-subheading header-subtitle" style={{ letterSpacing: '0.2em' }}>{message}</h2>
               {gamePhase === 'placement' && (
-                <p className="header-hint">
+                <p className="header-hint" style={{ fontSize: '12px', color: 'rgba(240, 250, 255, 0.85)' }}>
                   Press R to rotate • Orientation: {shipOrientation.toUpperCase()}
                 </p>
               )}
@@ -1371,8 +1358,11 @@ function App() {
               <SonarRadar />
             </div>
           </div>
+          <div className="hud-header-separator" />
         </header>
-
+        
+        <div className="section-bridge" />
+        
         <div className="flex flex-col lg:flex-row justify-center gap-8 mb-8 items-start">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ ALLIED SECTOR ◈</h2>
@@ -1414,7 +1404,7 @@ function App() {
                 {playerShips.map(ship => (
                   <div 
                     key={ship.id} 
-                    className="text-sm font-semibold"
+                    className="text-sm font-semibold fleet-status-item"
                     style={{ fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }}
                   >
                     {ship.name}: {ship.size} grid units
