@@ -411,17 +411,35 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
       }}
       style={{ background: 'transparent' }}
     >
+      {/* Allied soldier image - on top of smoke, behind text */}
+      <img 
+        src="/img/allied_overlay.png" 
+        alt="" 
+        className="title-soldier-overlay"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          height: '90vh',
+          width: 'auto',
+          objectFit: 'contain',
+          opacity: 0.35,
+          filter: 'brightness(1.15) contrast(1.05)',
+          pointerEvents: 'none',
+          zIndex: 10
+        }}
+      />
+      
       {/* Content - background video and vignette are rendered globally */}
       <div className="relative z-30 text-center px-8 max-w-4xl">
         {/* Main title */}
         <h1 
-          className="font-bold uppercase mb-4"
+          className="font-bold uppercase mb-4 mw-type-white"
           style={{
             fontFamily: 'Teko, sans-serif',
             fontSize: 'clamp(2.5rem, 8vw, 6rem)',
             letterSpacing: '0.15em',
-            color: '#eaeaea',
-            textShadow: '0 0 24px rgba(255,255,255,0.15), 0 0 48px rgba(255,255,255,0.08), 0 2px 4px rgba(0,0,0,0.8)',
             lineHeight: '1'
           }}
         >
@@ -430,13 +448,11 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
         
         {/* Subtitle with green accent */}
         <h2 
-          className="font-bold uppercase mb-12"
+          className="font-bold uppercase mb-12 mw-type-green"
           style={{
             fontFamily: 'Teko, sans-serif',
             fontSize: 'clamp(1.25rem, 3.5vw, 2.5rem)',
             letterSpacing: '0.2em',
-            color: '#8cff4f',
-            textShadow: '0 0 24px rgba(140,255,79,0.4), 0 0 48px rgba(140,255,79,0.2), 0 2px 4px rgba(0,0,0,0.8)',
             lineHeight: '1.2'
           }}
         >
@@ -445,13 +461,11 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
         
         {/* Press START prompt */}
         <p 
-          className="uppercase animate-pulse"
+          className="uppercase animate-pulse mw-type-white--muted"
           style={{
             fontFamily: 'Rajdhani, sans-serif',
             fontSize: 'clamp(0.9rem, 1.5vw, 1.25rem)',
             letterSpacing: '0.1em',
-            color: '#eaeaea',
-            textShadow: '0 0 12px rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.8)',
             fontWeight: 500
           }}
         >
@@ -1359,7 +1373,7 @@ function App() {
         
         <div className="flex flex-col lg:flex-row justify-center gap-8 mb-8 items-start">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ ALLIED SECTOR ◈</h2>
+            <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ ALLIED SECTOR ◈</h2>
             <div className="relative inline-block">
               {gamePhase === 'battle' && (
                 <img 
@@ -1381,8 +1395,8 @@ function App() {
                 {playerShips.map(ship => (
                   <div 
                     key={ship.id} 
-                    className={`text-sm font-semibold ${ship.sunk ? 'text-red-400 line-through' : ''}`}
-                    style={{ fontFamily: 'Rajdhani, sans-serif', color: ship.sunk ? '#f87171' : '#8cff4f' }}
+                    className={`text-sm font-semibold ${ship.sunk ? 'text-red-400 line-through' : 'mw-type-green--muted'}`}
+                    style={{ fontFamily: 'Rajdhani, sans-serif' }}
                   >
                     {ship.name}: {ship.sunk ? '💀 SUNK' : `${ship.hits}/${ship.size} hits`}
                   </div>
@@ -1393,20 +1407,20 @@ function App() {
 
           {gamePhase === 'placement' && (
             <div className="w-full lg:w-[380px] xl:w-[420px] text-left space-y-6 self-start">
-              <h3 className="text-xl font-bold uppercase tracking-wider mt-2" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ FLEET STATUS ◈</h3>
+              <h3 className="text-xl font-bold uppercase tracking-wider mt-2 mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ FLEET STATUS ◈</h3>
               <div className="space-y-3">
                 {playerShips.map(ship => (
                   <div 
                     key={ship.id} 
-                    className="text-sm font-semibold fleet-status-item"
-                    style={{ fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }}
+                    className="text-sm font-semibold fleet-status-item mw-type-green--muted"
+                    style={{ fontFamily: 'Rajdhani, sans-serif' }}
                   >
                     {ship.name}: {ship.size} grid units
                   </div>
                 ))}
               </div>
               <div className="pt-4 space-y-4 border-t border-white/5">
-                <h3 className="text-lg font-bold uppercase tracking-wider mt-2" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ ORIENTATION ◈</h3>
+                <h3 className="text-lg font-bold uppercase tracking-wider mt-2 mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ ORIENTATION ◈</h3>
                 <div className="flex flex-col gap-3">
                   <Button
                     onClick={() => setShipOrientation('horizontal')}
@@ -1445,7 +1459,7 @@ function App() {
 
           {gamePhase === 'battle' && (
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ fontFamily: 'Teko, sans-serif', color: '#ef4444' }}>◈ HOSTILE SECTOR ◈</h2>
+              <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest mw-type-white" style={{ fontFamily: 'Teko, sans-serif', color: '#ef4444' }}>◈ HOSTILE SECTOR ◈</h2>
               <div 
                 className="relative inline-block"
                 onMouseMove={() => {
@@ -1470,8 +1484,8 @@ function App() {
                 {aiShips.map(ship => (
                   <div 
                     key={ship.id} 
-                    className={`text-sm font-semibold`}
-                    style={{ fontFamily: 'Rajdhani, sans-serif', color: ship.sunk ? '#ef4444' : '#94a3b8' }}
+                    className={`text-sm font-semibold ${ship.sunk ? '' : 'mw-type-white--muted'}`}
+                    style={{ fontFamily: 'Rajdhani, sans-serif', color: ship.sunk ? '#ef4444' : undefined }}
                   >
                     {ship.name}: {ship.sunk ? '💀 SUNK' : '❓ UNKNOWN'}
                   </div>
