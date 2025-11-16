@@ -1204,41 +1204,41 @@ function App() {
             <div className="flex justify-center mb-3">
               <SonarRadar />
             </div>
-            <CardTitle className="text-4xl font-bold text-hud-accent-glow mb-2 tracking-wider uppercase" style={{ letterSpacing: '0.2em', textShadow: '0 0 20px rgba(0, 255, 0, 0.5)' }}>
+            <CardTitle className="text-4xl font-bold mb-2 tracking-wider uppercase mw-type-green" style={{ letterSpacing: '0.2em', fontFamily: 'Teko, sans-serif' }}>
               FLEET COMMAND OPS
             </CardTitle>
-            <CardDescription className="text-text-primary text-lg font-semibold mb-1 uppercase tracking-widest">
+            <CardDescription className="text-lg font-semibold mb-1 uppercase tracking-widest mw-type-white">
               TACTICAL STRIKE MISSION
             </CardDescription>
-            <CardDescription className="text-text-subtle text-sm mt-2 monospace">
+            <CardDescription className="text-sm mt-2 monospace mw-type-white--muted">
               &gt; PRIMARY OBJECTIVE: Locate and neutralize all hostile vessels
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 py-4">
             <div className="space-y-3">
-              <h3 className="text-lg font-bold text-hud-accent flex items-center gap-2 uppercase tracking-wide">
+              <h3 className="text-lg font-bold flex items-center gap-2 uppercase tracking-wide mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>
                 <Info className="w-4 h-4" />
                 Mission Briefing
               </h3>
-              <div className="space-y-2 text-sm leading-snug text-white">
+              <div className="space-y-2 text-sm leading-snug mw-type-white--muted">
                 <p className="flex items-start gap-2">
-                  <span className="text-hud-accent font-bold">1.</span>
+                  <span className="font-bold mw-type-green">1.</span>
                   <span>Deploy your naval fleet of 5 warships across the tactical grid. Maintain operational spacing - vessels cannot be adjacent, even diagonally.</span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <span className="text-hud-accent font-bold">2.</span>
+                  <span className="font-bold mw-type-green">2.</span>
                   <span>Press R to rotate ship orientation between horizontal and vertical during deployment phase.</span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <span className="text-hud-accent font-bold">3.</span>
+                  <span className="font-bold mw-type-green">3.</span>
                   <span>Engage in tactical combat. Select coordinates on enemy waters to launch strikes.</span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <span className="text-hud-accent font-bold">4.</span>
+                  <span className="font-bold mw-type-green">4.</span>
                   <span>💥 Direct hits marked in red. 💧 Missed shots marked in blue.</span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <span className="text-hud-accent font-bold">5.</span>
+                  <span className="font-bold mw-type-green">5.</span>
                   <span>Sink the entire enemy armada to achieve total naval supremacy!</span>
                 </p>
               </div>
@@ -1246,14 +1246,14 @@ function App() {
             
             <Button 
               onClick={startGame}
-              className="w-full bg-gradient-to-r from-hud-accent to-hud-accent-soft hover:from-hud-accent-glow hover:to-hud-accent text-white font-bold text-lg py-5 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-hud-accent/50 uppercase tracking-wider"
-              style={{ textShadow: '0 0 10px rgba(0, 255, 0, 0.5)' }}
+              className="w-full bg-gradient-to-r from-hud-accent to-hud-accent-soft hover:from-hud-accent-glow hover:to-hud-accent font-bold text-lg py-5 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-hud-accent/50 uppercase tracking-wider mw-type-white"
+              style={{ fontFamily: 'Teko, sans-serif' }}
             >
               ◈ COMMENCE OPERATIONS ◈
             </Button>
             
             <div className="text-center pt-4 border-t border-panel-stroke">
-              <p className="text-text-subtle text-sm">Created by <span className="text-hud-accent font-semibold">Rudi Willner</span></p>
+              <p className="text-sm mw-type-white--muted">Created by <span className="font-semibold mw-type-green--muted">Rudi Willner</span></p>
             </div>
           </CardContent>
         </Card>
