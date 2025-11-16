@@ -218,15 +218,15 @@ function ShipOverlays({
               const displayHeight = footprintWidth
               const scaleX = displayWidth / bias.w
               const scaleY = displayHeight / bias.h
-              const dxScaled = -bias.dx * scaleX
-              const dyScaled = -bias.dy * scaleY
-              corrX = Math.round(-dyScaled)
-              corrY = Math.round(dxScaled)
+              const vx = -bias.dx * scaleX
+              const vy = -bias.dy * scaleY
+              corrX = vx
+              corrY = vy
             } else {
               const scaleX = footprintWidth / bias.w
               const scaleY = footprintHeight / bias.h
-              corrX = Math.round(-bias.dx * scaleX)
-              corrY = Math.round(-bias.dy * scaleY)
+              corrX = -bias.dx * scaleX
+              corrY = -bias.dy * scaleY
             }
           }
           
