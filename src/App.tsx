@@ -665,6 +665,7 @@ function App() {
   const [attackInProgress, setAttackInProgress] = useState(false)
   const [playerEffects, setPlayerEffects] = useState<Map<string, CellEffect>>(new Map())
   const [aiEffects, setAiEffects] = useState<Map<string, CellEffect>>(new Map())
+  const [deploymentLog, setDeploymentLog] = useState<string | null>(null)
   
   const aiTargetQueueRef = useRef<[number, number][]>([])
   const lastHitRef = useRef<[number, number] | null>(null)
@@ -803,6 +804,15 @@ function App() {
     if (canPlaceShip(playerBoard, row, col, ship.width, ship.length, shipOrientation)) {
       const newBoard = placeShip(playerBoard, row, col, ship.width, ship.length, shipOrientation, ship.id)
       setPlayerBoard(newBoard)
+      
+      const footprintLength = shipOrientation === 'horizontal' ? ship.length : ship.length
+      const endRow = shipOrientation === 'horizontal' ? row : row + ship.length - 1
+      const endCol = shipOrientation === 'horizontal' ? col + ship.length - 1 : col
+      const startCell = `${String.fromCharCode(65 + row)}${col + 1}`
+      const endCell = `${String.fromCharCode(65 + endRow)}${endCol + 1}`
+      const logMessage = `> ${ship.name} deployed at ${startCell} – ${endCell}`
+      setDeploymentLog(logMessage)
+      setTimeout(() => setDeploymentLog(null), 2200)
       
       if (currentShipIndex === SHIPS.length - 1) {
         const aiBoard = placeAIShips()
@@ -1330,22 +1340,39 @@ function App() {
     <>
       <div className="theme-cod min-h-screen p-8" style={{ 
         background: 'linear-gradient(180deg, #0c0f12 0%, #0a0d10 60%, #080a0c 100%)',
-        backgroundAttachment: 'fixed'
+        backgroundAttachment: 'fixed',
+        position: 'relative'
       }}>
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold mb-2 flex items-center justify-center gap-3 tracking-wider uppercase" style={{ fontFamily: 'Teko, sans-serif', letterSpacing: '0.15em', color: '#8cff4f', textShadow: '0 0 20px rgba(140, 255, 79, 0.5)' }}>
-            <SonarRadar />
-            FLEET COMMAND OPS
-            <SonarRadar />
-          </h1>
-          <p className="text-3xl md:text-4xl font-bold uppercase tracking-[0.08em] text-zinc-100" style={{ fontFamily: 'Teko, sans-serif' }}>{message}</p>
-          {gamePhase === 'placement' && (
-            <p className="text-lg mt-2 font-bold" style={{ fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }}>
-              Press R to rotate • Orientation: {shipOrientation.toUpperCase()}
-            </p>
-          )}
+      {gamePhase === 'placement' && (
+        <div className="tactical-hud-overlay">
+          <div className="hud-scanlines" />
+          <div className="hud-grid" />
+          <div className="hud-radar-pulse" />
         </div>
+      )}
+      <div className="max-w-7xl mx-auto">
+        <header className="header-banner mb-8">
+          <div className="header-smoke-layer" />
+          <div className="header-inner">
+            <div className="header-radar left">
+              <SonarRadar />
+            </div>
+            <div className="header-text-block">
+              <h1 className="cod-heading header-title">
+                Fleet Command <span style={{ color: 'var(--cod-green)' }}>Ops</span>
+              </h1>
+              <h2 className="cod-subheading header-subtitle">{message}</h2>
+              {gamePhase === 'placement' && (
+                <p className="header-hint">
+                  Press R to rotate • Orientation: {shipOrientation.toUpperCase()}
+                </p>
+              )}
+            </div>
+            <div className="header-radar right">
+              <SonarRadar />
+            </div>
+          </div>
+        </header>
 
         <div className="flex flex-col lg:flex-row justify-center gap-8 mb-8 items-start">
           <div className="text-center">
@@ -1507,6 +1534,11 @@ function App() {
             />
           )}
         </>
+      )}
+      {deploymentLog && (
+        <div className="deployment-log" key={deploymentLog}>
+          {deploymentLog}
+        </div>
       )}
       </div>
     </>
