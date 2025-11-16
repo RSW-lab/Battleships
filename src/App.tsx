@@ -703,7 +703,6 @@ function App() {
   const [attackInProgress, setAttackInProgress] = useState(false)
   const [playerEffects, setPlayerEffects] = useState<Map<string, CellEffect>>(new Map())
   const [aiEffects, setAiEffects] = useState<Map<string, CellEffect>>(new Map())
-  const [deploymentLog, setDeploymentLog] = useState<string | null>(null)
   
   const aiTargetQueueRef = useRef<[number, number][]>([])
   const lastHitRef = useRef<[number, number] | null>(null)
@@ -842,14 +841,6 @@ function App() {
     if (canPlaceShip(playerBoard, row, col, ship.width, ship.length, shipOrientation)) {
       const newBoard = placeShip(playerBoard, row, col, ship.width, ship.length, shipOrientation, ship.id)
       setPlayerBoard(newBoard)
-      
-      const endRow = shipOrientation === 'horizontal' ? row : row + ship.length - 1
-      const endCol = shipOrientation === 'horizontal' ? col + ship.length - 1 : col
-      const startCell = `${String.fromCharCode(65 + row)}${col + 1}`
-      const endCell = `${String.fromCharCode(65 + endRow)}${endCol + 1}`
-      const logMessage = `> ${ship.name} deployed at ${startCell} – ${endCell}`
-      setDeploymentLog(logMessage)
-      setTimeout(() => setDeploymentLog(null), 2200)
       
       if (currentShipIndex === SHIPS.length - 1) {
         const aiBoard = placeAIShips()
@@ -1581,11 +1572,6 @@ function App() {
             />
           )}
         </>
-      )}
-      {deploymentLog && (
-        <div className="deployment-log" key={deploymentLog}>
-          {deploymentLog}
-        </div>
       )}
       </div>
     </>
