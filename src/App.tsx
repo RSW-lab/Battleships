@@ -213,11 +213,21 @@ function ShipOverlays({
           let corrX = 0, corrY = 0
           
           if (bias) {
-            const wrapperW = p.orientation === 'horizontal' ? footprintHeight : footprintWidth
-            const wrapperH = p.orientation === 'horizontal' ? footprintWidth : footprintHeight
-            const scale = Math.min(wrapperW / bias.w, wrapperH / bias.h)
-            corrX = Math.round(-bias.dx * scale)
-            corrY = Math.round(-bias.dy * scale)
+            if (p.orientation === 'horizontal') {
+              const displayWidth = footprintHeight
+              const displayHeight = footprintWidth
+              const scaleX = displayWidth / bias.w
+              const scaleY = displayHeight / bias.h
+              const dxScaled = -bias.dx * scaleX
+              const dyScaled = -bias.dy * scaleY
+              corrX = Math.round(-dyScaled)
+              corrY = Math.round(dxScaled)
+            } else {
+              const scaleX = footprintWidth / bias.w
+              const scaleY = footprintHeight / bias.h
+              corrX = Math.round(-bias.dx * scaleX)
+              corrY = Math.round(-bias.dy * scaleY)
+            }
           }
           
           if (p.orientation === 'horizontal') {
@@ -477,8 +487,8 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
   
   if (!cellSize || effects.size === 0) return null
   
-  const EXPLOSION_SCALE = 12.0
-  const FIRE_SCALE = 2.5
+  const EXPLOSION_SCALE = 9.6
+  const FIRE_SCALE = 3.325
   
   return (
     <div className="effects-overlay" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 35 }}>
