@@ -1523,7 +1523,9 @@ function App() {
             effects={aiEffects}
             onExplosionEnd={(key) => swapToFire(false, key)}
           />
-          <SonarRadar />
+          <div className="sonar-bottom-left">
+            <SonarRadar />
+          </div>
           {isPlayerTurn && !attackInProgress && (
             <TargetingOverlay 
               gridRef={aiGridRef}

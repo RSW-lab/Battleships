@@ -953,3 +953,11 @@ body::after {
     height: 90px;
   }
 }
+
+.sonar-bottom-left {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: 20;
+  opacity: 0.9;
+}
