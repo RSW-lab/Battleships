@@ -415,7 +415,7 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
       <img 
         src="/img/allied_overlay.png" 
         alt="" 
-        className="title-soldier-overlay"
+        className="title-soldier-overlay title-soldier-overlay-mw2"
         style={{
           position: 'fixed',
           top: '50%',
@@ -424,8 +424,6 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
           height: '105vh',
           width: 'auto',
           objectFit: 'contain',
-          opacity: 0.45,
-          filter: 'brightness(1.15) contrast(1.05) saturate(0.8)',
           pointerEvents: 'none',
           zIndex: 10,
           maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 50%, rgba(0,0,0,0.7) 75%, rgba(0,0,0,0) 100%)',
@@ -437,24 +435,22 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
       <div className="relative z-30 text-center px-8 max-w-4xl">
         {/* Main title */}
         <h1 
-          className="font-bold uppercase mb-4 mw2-title-text"
-          data-text="FLEET COMMAND OPS"
+          className="mw2-title uppercase mb-4"
           style={{
-            fontFamily: 'Teko, sans-serif',
             fontSize: 'clamp(2.5rem, 8vw, 6rem)',
             lineHeight: '1'
           }}
         >
-          FLEET COMMAND OPS
+          <span className="core">FLEET COMMAND OPS</span>
+          <span className="glow" aria-hidden="true">FLEET COMMAND OPS</span>
+          <span className="haze" aria-hidden="true">FLEET COMMAND OPS</span>
         </h1>
         
         {/* Subtitle with green accent */}
         <h2 
-          className="font-bold uppercase mb-12 mw-type-green"
+          className="mw2-subtitle uppercase mb-12"
           style={{
-            fontFamily: 'Teko, sans-serif',
-            fontSize: 'clamp(1.25rem, 3.5vw, 2.5rem)',
-            letterSpacing: '0.2em',
+            fontSize: 'clamp(1rem, 2vw, 1.5rem)',
             lineHeight: '1.2'
           }}
         >
@@ -1201,10 +1197,12 @@ function App() {
             <div className="flex justify-center mb-3">
               <SonarRadar />
             </div>
-            <CardTitle className="text-4xl font-bold mb-2 uppercase mw2-title-text" data-text="FLEET COMMAND OPS" style={{ fontFamily: 'Teko, sans-serif' }}>
-              FLEET COMMAND OPS
+            <CardTitle className="mw2-title uppercase mb-2" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
+              <span className="core">FLEET COMMAND OPS</span>
+              <span className="glow" aria-hidden="true">FLEET COMMAND OPS</span>
+              <span className="haze" aria-hidden="true">FLEET COMMAND OPS</span>
             </CardTitle>
-            <CardDescription className="text-lg font-semibold mb-1 uppercase tracking-widest mw-type-white">
+            <CardDescription className="mw2-subtitle uppercase mb-1">
               TACTICAL STRIKE MISSION
             </CardDescription>
             <CardDescription className="text-sm mt-2 monospace mw-type-white--muted">
@@ -1361,10 +1359,12 @@ function App() {
           <div className="header-inner">
             <div className="header-text-block">
               <div className="header-text-smoke" />
-              <h1 className="cod-heading header-title mw2-title-text" data-text="Fleet Command Ops">
-                Fleet Command <span className="mw-type-green">Ops</span>
+              <h1 className="cod-heading header-title mw2-title">
+                <span className="core">FLEET COMMAND OPS</span>
+                <span className="glow" aria-hidden="true">FLEET COMMAND OPS</span>
+                <span className="haze" aria-hidden="true">FLEET COMMAND OPS</span>
               </h1>
-              <h2 className="cod-subheading header-subtitle mw-type-white" style={{ letterSpacing: '0.2em' }}>{message}</h2>
+              <h2 className="cod-subheading header-subtitle mw2-subtitle">{message}</h2>
               {gamePhase === 'placement' && (
                 <p className="header-hint mw-type-white--muted" style={{ fontSize: '12px' }}>
                   Press R to rotate • Orientation: {shipOrientation.toUpperCase()}
