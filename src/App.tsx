@@ -1138,7 +1138,7 @@ function App() {
           <div className="absolute inset-0 pointer-events-none bg-black/40" style={{ zIndex: 0 }}></div>
           
           <div 
-            className="grid gap-0 relative board-with-water"
+            className="grid gap-0 relative board-strategy"
             style={{ 
               gridTemplateColumns: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
               gridTemplateRows: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
