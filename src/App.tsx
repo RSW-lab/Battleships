@@ -1375,7 +1375,6 @@ function App() {
             <div className="hud-radar-pulse" />
           </div>
           <div className="military-dashboard-frame">
-            <div className="dashboard-grid-lines" />
             <div className="dashboard-corner dashboard-corner-tl" />
             <div className="dashboard-corner dashboard-corner-tr" />
             <div className="dashboard-corner dashboard-corner-bl" />
