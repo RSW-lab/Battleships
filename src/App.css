@@ -15,6 +15,81 @@
   --cod-text-muted: rgba(230, 240, 255, 0.72);
 }
 
+/* Modern Warfare 2 Exact Title Text Styling */
+.mw2-title-text {
+  /* Core text: Pure white with light grey edge */
+  color: #FFFFFF;
+  -webkit-text-stroke: 1px #D6FFD6;
+  
+  /* MW2 Multi-Layer Glow System */
+  text-shadow:
+    /* Inner edge glow: Sharp lime green 3-4px */
+    0 0 3px #80FF9C,
+    0 0 4px #80FF9C,
+    /* Outer glow: Neon green 8-12px blur */
+    0 0 8px #00FF66,
+    0 0 10px #00FF66,
+    0 0 12px #00FF66,
+    /* Ambient haze: Softer green 40-60px blur at 20-30% opacity */
+    0 0 40px rgba(0, 255, 102, 0.3),
+    0 0 50px rgba(0, 255, 102, 0.25),
+    0 0 60px rgba(0, 255, 102, 0.2),
+    /* Soft vertical drop shadow */
+    0 5px 15px rgba(0, 0, 0, 0.5);
+  
+  /* Chromatic aberration on glow layer */
+  filter: 
+    drop-shadow(1px 0 0 rgba(255, 0, 0, 0.15)) 
+    drop-shadow(-1px 0 0 rgba(0, 255, 102, 0.15))
+    drop-shadow(0 0 2px rgba(255, 255, 255, 0.1));
+  
+  /* Tighter letter spacing (reduce by 5-10%) */
+  letter-spacing: 0.12em;
+  
+  /* Strengthen edges with subtle bevel */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  
+  position: relative;
+}
+
+/* Horizontal light streak behind text */
+.mw2-title-text::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: rgba(0, 255, 102, 0.18);
+  filter: blur(40px);
+  transform: translateY(-50%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Scanlines inside text mask */
+.mw2-title-text::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.04) 2px,
+    rgba(0, 0, 0, 0.04) 3px
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
 /* Modern Warfare Typography Styles - MW2 HUD Green (#00FF66) */
 .mw-type-white {
   color: #FFFFFF;

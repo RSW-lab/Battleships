@@ -437,11 +437,11 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
       <div className="relative z-30 text-center px-8 max-w-4xl">
         {/* Main title */}
         <h1 
-          className="font-bold uppercase mb-4 mw-type-white"
+          className="font-bold uppercase mb-4 mw2-title-text"
+          data-text="FLEET COMMAND OPS"
           style={{
             fontFamily: 'Teko, sans-serif',
             fontSize: 'clamp(2.5rem, 8vw, 6rem)',
-            letterSpacing: '0.15em',
             lineHeight: '1'
           }}
         >
@@ -1201,7 +1201,7 @@ function App() {
             <div className="flex justify-center mb-3">
               <SonarRadar />
             </div>
-            <CardTitle className="text-4xl font-bold mb-2 tracking-wider uppercase mw-type-green" style={{ letterSpacing: '0.2em', fontFamily: 'Teko, sans-serif' }}>
+            <CardTitle className="text-4xl font-bold mb-2 uppercase mw2-title-text" data-text="FLEET COMMAND OPS" style={{ fontFamily: 'Teko, sans-serif' }}>
               FLEET COMMAND OPS
             </CardTitle>
             <CardDescription className="text-lg font-semibold mb-1 uppercase tracking-widest mw-type-white">
@@ -1361,7 +1361,7 @@ function App() {
           <div className="header-inner">
             <div className="header-text-block">
               <div className="header-text-smoke" />
-              <h1 className="cod-heading header-title mw-type-white">
+              <h1 className="cod-heading header-title mw2-title-text" data-text="Fleet Command Ops">
                 Fleet Command <span className="mw-type-green">Ops</span>
               </h1>
               <h2 className="cod-subheading header-subtitle mw-type-white" style={{ letterSpacing: '0.2em' }}>{message}</h2>
