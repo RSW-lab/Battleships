@@ -313,49 +313,112 @@ function MissileOverlay({
   playerGridRef: React.RefObject<HTMLDivElement>
   aiGridRef: React.RefObject<HTMLDivElement>
 }) {
-  const playerMetrics = useGridMetrics(playerGridRef, [missiles])
-  const aiMetrics = useGridMetrics(aiGridRef, [missiles])
-
   return (
     <>
-      {missiles.map((missile) => {
-        const fromMetrics = missile.fromBoard === 'player' ? playerMetrics : aiMetrics
-        const toMetrics = missile.fromBoard === 'player' ? aiMetrics : playerMetrics
-        const fromGridRef = missile.fromBoard === 'player' ? playerGridRef : aiGridRef
-        const toGridRef = missile.fromBoard === 'player' ? aiGridRef : playerGridRef
-
-        if (!fromGridRef.current || !toGridRef.current) return null
-
-        const fromGridRect = fromGridRef.current.getBoundingClientRect()
-        const toGridRect = toGridRef.current.getBoundingClientRect()
-
-        const fromX = fromGridRect.left + fromMetrics.offsetLeft + missile.fromCol * fromMetrics.cell + fromMetrics.cell / 2
-        const fromY = fromGridRect.top + fromMetrics.offsetTop + missile.fromRow * fromMetrics.cell + fromMetrics.cell / 2
-
-        const toX = toGridRect.left + toMetrics.offsetLeft + missile.toCol * toMetrics.cell + toMetrics.cell / 2
-        const toY = toGridRect.top + toMetrics.offsetTop + missile.toRow * toMetrics.cell + toMetrics.cell / 2
-
-        const deltaX = toX - fromX
-        const deltaY = toY - fromY
-
-        return (
-          <div
-            key={missile.id}
-            className="fixed pointer-events-none z-50"
-            style={{
-              left: fromX,
-              top: fromY,
-              '--missile-x': `${deltaX}px`,
-              '--missile-y': `${deltaY}px`,
-            } as React.CSSProperties}
-          >
-            <div className="missile-animation" style={{ transform: `rotate(${Math.atan2(deltaY, deltaX) * 180 / Math.PI + 90}deg)` }}>
-              <img src="/assets/rocket.png" alt="missile" className="w-8 h-8" style={{ filter: 'drop-shadow(0 0 8px rgba(255, 100, 0, 0.8))' }} />
-            </div>
-          </div>
-        )
-      })}
+      {missiles.map((missile) => (
+        <AnimatedMissile
+          key={missile.id}
+          missile={missile}
+          playerGridRef={playerGridRef}
+          aiGridRef={aiGridRef}
+        />
+      ))}
     </>
+  )
+}
+
+function AnimatedMissile({
+  missile,
+  playerGridRef,
+  aiGridRef,
+}: {
+  missile: MissileAnimation
+  playerGridRef: React.RefObject<HTMLDivElement>
+  aiGridRef: React.RefObject<HTMLDivElement>
+}) {
+  const [position, setPosition] = React.useState({ x: 0, y: 0, angle: 0 })
+  const playerMetrics = useGridMetrics(playerGridRef, [missile])
+  const aiMetrics = useGridMetrics(aiGridRef, [missile])
+  const startTimeRef = React.useRef<number>(Date.now())
+  const animationFrameRef = React.useRef<number>()
+
+  React.useEffect(() => {
+    const fromMetrics = missile.fromBoard === 'player' ? playerMetrics : aiMetrics
+    const toMetrics = missile.fromBoard === 'player' ? aiMetrics : playerMetrics
+    const fromGridRef = missile.fromBoard === 'player' ? playerGridRef : aiGridRef
+    const toGridRef = missile.fromBoard === 'player' ? aiGridRef : playerGridRef
+
+    if (!fromGridRef.current || !toGridRef.current) return
+
+    const fromGridRect = fromGridRef.current.getBoundingClientRect()
+    const toGridRect = toGridRef.current.getBoundingClientRect()
+
+    const startX = fromGridRect.left + fromMetrics.offsetLeft + missile.fromCol * fromMetrics.cell + fromMetrics.cell / 2
+    const startY = fromGridRect.top + fromMetrics.offsetTop + missile.fromRow * fromMetrics.cell + fromMetrics.cell / 2
+    const endX = toGridRect.left + toMetrics.offsetLeft + missile.toCol * toMetrics.cell + toMetrics.cell / 2
+    const endY = toGridRect.top + toMetrics.offsetTop + missile.toRow * toMetrics.cell + toMetrics.cell / 2
+
+    const duration = 600 // 600ms for punchy but readable animation
+    const startTime = startTimeRef.current
+
+    const arcHeight = -150 // Negative for upward arc
+    const midX = (startX + endX) / 2
+    const midY = (startY + endY) / 2 + arcHeight
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+
+      const t = progress
+      const oneMinusT = 1 - t
+
+      const x = oneMinusT * oneMinusT * startX + 2 * oneMinusT * t * midX + t * t * endX
+      const y = oneMinusT * oneMinusT * startY + 2 * oneMinusT * t * midY + t * t * endY
+
+      const vx = 2 * oneMinusT * (midX - startX) + 2 * t * (endX - midX)
+      const vy = 2 * oneMinusT * (midY - startY) + 2 * t * (endY - midY)
+      const angle = Math.atan2(vy, vx) * 180 / Math.PI + 90 // +90 to point nose forward
+
+      setPosition({ x, y, angle })
+
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(animate)
+      }
+    }
+
+    animationFrameRef.current = requestAnimationFrame(animate)
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+    }
+  }, [missile, playerMetrics, aiMetrics, playerGridRef, aiGridRef])
+
+  return (
+    <div
+      className="fixed pointer-events-none z-50"
+      style={{
+        left: 0,
+        top: 0,
+        transform: `translate3d(${position.x}px, ${position.y}px, 0) rotate(${position.angle}deg)`,
+        transformOrigin: 'center center',
+      }}
+    >
+      <div className="missile-sprite">
+        <img 
+          src="/assets/missile.png" 
+          alt="missile" 
+          style={{ 
+            width: '32px',
+            height: 'auto',
+            filter: 'drop-shadow(0 0 8px rgba(255, 100, 0, 0.8)) blur(0.5px)',
+          }} 
+        />
+        {/* Flame trail */}
+        <div className="missile-flame-trail" />
+      </div>
+    </div>
   )
 }
 
