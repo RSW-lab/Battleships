@@ -1339,23 +1339,17 @@ function App() {
         <header className="header-banner mb-6">
           <div className="header-smoke-layer" />
           <div className="header-inner">
-            <div className="header-radar left">
-              <SonarRadar />
-            </div>
             <div className="header-text-block">
               <div className="header-text-smoke" />
-              <h1 className="cod-heading header-title">
-                Fleet Command <span style={{ color: 'var(--cod-green)' }}>Ops</span>
+              <h1 className="cod-heading header-title mw-type-white">
+                Fleet Command <span className="mw-type-green">Ops</span>
               </h1>
-              <h2 className="cod-subheading header-subtitle" style={{ letterSpacing: '0.2em' }}>{message}</h2>
+              <h2 className="cod-subheading header-subtitle mw-type-white" style={{ letterSpacing: '0.2em' }}>{message}</h2>
               {gamePhase === 'placement' && (
-                <p className="header-hint" style={{ fontSize: '12px', color: 'rgba(240, 250, 255, 0.85)' }}>
+                <p className="header-hint mw-type-white--muted" style={{ fontSize: '12px' }}>
                   Press R to rotate • Orientation: {shipOrientation.toUpperCase()}
                 </p>
               )}
-            </div>
-            <div className="header-radar right">
-              <SonarRadar />
             </div>
           </div>
           <div className="hud-header-separator" />

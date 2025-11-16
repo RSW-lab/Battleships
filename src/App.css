@@ -15,6 +15,42 @@
   --cod-text-muted: rgba(230, 240, 255, 0.72);
 }
 
+/* Modern Warfare Typography Styles */
+.mw-type-white {
+  color: #f5f7ff;
+  -webkit-text-stroke: 0.6px rgba(123, 255, 90, 0.28);
+  text-shadow:
+    0 0 2px rgba(123, 255, 90, 0.35),
+    0 0 6px rgba(123, 255, 90, 0.22),
+    0 0 14px rgba(123, 255, 90, 0.12);
+}
+
+.mw-type-green {
+  color: #7BFF5A;
+  text-shadow:
+    0 0 2px rgba(123, 255, 90, 0.95),
+    0 0 6px rgba(123, 255, 90, 0.75),
+    0 0 14px rgba(123, 255, 90, 0.55),
+    0 0 28px rgba(123, 255, 90, 0.40),
+    0 0 52px rgba(123, 255, 90, 0.28);
+}
+
+.mw-type-white--muted {
+  color: #f5f7ff;
+  -webkit-text-stroke: 0.4px rgba(123, 255, 90, 0.18);
+  text-shadow:
+    0 0 2px rgba(123, 255, 90, 0.25),
+    0 0 4px rgba(123, 255, 90, 0.15);
+}
+
+.mw-type-green--muted {
+  color: #7BFF5A;
+  text-shadow:
+    0 0 2px rgba(123, 255, 90, 0.65),
+    0 0 6px rgba(123, 255, 90, 0.45),
+    0 0 12px rgba(123, 255, 90, 0.28);
+}
+
 #root {
   max-width: none;
   width: 100%;
