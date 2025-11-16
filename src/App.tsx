@@ -1119,23 +1119,6 @@ function App() {
     return (
       <div className="inline-block p-2 rounded-lg shadow-2xl grid-frame" style={{ backgroundColor: 'rgba(28, 32, 36, 0.9)' }}>
         <div ref={gridRef} className="relative inline-block">
-          {/* Grid video background */}
-          <video 
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-50"
-            style={{ zIndex: 0 }}
-            src="/video/grid_surf.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            onTimeUpdate={(e) => {
-              if (e.currentTarget.currentTime > 7) {
-                e.currentTarget.currentTime = 0;
-              }
-            }}
-          />
-          {/* Dark overlay for contrast */}
-          <div className="absolute inset-0 pointer-events-none bg-black/40" style={{ zIndex: 0 }}></div>
           
           <div 
             className="grid gap-0 relative board-strategy"
@@ -1369,6 +1352,24 @@ function App() {
       }}>
       {gamePhase === 'placement' && (
         <>
+          <video
+            className="bg-video bg-video--placement"
+            autoPlay
+            muted
+            loop
+            playsInline
+            style={{
+              position: 'fixed',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              zIndex: -2,
+              filter: 'grayscale(1) saturate(0.6) brightness(0.45) contrast(1.08)'
+            }}
+          >
+            <source src="/video/placement_bg.mp4" type="video/mp4" />
+          </video>
           <div className="tactical-hud-overlay">
             <div className="hud-scanlines" />
             <div className="hud-grid" />
@@ -1379,6 +1380,40 @@ function App() {
             <div className="dashboard-corner dashboard-corner-tr" />
             <div className="dashboard-corner dashboard-corner-bl" />
             <div className="dashboard-corner dashboard-corner-br" />
+          </div>
+          <div className="placement-hud-overlay">
+            <div className="hud-ticker">
+              <div className="ticker-content">
+                LINK-16 ONLINE • IFF AUTH: GREEN • COMMS: ENCRYPTED • THREAT LEVEL: MODERATE • TACTICAL NET: ACTIVE • DATALINK: SECURE
+              </div>
+            </div>
+            <div className="hud-systems-panel">
+              <div className="system-meter">
+                <div className="meter-label">PWR</div>
+                <div className="meter-bar">
+                  <div className="meter-fill" style={{ height: '85%' }} />
+                </div>
+              </div>
+              <div className="system-meter">
+                <div className="meter-label">COM</div>
+                <div className="meter-bar">
+                  <div className="meter-fill" style={{ height: '92%' }} />
+                </div>
+              </div>
+              <div className="system-meter">
+                <div className="meter-label">SNR</div>
+                <div className="meter-bar">
+                  <div className="meter-fill" style={{ height: '78%' }} />
+                </div>
+              </div>
+            </div>
+            <div className="hud-threat-indicator">
+              <div className="threat-label">THREAT INDEX</div>
+              <div className="threat-value">02</div>
+              <div className="threat-bar">
+                <div className="threat-fill" style={{ width: '20%' }} />
+              </div>
+            </div>
           </div>
         </>
       )}
