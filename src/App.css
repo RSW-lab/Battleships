@@ -571,16 +571,17 @@
 }
 
 .soldier-overlay {
-  position: absolute;
+  position: fixed;
   top: -8vh;
   height: 115vh;
   width: auto;
   pointer-events: none;
-  opacity: 0.4;
+  opacity: 0.65;
   mix-blend-mode: screen;
   animation: soldier-breathe 3s ease-in-out infinite;
   z-index: 0;
   object-fit: contain;
+  filter: brightness(1.25) contrast(1.1);
 }
 
 .soldier-overlay-allied {

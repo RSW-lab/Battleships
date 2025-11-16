@@ -221,9 +221,6 @@ function ShipOverlays({
           }
           
           if (p.orientation === 'horizontal') {
-            const corrRotX = -corrY
-            const corrRotY = corrX
-            
             return (
               <div
                 key={p.shipId}
@@ -240,7 +237,7 @@ function ShipOverlays({
                   style={{
                     width: Math.round(footprintHeight),
                     height: Math.round(footprintWidth),
-                    transform: `rotate(90deg) translate(${corrRotX}px, ${corrRotY}px)`,
+                    transform: `translate(${corrX}px, ${corrY}px) rotate(90deg)`,
                     transformOrigin: 'center center',
                     display: 'flex',
                     alignItems: 'center',
@@ -547,12 +544,13 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
   )
 }
 
-function TargetingOverlay({ gridRef, crosshairPosition, crosshairPixel }: { gridRef: React.RefObject<HTMLDivElement>, crosshairPosition: { row: number, col: number } | null, crosshairPixel: { x: number, y: number } | null }) {
-  const [overlayRect, setOverlayRect] = useState<{ left: number, top: number, width: number, height: number } | null>(null)
+function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefObject<HTMLDivElement>, crosshairPosition: { row: number, col: number } | null }) {
+  const [overlayRect, setOverlayRect] = useState<{ left: number, top: number, width: number, height: number, gridLeft: number, gridTop: number, gridWidth: number, gridHeight: number, cellSize: number } | null>(null)
 
   useEffect(() => {
     const updateRect = () => {
       if (gridRef.current) {
+        const rect = gridRef.current.getBoundingClientRect()
         const firstCell = gridRef.current.querySelector('[data-cell="0-0"]')
         const lastCell = gridRef.current.querySelector('[data-cell="14-14"]')
         
@@ -561,10 +559,15 @@ function TargetingOverlay({ gridRef, crosshairPosition, crosshairPixel }: { grid
           const r2 = lastCell.getBoundingClientRect()
           
           setOverlayRect({
-            left: r1.left,
-            top: r1.top,
-            width: r2.right - r1.left,
-            height: r2.bottom - r1.top
+            left: rect.left,
+            top: rect.top,
+            width: rect.width,
+            height: rect.height,
+            gridLeft: r1.left - rect.left,
+            gridTop: r1.top - rect.top,
+            gridWidth: r2.right - r1.left,
+            gridHeight: r2.bottom - r1.top,
+            cellSize: r1.width
           })
         }
       }
@@ -582,6 +585,9 @@ function TargetingOverlay({ gridRef, crosshairPosition, crosshairPixel }: { grid
 
   if (!overlayRect) return null
 
+  const reticleX = crosshairPosition ? overlayRect.gridLeft + (crosshairPosition.col + 0.5) * overlayRect.cellSize : 0
+  const reticleY = crosshairPosition ? overlayRect.gridTop + (crosshairPosition.row + 0.5) * overlayRect.cellSize : 0
+
   return (
     <>
       <div className="targeting-overlay-backdrop" />
@@ -594,17 +600,31 @@ function TargetingOverlay({ gridRef, crosshairPosition, crosshairPixel }: { grid
           height: `${overlayRect.height}px`
         }}
       >
+        <div 
+          className="targeting-grid-lines"
+          style={{
+            position: 'absolute',
+            left: `${overlayRect.gridLeft}px`,
+            top: `${overlayRect.gridTop}px`,
+            width: `${overlayRect.gridWidth}px`,
+            height: `${overlayRect.gridHeight}px`,
+            backgroundImage: 'linear-gradient(to right, rgba(0, 255, 100, 0.3) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 255, 100, 0.3) 1px, transparent 1px)',
+            backgroundSize: `${overlayRect.cellSize}px ${overlayRect.cellSize}px`,
+            backgroundPosition: '0 0',
+            pointerEvents: 'none'
+          }}
+        />
         <div className="targeting-scan-line" />
         <div className="targeting-hud-text">
           [ TARGETING SYSTEM ACTIVE ]
         </div>
-        {crosshairPixel && crosshairPosition && (
+        {crosshairPosition && (
           <div 
             className="crosshair"
             style={{
               position: 'absolute',
-              left: `${crosshairPixel.x - overlayRect.left}px`,
-              top: `${crosshairPixel.y - overlayRect.top}px`,
+              left: `${reticleX}px`,
+              top: `${reticleY}px`,
               transform: 'translate(-50%, -50%)'
             }}
           >
@@ -632,7 +652,6 @@ function App() {
   const [message, setMessage] = useState('')
   const [missiles, setMissiles] = useState<MissileAnimation[]>([])
   const [crosshairPosition, setCrosshairPosition] = useState<{ row: number; col: number } | null>(null)
-  const [crosshairPixel, setCrosshairPixel] = useState<{ x: number; y: number } | null>(null)
   const [attackInProgress, setAttackInProgress] = useState(false)
   const [playerEffects, setPlayerEffects] = useState<Map<string, CellEffect>>(new Map())
   const [aiEffects, setAiEffects] = useState<Map<string, CellEffect>>(new Map())
@@ -1409,13 +1428,11 @@ function App() {
               <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ fontFamily: 'Teko, sans-serif', color: '#ef4444' }}>◈ HOSTILE SECTOR ◈</h2>
               <div 
                 className="relative inline-block"
-                onMouseMove={(e) => {
+                onMouseMove={() => {
                   if (isPlayerTurn && !attackInProgress) {
-                    setCrosshairPixel({ x: e.clientX, y: e.clientY });
                   }
                 }}
                 onMouseLeave={() => {
-                  setCrosshairPixel(null);
                 }}
               >
                 <img 
@@ -1477,7 +1494,6 @@ function App() {
             <TargetingOverlay 
               gridRef={aiGridRef}
               crosshairPosition={crosshairPosition}
-              crosshairPixel={crosshairPixel}
             />
           )}
         </>
