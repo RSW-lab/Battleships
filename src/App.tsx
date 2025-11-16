@@ -336,13 +336,13 @@ function AnimatedMissile({
   playerGridRef: React.RefObject<HTMLDivElement>
   aiGridRef: React.RefObject<HTMLDivElement>
 }) {
-  const [position, setPosition] = React.useState({ x: 0, y: 0, angle: 0 })
+  const [position, setPosition] = useState({ x: 0, y: 0, angle: 0 })
   const playerMetrics = useGridMetrics(playerGridRef, [missile])
   const aiMetrics = useGridMetrics(aiGridRef, [missile])
-  const startTimeRef = React.useRef<number>(Date.now())
-  const animationFrameRef = React.useRef<number>()
+  const startTimeRef = useRef<number>(Date.now())
+  const animationFrameRef = useRef<number>()
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fromMetrics = missile.fromBoard === 'player' ? playerMetrics : aiMetrics
     const toMetrics = missile.fromBoard === 'player' ? aiMetrics : playerMetrics
     const fromGridRef = missile.fromBoard === 'player' ? playerGridRef : aiGridRef
