@@ -961,3 +961,74 @@ body::after {
   z-index: 20;
   opacity: 0.9;
 }
+
+/* Military Dashboard Frame Overlay for Ship Placement Screen */
+.military-dashboard-frame {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0.4;
+}
+
+.military-dashboard-frame::before {
+  content: '';
+  position: absolute;
+  inset: 20px;
+  border: 2px solid rgba(123, 255, 90, 0.3);
+  box-shadow: 
+    inset 0 0 20px rgba(123, 255, 90, 0.1),
+    0 0 20px rgba(123, 255, 90, 0.1);
+}
+
+.military-dashboard-frame::after {
+  content: '';
+  position: absolute;
+  inset: 30px;
+  border: 1px solid rgba(123, 255, 90, 0.15);
+}
+
+.dashboard-corner {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgba(123, 255, 90, 0.5);
+  box-shadow: 0 0 10px rgba(123, 255, 90, 0.3);
+}
+
+.dashboard-corner-tl {
+  top: 15px;
+  left: 15px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.dashboard-corner-tr {
+  top: 15px;
+  right: 15px;
+  border-left: none;
+  border-bottom: none;
+}
+
+.dashboard-corner-bl {
+  bottom: 15px;
+  left: 15px;
+  border-right: none;
+  border-top: none;
+}
+
+.dashboard-corner-br {
+  bottom: 15px;
+  right: 15px;
+  border-left: none;
+  border-top: none;
+}
+
+.dashboard-grid-lines {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(123, 255, 90, 0.08) 49px, rgba(123, 255, 90, 0.08) 50px),
+    repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(123, 255, 90, 0.08) 49px, rgba(123, 255, 90, 0.08) 50px);
+  opacity: 0.5;
+}

@@ -1343,11 +1343,20 @@ function App() {
         position: 'relative'
       }}>
       {gamePhase === 'placement' && (
-        <div className="tactical-hud-overlay">
-          <div className="hud-scanlines" />
-          <div className="hud-grid" />
-          <div className="hud-radar-pulse" />
-        </div>
+        <>
+          <div className="tactical-hud-overlay">
+            <div className="hud-scanlines" />
+            <div className="hud-grid" />
+            <div className="hud-radar-pulse" />
+          </div>
+          <div className="military-dashboard-frame">
+            <div className="dashboard-grid-lines" />
+            <div className="dashboard-corner dashboard-corner-tl" />
+            <div className="dashboard-corner dashboard-corner-tr" />
+            <div className="dashboard-corner dashboard-corner-bl" />
+            <div className="dashboard-corner dashboard-corner-br" />
+          </div>
+        </>
       )}
       <div className="max-w-7xl mx-auto">
         <header className="header-banner mb-6">
