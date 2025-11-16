@@ -15,103 +15,90 @@
   --cod-text-muted: rgba(230, 240, 255, 0.72);
 }
 
-/* Modern Warfare 2 Title Text Styling - Layered Approach */
+/* Modern Warfare 2 Title Text Styling - Clean Gradient Approach */
 .mw2-title {
   position: relative;
   display: inline-block;
   font-family: 'Teko', sans-serif;
   font-weight: 700;
-  /* Slightly narrower letters + modest tracking */
-  transform: scaleX(0.96);
-  transform-origin: center;
-  letter-spacing: 0.08em;
-  text-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.32em;
+  font-size: clamp(44px, 4.6vw, 70px);
 }
 
-/* Horizontal light streak behind text */
-.mw2-title::before {
-  content: '';
-  position: absolute;
-  left: -10%;
-  right: -10%;
-  top: 55%;
-  height: 2px;
-  background: rgba(0, 255, 102, 0.18);
-  filter: blur(40px);
-  transform: translateY(-50%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Core text fill - white to light green gradient */
-.mw2-title .core {
-  position: relative;
-  z-index: 2;
-  /* Gradient fill inside the letters */
+/* Main title word - stronger white to green gradient */
+.mw2-title-main {
   background: linear-gradient(
-    180deg,
-    #FFFFFF 0%,
-    #FFFFFF 55%,
-    #E7FFEF 65%,
-    #CFFFE0 100%
+    to bottom,
+    #ffffff 0%,
+    #f5fff2 40%,
+    #b4ffb5 70%,
+    #4bff6f 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
-  -webkit-text-fill-color: transparent;
-  
-  /* Sharp edge without tinting the fill */
-  -webkit-text-stroke: 1px #D6FFD6;
-  
-  /* Subtle bevel highlight */
-  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.25));
+  color: transparent;
+  text-shadow:
+    0 0 2px rgba(0, 0, 0, 0.95),
+    0 0 4px rgba(255, 255, 255, 0.8),
+    0 0 10px rgba(0, 255, 120, 0.85),
+    0 0 22px rgba(0, 255, 120, 0.6);
 }
 
-/* Tight inner glow layer */
-.mw2-title .glow {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  color: #00FF66;
-  -webkit-text-stroke: 0;
-  pointer-events: none;
-  mix-blend-mode: screen;
-  filter: blur(10px) saturate(1.1)
-          drop-shadow(1px 0 0 rgba(255, 0, 0, 0.12))
-          drop-shadow(-1px 0 0 rgba(0, 255, 102, 0.12));
-  opacity: 0.65;
+/* OPS - the hero word (larger, greener) */
+.mw2-title-ops {
+  margin-left: 0.35em;
+  transform: translateY(1px);
+  background: linear-gradient(
+    to bottom,
+    #f9fff0 0%,
+    #d4ff9a 40%,
+    #8bff4f 80%,
+    #45ff4b 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow:
+    0 0 2px rgba(0, 0, 0, 0.95),
+    0 0 5px rgba(255, 255, 255, 0.9),
+    0 0 14px rgba(0, 255, 120, 0.95),
+    0 0 28px rgba(0, 255, 120, 0.7);
 }
 
-/* Wide ambient haze layer */
-.mw2-title .haze {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  color: #00FF66;
-  -webkit-text-stroke: 0;
-  pointer-events: none;
-  mix-blend-mode: screen;
-  filter: blur(48px) saturate(1.1);
-  opacity: 0.28;
-  transform: scale(1.02);
-}
-
-/* MW2 Subtitle Styling - Smaller, white, low-glow */
+/* MW2 Subtitle Styling - Non-glowing white */
 .mw2-subtitle {
-  color: #FFFFFF;
+  color: #f5f5f5;
   font-family: 'Rajdhani', sans-serif;
   font-weight: 600;
   letter-spacing: 0.14em;
-  opacity: 0.9;
-  text-shadow:
-    0 0 1px rgba(255, 255, 255, 0.6),
-    0 0 8px rgba(0, 255, 102, 0.15);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
   font-size: clamp(0.8rem, 1.1vw, 1.1rem);
 }
 
-/* Title screen soldier - darker and blurred */
+/* Press START styling - Non-glowing white */
+.mw-press-start {
+  color: #f5f5f5;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
+}
+
+/* Title overlay - darken fog behind text */
+.title-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.75) 55%,
+    rgba(0, 0, 0, 0.95) 100%
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Title screen soldier - darker and desaturated */
 .title-soldier-overlay-mw2 {
   opacity: 0.35 !important;
-  filter: brightness(0.6) contrast(1.05) saturate(0.7) blur(1.25px) !important;
+  filter: brightness(0.6) contrast(1.1) saturate(0.8) !important;
 }
 
 /* Modern Warfare Typography Styles - MW2 HUD Green (#00FF66) */

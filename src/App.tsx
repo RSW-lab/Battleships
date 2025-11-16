@@ -474,6 +474,9 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
       }}
       style={{ background: 'transparent' }}
     >
+      {/* Title overlay - darken fog behind text */}
+      <div className="title-overlay" />
+      
       {/* Allied soldier image - on top of smoke, behind text */}
       <img 
         src="/img/allied_overlay.png" 
@@ -500,16 +503,14 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
         <h1 
           className="mw2-title uppercase mb-4"
           style={{
-            fontSize: 'clamp(2.5rem, 8vw, 6rem)',
             lineHeight: '1'
           }}
         >
-          <span className="core">FLEET COMMAND OPS</span>
-          <span className="glow" aria-hidden="true">FLEET COMMAND OPS</span>
-          <span className="haze" aria-hidden="true">FLEET COMMAND OPS</span>
+          <span className="mw2-title-main">FLEET COMMAND </span>
+          <span className="mw2-title-ops">OPS</span>
         </h1>
         
-        {/* Subtitle with green accent */}
+        {/* Subtitle */}
         <h2 
           className="mw2-subtitle uppercase mb-12"
           style={{
@@ -522,7 +523,7 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
         
         {/* Press START prompt */}
         <p 
-          className="uppercase animate-pulse mw-type-white--muted"
+          className="uppercase animate-pulse mw-press-start"
           style={{
             fontFamily: 'Rajdhani, sans-serif',
             fontSize: 'clamp(0.9rem, 1.5vw, 1.25rem)',
