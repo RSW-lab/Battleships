@@ -805,7 +805,6 @@ function App() {
       const newBoard = placeShip(playerBoard, row, col, ship.width, ship.length, shipOrientation, ship.id)
       setPlayerBoard(newBoard)
       
-      const footprintLength = shipOrientation === 'horizontal' ? ship.length : ship.length
       const endRow = shipOrientation === 'horizontal' ? row : row + ship.length - 1
       const endCol = shipOrientation === 'horizontal' ? col + ship.length - 1 : col
       const startCell = `${String.fromCharCode(65 + row)}${col + 1}`
