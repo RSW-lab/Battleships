@@ -421,13 +421,15 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          height: '90vh',
+          height: '105vh',
           width: 'auto',
           objectFit: 'contain',
-          opacity: 0.35,
-          filter: 'brightness(1.15) contrast(1.05)',
+          opacity: 0.45,
+          filter: 'brightness(1.15) contrast(1.05) saturate(0.8)',
           pointerEvents: 'none',
-          zIndex: 10
+          zIndex: 10,
+          maskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 50%, rgba(0,0,0,0.7) 75%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse at center, rgba(0,0,0,1) 50%, rgba(0,0,0,0.7) 75%, rgba(0,0,0,0) 100%)'
         }}
       />
       
