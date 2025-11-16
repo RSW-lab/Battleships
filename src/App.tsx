@@ -487,7 +487,7 @@ function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.R
   
   if (!cellSize || effects.size === 0) return null
   
-  const EXPLOSION_SCALE = 9.6
+  const EXPLOSION_SCALE = 8.16
   const FIRE_SCALE = 3.325
   
   return (
