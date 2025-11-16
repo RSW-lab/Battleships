@@ -1032,3 +1032,39 @@ body::after {
     repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(123, 255, 90, 0.08) 49px, rgba(123, 255, 90, 0.08) 50px);
   opacity: 0.5;
 }
+
+/* Water Ripple Effect for Miss Markers */
+.water-ripple-effect {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.water-ripple-effect::before,
+.water-ripple-effect::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 0 8px rgba(255, 255, 255, 0.4),
+    inset 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.water-ripple-effect::before {
+  width: 60%;
+  height: 60%;
+  border-width: 2px;
+  opacity: 0.8;
+}
+
+.water-ripple-effect::after {
+  width: 85%;
+  height: 85%;
+  border-width: 1.5px;
+  opacity: 0.5;
+}

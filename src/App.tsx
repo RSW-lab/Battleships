@@ -1169,12 +1169,7 @@ function App() {
                       </div>
                     )}
                     {cell.state === 'miss' && (
-                      <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                        <div style={{ position: 'relative', width: '24px', height: '24px' }}>
-                          <div style={{ position: 'absolute', left: '50%', top: '50%', width: '20px', height: '2px', background: 'rgba(100, 200, 255, 0.8)', transform: 'translate(-50%, -50%) rotate(45deg)', boxShadow: '0 0 8px rgba(100, 200, 255, 0.6)' }}></div>
-                          <div style={{ position: 'absolute', left: '50%', top: '50%', width: '20px', height: '2px', background: 'rgba(100, 200, 255, 0.8)', transform: 'translate(-50%, -50%) rotate(-45deg)', boxShadow: '0 0 8px rgba(100, 200, 255, 0.6)' }}></div>
-                        </div>
-                      </div>
+                      <div className="water-ripple-effect"></div>
                     )}
                   </div>
                 )
