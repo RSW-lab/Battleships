@@ -1527,7 +1527,6 @@ function App() {
                 {playerShips.map((ship, index) => {
                   const isDeployed = index < currentShipIndex
                   const isSelected = index === currentShipIndex
-                  const isAvailable = index > currentShipIndex
                   
                   let cardClass = 'jtac-asset-card'
                   let statusClass = 'jtac-asset-status'
