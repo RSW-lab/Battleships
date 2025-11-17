@@ -1147,6 +1147,43 @@ function App() {
               zIndex: 1
             }}
           >
+            {!showOceanVideo && gamePhase === 'placement' && (
+              <>
+                <div className="radar-sweep-overlay">
+                  <div className="radar-sweep" />
+                </div>
+                <div className="bearing-ticks">
+                  {Array.from({ length: BOARD_SIZE + 1 }, (_, i) => (
+                    <div
+                      key={`tick-top-${i}`}
+                      className="bearing-tick bearing-tick-top"
+                      style={{ left: `${i * CELL_SIZE + 8}px`, top: '8px' }}
+                    />
+                  ))}
+                  {Array.from({ length: BOARD_SIZE + 1 }, (_, i) => (
+                    <div
+                      key={`tick-bottom-${i}`}
+                      className="bearing-tick bearing-tick-bottom"
+                      style={{ left: `${i * CELL_SIZE + 8}px`, bottom: '8px' }}
+                    />
+                  ))}
+                  {Array.from({ length: BOARD_SIZE + 1 }, (_, i) => (
+                    <div
+                      key={`tick-left-${i}`}
+                      className="bearing-tick bearing-tick-left"
+                      style={{ top: `${i * CELL_SIZE + 8}px`, left: '8px' }}
+                    />
+                  ))}
+                  {Array.from({ length: BOARD_SIZE + 1 }, (_, i) => (
+                    <div
+                      key={`tick-right-${i}`}
+                      className="bearing-tick bearing-tick-right"
+                      style={{ top: `${i * CELL_SIZE + 8}px`, right: '8px' }}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           <div style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}></div>
           {Array.from({ length: BOARD_SIZE }, (_, i) => (
             <div key={i} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px`, fontFamily: 'Rajdhani, sans-serif', color: '#ffffff', fontWeight: 700 }} className="flex items-center justify-center text-xs">
