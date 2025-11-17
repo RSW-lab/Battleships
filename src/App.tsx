@@ -366,8 +366,6 @@ function AnimatedMissile({
     const midX = (startX + endX) / 2
     const midY = (startY + endY) / 2 + arcHeight
 
-    const fixedAngle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI + 90
-
     const animate = () => {
       const elapsed = Date.now() - startTime
       const progress = Math.min(elapsed / duration, 1)
@@ -378,7 +376,12 @@ function AnimatedMissile({
       const x = oneMinusT * oneMinusT * startX + 2 * oneMinusT * t * midX + t * t * endX
       const y = oneMinusT * oneMinusT * startY + 2 * oneMinusT * t * midY + t * t * endY
 
-      setPosition({ x, y, angle: fixedAngle })
+      const dx = 2 * oneMinusT * (midX - startX) + 2 * t * (endX - midX)
+      const dy = 2 * oneMinusT * (midY - startY) + 2 * t * (endY - midY)
+      
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI + 90
+
+      setPosition({ x, y, angle })
 
       if (progress < 1) {
         animationFrameRef.current = requestAnimationFrame(animate)
@@ -409,15 +412,12 @@ function AnimatedMissile({
           src="/assets/missile_sprite.png"
           alt="missile"
           style={{
-            width: '64px',
+            width: '21px',
             height: 'auto',
-            filter: 'drop-shadow(0 0 8px rgba(255, 140, 0, 0.8))',
+            filter: 'drop-shadow(0 0 4px rgba(255, 140, 0, 0.5))',
             pointerEvents: 'none',
-            animation: 'fire-flicker 180ms ease-in-out infinite alternate',
-            transformOrigin: '20% 50%',
           }}
         />
-        <div className="missile-flame-trail" />
       </div>
     </div>
   )

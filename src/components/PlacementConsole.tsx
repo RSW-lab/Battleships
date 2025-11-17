@@ -44,7 +44,8 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
   const [previewCells, setPreviewCells] = useState<Array<{ row: number; col: number; valid: boolean }>>([])
   const [showInstructions, setShowInstructions] = useState(false)
   const [gridSize, setGridSize] = useState(600)
-  const [gridOffset, setGridOffset] = useState(0)
+  const [gridOffsetTop, setGridOffsetTop] = useState(0)
+  const [gridOffsetLeft, setGridOffsetLeft] = useState(0)
   const [selectedShipId, setSelectedShipId] = useState<number | null>(null)
   
   const containerRef = useRef<HTMLDivElement>(null)
@@ -74,10 +75,14 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect
-        const size = Math.min(width, height) * 0.96
-        const offset = height * 0.04
+        const labelPad = 20        // space for numbers/letters
+        const frameGutter = 10     // small buffer from inner frame
+        const maxByWidth = width - labelPad - frameGutter
+        const maxByHeight = height - labelPad - frameGutter
+        const size = Math.min(maxByWidth, maxByHeight)
         setGridSize(size)
-        setGridOffset(offset)
+        setGridOffsetTop(frameGutter)
+        setGridOffsetLeft(frameGutter)
       }
     })
 
@@ -220,81 +225,11 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
             width: `${(OPENING_WIDTH / FRAME_WIDTH) * 100}%`,
             height: `${(OPENING_HEIGHT / FRAME_HEIGHT) * 100}%`,
             display: 'grid',
-            gridTemplateRows: 'auto 1fr',
             gridTemplateColumns: '7fr 3fr',
             gap: '2%',
             padding: '2%',
           }}
         >
-          {/* Title and Info Widget */}
-          <div
-            style={{
-              gridColumn: '1 / -1',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              marginBottom: '12px',
-              position: 'relative',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <h1
-                style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontSize: 'clamp(22px, 2.4vw, 32px)',
-                  fontWeight: 800,
-                  letterSpacing: '0.24em',
-                  textTransform: 'uppercase',
-                  background: 'linear-gradient(to bottom, #ffffff 0%, #f5fff2 40%, #b4ffb5 70%, #4bff6f 100%)',
-                  WebkitBackgroundClip: 'text',
-                  backgroundClip: 'text',
-                  color: 'transparent',
-                  textShadow: '0 0 2px rgba(0, 0, 0, 0.95), 0 0 4px rgba(255, 255, 255, 0.8), 0 0 10px rgba(0, 255, 120, 0.85), 0 0 22px rgba(0, 255, 120, 0.6)',
-                  margin: 0,
-                }}
-              >
-                Fleet Asset Deployment
-              </h1>
-              <button
-                onClick={() => setShowInstructions(!showInstructions)}
-                style={{
-                  background: 'rgba(0, 255, 102, 0.2)',
-                  border: '2px solid rgba(0, 255, 102, 0.6)',
-                  borderRadius: '50%',
-                  width: '28px',
-                  height: '28px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  pointerEvents: 'auto',
-                  color: '#00FF66',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 255, 102, 0.4)'
-                  e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 255, 102, 0.6)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 255, 102, 0.2)'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}
-              >
-                <Info size={18} />
-              </button>
-            </div>
-            {/* Divider line */}
-            <div
-              style={{
-                width: '55%',
-                height: '1px',
-                background: 'linear-gradient(to right, transparent, rgba(0, 255, 120, 0.45), transparent)',
-                pointerEvents: 'none',
-              }}
-            />
-          </div>
 
           {/* Instructions Dialog */}
           {showInstructions && (
@@ -382,7 +317,7 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
           )}
 
           <div ref={leftColumnRef} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-            <div style={{ position: 'relative', marginTop: `${gridOffset}px` }}>
+            <div style={{ position: 'relative', marginTop: `${gridOffsetTop}px`, marginLeft: `${gridOffsetLeft}px` }}>
               {/* Coordinate labels - Top (numbers 1-15) */}
               <div
                 style={{
@@ -484,36 +419,101 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
             </div>
           </div>
 
-          {/* Naval Assets Panel */}
+          {/* Right Column: Title + Naval Assets Panel */}
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
+              display: 'grid',
+              gridTemplateRows: 'auto 1fr',
               gap: '8px',
-              overflowY: 'auto',
-              padding: '12px',
-              background: 'rgba(0, 20, 10, 0.4)',
-              border: '1px solid rgba(0, 255, 102, 0.4)',
-              borderRadius: '4px',
-              boxShadow: '0 0 12px rgba(0, 255, 102, 0.2)',
             }}
           >
-            {/* Panel Title */}
+            {/* Title Header */}
             <div
               style={{
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: '14px',
-                fontWeight: 700,
-                color: '#00FF66',
-                textAlign: 'center',
-                letterSpacing: '0.15em',
-                textShadow: '0 0 6px rgba(0, 255, 102, 0.6)',
-                marginBottom: '4px',
-                textTransform: 'uppercase',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                pointerEvents: 'auto',
               }}
             >
-              Naval Assets
+              <h1
+                style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: 'clamp(14px, 1.4vw, 20px)',
+                  fontWeight: 800,
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  background: 'linear-gradient(to bottom, #ffffff 0%, #f5fff2 40%, #b4ffb5 70%, #4bff6f 100%)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                  textShadow: '0 0 2px rgba(0, 0, 0, 0.95), 0 0 4px rgba(255, 255, 255, 0.8), 0 0 10px rgba(0, 255, 120, 0.85), 0 0 22px rgba(0, 255, 120, 0.6)',
+                  margin: 0,
+                }}
+              >
+                Fleet Asset Deployment
+              </h1>
+              <button
+                onClick={() => setShowInstructions(!showInstructions)}
+                style={{
+                  background: 'rgba(0, 255, 102, 0.2)',
+                  border: '2px solid rgba(0, 255, 102, 0.6)',
+                  borderRadius: '50%',
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  pointerEvents: 'auto',
+                  color: '#00FF66',
+                  transition: 'all 0.3s ease',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(0, 255, 102, 0.4)'
+                  e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 255, 102, 0.6)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(0, 255, 102, 0.2)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+              >
+                <Info size={16} />
+              </button>
             </div>
+
+            {/* Naval Assets Panel */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                overflowY: 'auto',
+                padding: '12px',
+                background: 'rgba(0, 20, 10, 0.4)',
+                border: '1px solid rgba(0, 255, 102, 0.4)',
+                borderRadius: '4px',
+                boxShadow: '0 0 12px rgba(0, 255, 102, 0.2)',
+              }}
+            >
+              {/* Panel Title */}
+              <div
+                style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: '#00FF66',
+                  textAlign: 'center',
+                  letterSpacing: '0.15em',
+                  textShadow: '0 0 6px rgba(0, 255, 102, 0.6)',
+                  marginBottom: '4px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Naval Assets
+              </div>
 
             {/* Ship Cards */}
             {availableShips.map(ship => {
@@ -617,6 +617,7 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
                 </div>
               )
             })}
+            </div>
           </div>
         </div>
 
