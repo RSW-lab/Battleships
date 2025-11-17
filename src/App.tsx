@@ -342,6 +342,9 @@ function AnimatedMissile({
   const aiMetrics = useGridMetrics(aiGridRef, [missile])
   const startTimeRef = useRef<number>(Date.now())
   const animationFrameRef = useRef<number>()
+  
+  const fromMetrics = missile.fromBoard === 'player' ? playerMetrics : aiMetrics
+  const cellSize = fromMetrics.cell
 
   useEffect(() => {
     const fromMetrics = missile.fromBoard === 'player' ? playerMetrics : aiMetrics
@@ -368,7 +371,7 @@ function AnimatedMissile({
     const baseAngleDeg = baseAngle * 180 / Math.PI
     
     const distance = Math.sqrt(vx * vx + vy * vy)
-    const amplitude = Math.min(12, 0.04 * distance)
+    const amplitude = Math.min(8, 0.02 * distance)
     
     const nx = -Math.sin(baseAngle)
     const ny = Math.cos(baseAngle)
@@ -396,8 +399,8 @@ function AnimatedMissile({
       }
       
       const delta = normalizeAngle(angleDeg - baseAngleDeg)
-      const clampedDelta = Math.max(-10, Math.min(10, delta)) * 0.6
-      angleDeg = baseAngleDeg + clampedDelta + 90
+      const clampedDelta = Math.max(-8, Math.min(8, delta)) * 0.5
+      angleDeg = baseAngleDeg + clampedDelta
 
       setPosition({ x, y, angle: angleDeg })
 
@@ -415,6 +418,8 @@ function AnimatedMissile({
     }
   }, [missile, playerMetrics, aiMetrics, playerGridRef, aiGridRef])
 
+  const spriteSize = Math.round(cellSize * 0.7)
+  
   return (
     <div
       className="fixed pointer-events-none z-50"
@@ -425,10 +430,16 @@ function AnimatedMissile({
         transformOrigin: 'center center',
       }}
     >
-      <div className="missile">
-        <div className="missile-head" />
-        <div className="missile-trail" />
-      </div>
+      <img
+        src="/assets/missile-body.png"
+        alt="missile"
+        style={{
+          width: `${spriteSize}px`,
+          height: 'auto',
+          filter: 'drop-shadow(0 0 4px rgba(255, 140, 0, 0.6))',
+          pointerEvents: 'none',
+        }}
+      />
     </div>
   )
 }

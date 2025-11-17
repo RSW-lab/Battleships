@@ -76,14 +76,20 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
       if (!containerRef.current) return
       
       const rect = containerRef.current.getBoundingClientRect()
-      const labelPad = 20
-      const frameGutter = 10
+      const labelPadTop = 20    // for numbers on top
+      const labelPadLeft = 20   // for letters on left
+      const frameGutter = 10    // visual breathing room away from inner frame
       
-      const availableWidth = (rect.width * 0.7) - labelPad - frameGutter
-      const availableHeight = rect.height - labelPad - frameGutter
-      const size = Math.min(availableWidth, availableHeight)
+      const leftWidth = rect.width * 0.7
       
-      setGridSize(size)
+      const availableHeight = rect.height - (labelPadTop + 2 * frameGutter)
+      
+      const availableWidth = leftWidth - (labelPadLeft + 2 * frameGutter)
+      
+      const cell = Math.max(1, Math.floor(Math.min(availableWidth, availableHeight) / BOARD_SIZE))
+      const gridPx = cell * BOARD_SIZE
+      
+      setGridSize(gridPx)
       setGridOffsetTop(frameGutter)
       setGridOffsetLeft(frameGutter)
     }
