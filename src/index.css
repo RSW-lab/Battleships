@@ -9,18 +9,18 @@
   :root {
     --radius: 0.5rem;
     
-    /* COD Modern Warfare Theme Tokens */
-    --hud-accent: 120 100% 35%;           /* MW green accent */
-    --hud-accent-soft: 120 60% 45%;       /* Softer green */
-    --hud-accent-glow: 120 100% 50%;      /* Bright green glow */
-    --panel-bg: 210 20% 12%;              /* Dark steel blue */
-    --panel-bg-darker: 210 25% 8%;        /* Deeper background */
+    /* COD Modern Warfare 2 Theme Tokens */
+    --hud-accent: 145 100% 50%;           /* MW2 HUD green #00FF66 */
+    --hud-accent-soft: 145 100% 40%;      /* Softer MW2 green */
+    --hud-accent-glow: 145 100% 60%;      /* Bright MW2 green glow */
+    --panel-bg: 0 0% 1.6%;                /* Deep black #040404 */
+    --panel-bg-darker: 0 0% 0.8%;         /* Deeper black #020202 */
     --panel-stroke: 210 15% 25%;          /* Border/stroke color */
-    --bg-deep: 210 30% 6%;                /* Deepest background */
-    --text-primary: 0 0% 95%;             /* Off-white text */
-    --text-subtle: 0 0% 65%;              /* Muted text */
-    --text-accent: 120 100% 45%;          /* Green text accent */
-    --allied-accent: 180 80% 50%;         /* Cyan for allied (toned down) */
+    --bg-deep: 0 0% 1.6%;                 /* Deep black #040404 */
+    --text-primary: 0 0% 100%;            /* Pure white #FFFFFF */
+    --text-subtle: 0 0% 90%;              /* Off-white #E6E6E6 */
+    --text-accent: 145 100% 50%;          /* MW2 green text accent */
+    --allied-accent: 145 100% 50%;        /* MW2 green for allied */
     --hostile-accent: 0 85% 55%;          /* Red for hostile */
     
     /* Legacy sidebar tokens */

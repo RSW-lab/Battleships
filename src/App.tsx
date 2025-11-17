@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 import './App.css'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Waves, Trophy, RotateCcw, Info, RotateCw } from 'lucide-react'
+import { Trophy, RotateCcw, Info, RotateCw } from 'lucide-react'
 import BackgroundVideo from '@/components/ui/BackgroundVideo'
 
 type CellState = 'empty' | 'ship' | 'hit' | 'miss'
@@ -13,7 +13,6 @@ interface Cell {
   state: CellState
   shipId?: number
   animation?: string
-  showExplosion?: boolean
 }
 
 interface MissileAnimation {
@@ -120,6 +119,60 @@ function useGridMetrics(gridRef: React.RefObject<HTMLElement>, deps: unknown[]) 
   return metrics
 }
 
+const biasCache = new Map<string, { dx: number; dy: number; w: number; h: number }>()
+
+function measureImageBias(src: string): Promise<{ dx: number; dy: number; w: number; h: number }> {
+  return new Promise((resolve, reject) => {
+    if (biasCache.has(src)) {
+      resolve(biasCache.get(src)!)
+      return
+    }
+    
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'))
+        return
+      }
+      
+      ctx.drawImage(img, 0, 0)
+      const imageData = ctx.getImageData(0, 0, img.naturalWidth, img.naturalHeight)
+      const data = imageData.data
+      
+      let minX = img.naturalWidth, maxX = 0, minY = img.naturalHeight, maxY = 0
+      
+      for (let y = 0; y < img.naturalHeight; y++) {
+        for (let x = 0; x < img.naturalWidth; x++) {
+          const alpha = data[(y * img.naturalWidth + x) * 4 + 3]
+          if (alpha > 10) {
+            if (x < minX) minX = x
+            if (x > maxX) maxX = x
+            if (y < minY) minY = y
+            if (y > maxY) maxY = y
+          }
+        }
+      }
+      
+      const contentCenterX = (minX + maxX) / 2
+      const contentCenterY = (minY + maxY) / 2
+      const imageCenterX = img.naturalWidth / 2
+      const imageCenterY = img.naturalHeight / 2
+      const dx = contentCenterX - imageCenterX
+      const dy = contentCenterY - imageCenterY
+      
+      const result = { dx, dy, w: img.naturalWidth, h: img.naturalHeight }
+      biasCache.set(src, result)
+      resolve(result)
+    }
+    img.onerror = () => reject(new Error(`Failed to load image: ${src}`))
+    img.src = src
+  })
+}
+
 function ShipOverlays({
   placements,
   gridRef,
@@ -128,24 +181,54 @@ function ShipOverlays({
   gridRef: React.RefObject<HTMLElement>
 }) {
   const { cell, offsetLeft, offsetTop } = useGridMetrics(gridRef, [placements])
+  const [, setBiasVersion] = useState(0)
+  
+  useEffect(() => {
+    const uniqueSrcs = [...new Set(placements.map(p => SHIP_IMG[p.name]).filter(Boolean))]
+    Promise.all(uniqueSrcs.map(src => measureImageBias(src)))
+      .then(() => setBiasVersion(v => v + 1))
+      .catch(err => console.error('Failed to measure image bias:', err))
+  }, [placements])
+  
   return (
     <div className="absolute inset-0 pointer-events-none z-10">
       <div
         className="absolute"
         style={{
-          left: offsetLeft,
-          top: offsetTop,
-          width: cell * BOARD_SIZE,
-          height: cell * BOARD_SIZE,
+          left: Math.round(offsetLeft),
+          top: Math.round(offsetTop),
+          width: Math.round(cell * BOARD_SIZE),
+          height: Math.round(cell * BOARD_SIZE),
         }}
       >
         {placements.map((p) => {
-          const left = p.startCol * cell
-          const top = p.startRow * cell
+          const left = Math.round(p.startCol * cell)
+          const top = Math.round(p.startRow * cell)
           const footprintWidth = p.orientation === 'horizontal' ? p.length * cell : p.width * cell
           const footprintHeight = p.orientation === 'horizontal' ? p.width * cell : p.length * cell
           const src = SHIP_IMG[p.name]
           if (!src) return null
+          
+          const bias = biasCache.get(src)
+          let corrX = 0, corrY = 0
+          
+          if (bias) {
+            if (p.orientation === 'horizontal') {
+              const displayWidth = footprintHeight
+              const displayHeight = footprintWidth
+              const scaleX = displayWidth / bias.w
+              const scaleY = displayHeight / bias.h
+              const vx = -bias.dx * scaleX
+              const vy = -bias.dy * scaleY
+              corrX = vx
+              corrY = vy
+            } else {
+              const scaleX = footprintWidth / bias.w
+              const scaleY = footprintHeight / bias.h
+              corrX = -bias.dx * scaleX
+              corrY = -bias.dy * scaleY
+            }
+          }
           
           if (p.orientation === 'horizontal') {
             return (
@@ -155,16 +238,16 @@ function ShipOverlays({
                 style={{
                   left,
                   top,
-                  width: footprintWidth,
-                  height: footprintHeight,
+                  width: Math.round(footprintWidth),
+                  height: Math.round(footprintHeight),
                   overflow: 'visible',
                 }}
               >
                 <div
                   style={{
-                    width: footprintHeight,
-                    height: footprintWidth,
-                    transform: 'rotate(90deg)',
+                    width: Math.round(footprintHeight),
+                    height: Math.round(footprintWidth),
+                    transform: `translate(${corrX}px, ${corrY}px) rotate(90deg)`,
                     transformOrigin: 'center center',
                     display: 'flex',
                     alignItems: 'center',
@@ -194,8 +277,8 @@ function ShipOverlays({
                 style={{
                   left,
                   top,
-                  width: footprintWidth,
-                  height: footprintHeight,
+                  width: Math.round(footprintWidth),
+                  height: Math.round(footprintHeight),
                   overflow: 'visible',
                 }}
               >
@@ -205,10 +288,10 @@ function ShipOverlays({
                   className="opacity-90 select-none block"
                   style={{
                     height: '100%',
-                    width: 'auto',
-                    maxWidth: '100%',
+                    width: '100%',
                     objectFit: 'contain',
                     objectPosition: 'center',
+                    transform: `translate(${corrX}px, ${corrY}px)`,
                   }}
                   draggable={false}
                 />
@@ -230,79 +313,126 @@ function MissileOverlay({
   playerGridRef: React.RefObject<HTMLDivElement>
   aiGridRef: React.RefObject<HTMLDivElement>
 }) {
-  const playerMetrics = useGridMetrics(playerGridRef, [missiles])
-  const aiMetrics = useGridMetrics(aiGridRef, [missiles])
-
   return (
     <>
-      {missiles.map((missile) => {
-        const fromMetrics = missile.fromBoard === 'player' ? playerMetrics : aiMetrics
-        const toMetrics = missile.fromBoard === 'player' ? aiMetrics : playerMetrics
-        const fromGridRef = missile.fromBoard === 'player' ? playerGridRef : aiGridRef
-        const toGridRef = missile.fromBoard === 'player' ? aiGridRef : playerGridRef
-
-        if (!fromGridRef.current || !toGridRef.current) return null
-
-        const fromGridRect = fromGridRef.current.getBoundingClientRect()
-        const toGridRect = toGridRef.current.getBoundingClientRect()
-
-        const fromX = fromGridRect.left + fromMetrics.offsetLeft + missile.fromCol * fromMetrics.cell + fromMetrics.cell / 2
-        const fromY = fromGridRect.top + fromMetrics.offsetTop + missile.fromRow * fromMetrics.cell + fromMetrics.cell / 2
-
-        const toX = toGridRect.left + toMetrics.offsetLeft + missile.toCol * toMetrics.cell + toMetrics.cell / 2
-        const toY = toGridRect.top + toMetrics.offsetTop + missile.toRow * toMetrics.cell + toMetrics.cell / 2
-
-        const deltaX = toX - fromX
-        const deltaY = toY - fromY
-
-        return (
-          <div
-            key={missile.id}
-            className="fixed pointer-events-none z-50"
-            style={{
-              left: fromX,
-              top: fromY,
-              '--missile-x': `${deltaX}px`,
-              '--missile-y': `${deltaY}px`,
-            } as React.CSSProperties}
-          >
-            <div className="missile-animation" style={{ transform: `rotate(${Math.atan2(deltaY, deltaX) * 180 / Math.PI + 90}deg)` }}>
-              <img src="/assets/rocket.png" alt="missile" className="w-8 h-8" style={{ filter: 'drop-shadow(0 0 8px rgba(255, 100, 0, 0.8))' }} />
-            </div>
-          </div>
-        )
-      })}
+      {missiles.map((missile) => (
+        <AnimatedMissile
+          key={missile.id}
+          missile={missile}
+          playerGridRef={playerGridRef}
+          aiGridRef={aiGridRef}
+        />
+      ))}
     </>
+  )
+}
+
+function AnimatedMissile({
+  missile,
+  playerGridRef,
+  aiGridRef,
+}: {
+  missile: MissileAnimation
+  playerGridRef: React.RefObject<HTMLDivElement>
+  aiGridRef: React.RefObject<HTMLDivElement>
+}) {
+  const [position, setPosition] = useState({ x: 0, y: 0, angle: 0 })
+  const playerMetrics = useGridMetrics(playerGridRef, [missile])
+  const aiMetrics = useGridMetrics(aiGridRef, [missile])
+  const startTimeRef = useRef<number>(Date.now())
+  const animationFrameRef = useRef<number>()
+
+  useEffect(() => {
+    const fromMetrics = missile.fromBoard === 'player' ? playerMetrics : aiMetrics
+    const toMetrics = missile.fromBoard === 'player' ? aiMetrics : playerMetrics
+    const fromGridRef = missile.fromBoard === 'player' ? playerGridRef : aiGridRef
+    const toGridRef = missile.fromBoard === 'player' ? aiGridRef : playerGridRef
+
+    if (!fromGridRef.current || !toGridRef.current) return
+
+    const fromGridRect = fromGridRef.current.getBoundingClientRect()
+    const toGridRect = toGridRef.current.getBoundingClientRect()
+
+    const startX = fromGridRect.left + fromMetrics.offsetLeft + missile.fromCol * fromMetrics.cell + fromMetrics.cell / 2
+    const startY = fromGridRect.top + fromMetrics.offsetTop + missile.fromRow * fromMetrics.cell + fromMetrics.cell / 2
+    const endX = toGridRect.left + toMetrics.offsetLeft + missile.toCol * toMetrics.cell + toMetrics.cell / 2
+    const endY = toGridRect.top + toMetrics.offsetTop + missile.toRow * toMetrics.cell + toMetrics.cell / 2
+
+    const duration = 600
+    const startTime = startTimeRef.current
+
+    const arcHeight = -150
+    const midX = (startX + endX) / 2
+    const midY = (startY + endY) / 2 + arcHeight
+
+    const fixedAngle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI + 90
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+
+      const t = progress
+      const oneMinusT = 1 - t
+
+      const x = oneMinusT * oneMinusT * startX + 2 * oneMinusT * t * midX + t * t * endX
+      const y = oneMinusT * oneMinusT * startY + 2 * oneMinusT * t * midY + t * t * endY
+
+      setPosition({ x, y, angle: fixedAngle })
+
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(animate)
+      }
+    }
+
+    animationFrameRef.current = requestAnimationFrame(animate)
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+    }
+  }, [missile, playerMetrics, aiMetrics, playerGridRef, aiGridRef])
+
+  return (
+    <div
+      className="fixed pointer-events-none z-50"
+      style={{
+        left: 0,
+        top: 0,
+        transform: `translate3d(${position.x}px, ${position.y}px, 0) rotate(${position.angle}deg)`,
+        transformOrigin: 'center center',
+      }}
+    >
+      <div className="missile-sprite">
+        <img 
+          src="/assets/missile-body.png" 
+          alt="missile" 
+          style={{ 
+            width: '48px',
+            height: 'auto',
+            filter: 'drop-shadow(0 0 8px rgba(255, 100, 0, 0.8))',
+          }} 
+        />
+        {/* Flame trail */}
+        <div className="missile-flame-trail" />
+      </div>
+    </div>
   )
 }
 
 function SonarRadar() {
   return (
-    <div className="relative w-32 h-32 pointer-events-none">
-      <div className="relative w-full h-full">
-        {/* Outer rings with green MW color */}
-        <div className="absolute inset-0 rounded-full border-2 opacity-50" style={{ borderColor: '#8cff4f' }}></div>
-        <div className="absolute inset-2 rounded-full border opacity-40" style={{ borderColor: '#8cff4f' }}></div>
-        <div className="absolute inset-4 rounded-full border opacity-30" style={{ borderColor: '#8cff4f' }}></div>
-        
-        {/* Rotating radar sweep arm */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="radar-arm absolute w-1 h-16 origin-bottom" style={{ 
-            background: 'linear-gradient(to top, #8cff4f, transparent)',
-            transformOrigin: 'center center', 
-            bottom: '50%' 
-          }}></div>
-        </div>
-        
-        {/* Center ping */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="radar-ping absolute w-2 h-2 rounded-full" style={{ backgroundColor: '#8cff4f' }}></div>
-        </div>
-        
-        {/* SONAR label */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-xs font-bold opacity-70" style={{ color: '#8cff4f' }}>SONAR</div>
-        </div>
+    <div className="hud-radar">
+      <div className="radar-ring">
+        {/* Base radar image */}
+        <img 
+          src="/img/sonar_radar.png" 
+          alt="Sonar Radar"
+          className="absolute inset-0 w-full h-full object-contain opacity-75"
+        />
+        {/* White sweep line from center with trace */}
+        <div className="radar-sweep-trace" />
+        <div className="radar-sweep-line" />
       </div>
     </div>
   )
@@ -347,28 +477,20 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
       <div className="relative z-30 text-center px-8 max-w-4xl">
         {/* Main title */}
         <h1 
-          className="font-bold uppercase mb-4"
+          className="mw2-title uppercase mb-4"
           style={{
-            fontFamily: 'Teko, sans-serif',
-            fontSize: 'clamp(2.5rem, 8vw, 6rem)',
-            letterSpacing: '0.15em',
-            color: '#eaeaea',
-            textShadow: '0 0 24px rgba(255,255,255,0.15), 0 0 48px rgba(255,255,255,0.08), 0 2px 4px rgba(0,0,0,0.8)',
             lineHeight: '1'
           }}
         >
-          FLEET COMMAND OPS
+          <span className="mw2-title-main">FLEET COMMAND </span>
+          <span className="mw2-title-ops">OPS</span>
         </h1>
         
-        {/* Subtitle with green accent */}
+        {/* Subtitle */}
         <h2 
-          className="font-bold uppercase mb-12"
+          className="mw2-subtitle uppercase mb-12"
           style={{
-            fontFamily: 'Teko, sans-serif',
-            fontSize: 'clamp(1.25rem, 3.5vw, 2.5rem)',
-            letterSpacing: '0.2em',
-            color: '#8cff4f',
-            textShadow: '0 0 24px rgba(140,255,79,0.4), 0 0 48px rgba(140,255,79,0.2), 0 2px 4px rgba(0,0,0,0.8)',
+            fontSize: 'clamp(1rem, 2vw, 1.5rem)',
             lineHeight: '1.2'
           }}
         >
@@ -377,13 +499,11 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
         
         {/* Press START prompt */}
         <p 
-          className="uppercase animate-pulse"
+          className="uppercase animate-pulse mw-press-start"
           style={{
             fontFamily: 'Rajdhani, sans-serif',
             fontSize: 'clamp(0.9rem, 1.5vw, 1.25rem)',
             letterSpacing: '0.1em',
-            color: '#eaeaea',
-            textShadow: '0 0 12px rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.8)',
             fontWeight: 500
           }}
         >
@@ -394,19 +514,110 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
   )
 }
 
-function TargetingOverlay({ gridRef, crosshairPosition, crosshairPixel }: { gridRef: React.RefObject<HTMLDivElement>, crosshairPosition: { row: number, col: number } | null, crosshairPixel: { x: number, y: number } | null }) {
-  const [overlayRect, setOverlayRect] = useState<{ left: number, top: number, width: number, height: number } | null>(null)
+type EffectType = 'explosion' | 'fire'
+interface CellEffect {
+  type: EffectType
+  startedAt: number
+}
+
+function EffectsOverlay({ gridRef, effects, onExplosionEnd }: { gridRef: React.RefObject<HTMLDivElement>, effects: Map<string, CellEffect>, onExplosionEnd: (key: string) => void }) {
+  const { cell: cellSize } = useGridMetrics(gridRef, [effects.size])
+  
+  if (!cellSize || effects.size === 0) return null
+  
+  const EXPLOSION_SCALE = 8.16
+  const FIRE_SCALE = 3.325
+  
+  return (
+    <div className="effects-overlay" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 35 }}>
+      {Array.from(effects.entries()).map(([key, effect]) => {
+        const [row, col] = key.split('-').map(Number)
+        
+        const cellEl = gridRef.current?.querySelector(`[data-cell="${row}-${col}"]`) as HTMLElement | null
+        if (!cellEl) return null
+        
+        const cellRect = cellEl.getBoundingClientRect()
+        const cellCenterX = cellRect.left + cellRect.width / 2
+        const cellCenterY = cellRect.top + cellRect.height / 2
+        
+        const isExplosion = effect.type === 'explosion'
+        const size = isExplosion ? cellSize * EXPLOSION_SCALE : cellSize * FIRE_SCALE
+        const left = cellCenterX - size / 2
+        const top = cellCenterY - size / 2
+        
+        return (
+          <div
+            key={key}
+            style={{
+              position: 'absolute',
+              left: `${left}px`,
+              top: `${top}px`,
+              width: `${size}px`,
+              height: `${size}px`,
+              pointerEvents: 'none'
+            }}
+          >
+            {isExplosion ? (
+              <video
+                key={`${key}-explosion`}
+                autoPlay
+                muted
+                playsInline
+                preload="auto"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'translateY(-20%)' }}
+                onEnded={() => onExplosionEnd(key)}
+                onLoadedData={() => setTimeout(() => onExplosionEnd(key), 1100)}
+                onError={(e) => console.error(`[EffectsOverlay] Explosion video error for ${key}:`, e)}
+              >
+                <source src="/fx/explosion.webm" type="video/webm" />
+              </video>
+            ) : (
+              <video
+                key={`${key}-fire`}
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="auto"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'screen', transform: 'translateY(-20%)' }}
+                onError={(e) => console.error(`[EffectsOverlay] Fire video error for ${key}:`, e)}
+              >
+                <source src="/fx/fire.webm" type="video/webm" />
+              </video>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefObject<HTMLDivElement>, crosshairPosition: { row: number, col: number } | null }) {
+  const [overlayRect, setOverlayRect] = useState<{ left: number, top: number, width: number, height: number, gridLeft: number, gridTop: number, gridWidth: number, gridHeight: number, cellSize: number } | null>(null)
 
   useEffect(() => {
     const updateRect = () => {
       if (gridRef.current) {
         const rect = gridRef.current.getBoundingClientRect()
-        setOverlayRect({
-          left: rect.left,
-          top: rect.top,
-          width: rect.width,
-          height: rect.height
-        })
+        const firstCell = gridRef.current.querySelector('[data-cell="0-0"]')
+        const lastCell = gridRef.current.querySelector('[data-cell="14-14"]')
+        
+        if (firstCell && lastCell) {
+          const r1 = firstCell.getBoundingClientRect()
+          const r2 = lastCell.getBoundingClientRect()
+          
+          setOverlayRect({
+            left: rect.left,
+            top: rect.top,
+            width: rect.width,
+            height: rect.height,
+            gridLeft: r1.left - rect.left,
+            gridTop: r1.top - rect.top,
+            gridWidth: r2.right - r1.left,
+            gridHeight: r2.bottom - r1.top,
+            cellSize: r1.width
+          })
+        }
       }
     }
     
@@ -422,6 +633,9 @@ function TargetingOverlay({ gridRef, crosshairPosition, crosshairPixel }: { grid
 
   if (!overlayRect) return null
 
+  const reticleX = crosshairPosition ? overlayRect.gridLeft + (crosshairPosition.col + 0.5) * overlayRect.cellSize : 0
+  const reticleY = crosshairPosition ? overlayRect.gridTop + (crosshairPosition.row + 0.5) * overlayRect.cellSize : 0
+
   return (
     <>
       <div className="targeting-overlay-backdrop" />
@@ -434,17 +648,31 @@ function TargetingOverlay({ gridRef, crosshairPosition, crosshairPixel }: { grid
           height: `${overlayRect.height}px`
         }}
       >
+        <div 
+          className="targeting-grid-lines"
+          style={{
+            position: 'absolute',
+            left: `${overlayRect.gridLeft}px`,
+            top: `${overlayRect.gridTop}px`,
+            width: `${overlayRect.gridWidth}px`,
+            height: `${overlayRect.gridHeight}px`,
+            backgroundImage: 'linear-gradient(to right, rgba(0, 255, 100, 0.3) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 255, 100, 0.3) 1px, transparent 1px)',
+            backgroundSize: `${overlayRect.cellSize}px ${overlayRect.cellSize}px`,
+            backgroundPosition: '0 0',
+            pointerEvents: 'none'
+          }}
+        />
         <div className="targeting-scan-line" />
         <div className="targeting-hud-text">
           [ TARGETING SYSTEM ACTIVE ]
         </div>
-        {crosshairPixel && crosshairPosition && (
+        {crosshairPosition && (
           <div 
             className="crosshair"
             style={{
               position: 'absolute',
-              left: `${crosshairPixel.x - overlayRect.left}px`,
-              top: `${crosshairPixel.y - overlayRect.top}px`,
+              left: `${reticleX}px`,
+              top: `${reticleY}px`,
               transform: 'translate(-50%, -50%)'
             }}
           >
@@ -472,8 +700,9 @@ function App() {
   const [message, setMessage] = useState('')
   const [missiles, setMissiles] = useState<MissileAnimation[]>([])
   const [crosshairPosition, setCrosshairPosition] = useState<{ row: number; col: number } | null>(null)
-  const [crosshairPixel, setCrosshairPixel] = useState<{ x: number; y: number } | null>(null)
   const [attackInProgress, setAttackInProgress] = useState(false)
+  const [playerEffects, setPlayerEffects] = useState<Map<string, CellEffect>>(new Map())
+  const [aiEffects, setAiEffects] = useState<Map<string, CellEffect>>(new Map())
   
   const aiTargetQueueRef = useRef<[number, number][]>([])
   const lastHitRef = useRef<[number, number] | null>(null)
@@ -521,6 +750,31 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [gamePhase])
 
+  const addEffect = (isPlayerBoard: boolean, row: number, col: number, type: EffectType) => {
+    const key = `${row}-${col}`
+    const setter = isPlayerBoard ? setPlayerEffects : setAiEffects
+    console.log(`[addEffect] Adding ${type} effect at ${key} on ${isPlayerBoard ? 'player' : 'AI'} board`)
+    setter(prev => {
+      if (prev.has(key)) return prev
+      const newMap = new Map(prev)
+      newMap.set(key, { type, startedAt: Date.now() })
+      return newMap
+    })
+  }
+
+  const swapToFire = (isPlayerBoard: boolean, key: string) => {
+    const setter = isPlayerBoard ? setPlayerEffects : setAiEffects
+    console.log(`[swapToFire] Swapping to fire at ${key} on ${isPlayerBoard ? 'player' : 'AI'} board`)
+    setter(prev => {
+      if (!prev.has(key)) return prev
+      const current = prev.get(key)
+      if (current?.type !== 'explosion') return prev
+      const newMap = new Map(prev)
+      newMap.set(key, { type: 'fire', startedAt: Date.now() })
+      return newMap
+    })
+  }
+
   const initializeGame = () => {
     const emptyBoard = Array(BOARD_SIZE).fill(null).map(() =>
       Array(BOARD_SIZE).fill(null).map(() => ({ state: 'empty' as CellState }))
@@ -528,6 +782,8 @@ function App() {
     setPlayerBoard(JSON.parse(JSON.stringify(emptyBoard)))
     setAiBoard(JSON.parse(JSON.stringify(emptyBoard)))
     setPlayerShips(SHIPS.map(s => ({ ...s, hits: 0, sunk: false })))
+    setPlayerEffects(new Map())
+    setAiEffects(new Map())
     setAiShips(SHIPS.map(s => ({ ...s, hits: 0, sunk: false })))
     setCurrentShipIndex(0)
     setIsPlayerTurn(true)
@@ -539,7 +795,7 @@ function App() {
 
   const startGame = () => {
     setGamePhase('placement')
-    setMessage(`DEPLOY ${SHIPS[0].name.toUpperCase()} - ${SHIPS[0].size} grid units`)
+    setMessage(`ASSIGN ASSET TO GRID: ${SHIPS[0].name.toUpperCase()} — ${SHIPS[0].size} HULL LENGTH UNITS`)
   }
 
   const canPlaceShip = (board: Cell[][], row: number, col: number, width: number, length: number, orientation: Orientation): boolean => {
@@ -590,10 +846,10 @@ function App() {
         const aiBoard = placeAIShips()
         setAiBoard(aiBoard)
         setGamePhase('battle')
-        setMessage('⚔️ BATTLE STATIONS! Select enemy coordinates to fire!')
+        setMessage('⚔️ BATTLE STATIONS! ENGAGE HOSTILE TARGETS!')
       } else {
         setCurrentShipIndex(currentShipIndex + 1)
-        setMessage(`DEPLOY ${SHIPS[currentShipIndex + 1].name.toUpperCase()} - ${SHIPS[currentShipIndex + 1].size} grid units`)
+        setMessage(`ASSIGN ASSET TO GRID: ${SHIPS[currentShipIndex + 1].name.toUpperCase()} — ${SHIPS[currentShipIndex + 1].size} HULL LENGTH UNITS`)
       }
     }
   }
@@ -682,8 +938,7 @@ function App() {
     
     if (cell.state === 'ship') {
       cell.state = 'hit'
-      cell.animation = 'hit'
-      cell.showExplosion = true
+      addEffect(false, row, col, 'explosion')
       setMessage('💥 DIRECT HIT! Enemy vessel damaged!')
       
       const shipIndex = updatedAiShips.findIndex(s => s.id === cell.shipId)
@@ -703,18 +958,10 @@ function App() {
       }
     } else {
       cell.state = 'miss'
-      cell.animation = 'miss'
       setMessage('💧 MISS! Shells hit open water.')
     }
     
     setAiBoard(newBoard)
-    
-    setTimeout(() => {
-      const updatedBoard = JSON.parse(JSON.stringify(newBoard))
-      updatedBoard[row][col].animation = undefined
-      updatedBoard[row][col].showExplosion = false
-      setAiBoard(updatedBoard)
-    }, 1000)
 
     if (cell.state === 'hit' && !updatedAiShips.every(s => s.sunk)) {
       setTimeout(() => {
@@ -779,8 +1026,7 @@ function App() {
         
         if (cell.state === 'ship') {
           cell.state = 'hit'
-          cell.animation = 'hit'
-          cell.showExplosion = true
+          addEffect(true, targetRow, targetCol, 'explosion')
           setMessage('🚨 INCOMING FIRE! Our vessel is hit!')
           lastHitRef.current = [targetRow, targetCol]
           
@@ -817,18 +1063,10 @@ function App() {
           }
         } else {
           cell.state = 'miss'
-          cell.animation = 'miss'
           setMessage('💧 Enemy salvo missed! We remain unscathed.')
         }
         
         setPlayerBoard(newBoard)
-        
-        setTimeout(() => {
-          const updatedBoard = JSON.parse(JSON.stringify(newBoard))
-          updatedBoard[targetRow][targetCol].animation = undefined
-          updatedBoard[targetRow][targetCol].showExplosion = false
-          setPlayerBoard(updatedBoard)
-        }, 1000)
 
         if (cell.state === 'hit' && !updatedPlayerShips.every(s => s.sunk)) {
           aiTurn()
@@ -847,31 +1085,29 @@ function App() {
   }
 
   const getCellClass = (cell: Cell, isPlayerBoard: boolean, row: number, col: number) => {
-    const baseClass = 'border border-slate-600 cursor-pointer transition-all duration-300 relative overflow-hidden bg-transparent'
     const isPreview = previewCells.some(([r, c]) => r === row && c === col)
+    const isAlreadyAttacked = cell.state === 'hit' || cell.state === 'miss'
+    
+    const baseClass = isAlreadyAttacked 
+      ? 'cursor-not-allowed transition-all duration-300 relative overflow-hidden bg-transparent'
+      : 'cursor-pointer transition-all duration-300 relative overflow-hidden bg-transparent'
     
     let stateClass = ''
+    let borderStyle = 'border border-white/10'
     
     if (cell.state === 'ship' && isPlayerBoard) {
-      stateClass = 'bg-slate-700 hover:bg-slate-600'
-    } else if (cell.state === 'hit') {
-      stateClass = 'bg-red-600'
-    } else if (cell.state === 'miss') {
-      stateClass = 'bg-blue-400'
+      stateClass = 'hover:bg-white/5'
+      borderStyle = 'border border-white/[0.12]'
     }
     
     if (isPreview) {
       stateClass += ' ring-2 ring-yellow-400'
     }
     
-    if (cell.animation === 'hit') {
-      stateClass += ' animate-pulse'
-    }
-    
-    return `${baseClass} ${stateClass}`
+    return `${baseClass} ${borderStyle} ${stateClass}`
   }
 
-  const renderBoard = (board: Cell[][], isPlayerBoard: boolean, gridRef?: React.RefObject<HTMLDivElement>) => {
+  const renderBoard = (board: Cell[][], isPlayerBoard: boolean, gridRef?: React.RefObject<HTMLDivElement>, showOceanVideo: boolean = false) => {
     const ships = isPlayerBoard ? playerShips : aiShips
     
     const isCellOnSunkShip = (cell: Cell): boolean => {
@@ -881,34 +1117,73 @@ function App() {
     }
     
     return (
-      <div className="inline-block bg-slate-800 p-2 rounded-lg shadow-2xl">
+      <div className="inline-block p-2 rounded-lg shadow-2xl grid-frame" style={{ backgroundColor: 'rgba(28, 32, 36, 0.15)' }}>
         <div ref={gridRef} className="relative inline-block">
-          {/* Grid video background */}
-          <video 
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-50"
-            style={{ zIndex: 0 }}
-            src="/video/grid_surf.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            onTimeUpdate={(e) => {
-              if (e.currentTarget.currentTime > 7) {
-                e.currentTarget.currentTime = 0;
-              }
-            }}
-          />
-          {/* Dark overlay for contrast */}
-          <div className="absolute inset-0 pointer-events-none bg-black/40" style={{ zIndex: 0 }}></div>
+          {showOceanVideo && (
+            <>
+              <video 
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-50"
+                style={{ zIndex: 0 }}
+                src="/video/grid_surf.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                onTimeUpdate={(e) => {
+                  if (e.currentTarget.currentTime > 7) {
+                    e.currentTarget.currentTime = 0;
+                  }
+                }}
+              />
+              <div className="absolute inset-0 pointer-events-none bg-black/40" style={{ zIndex: 0 }}></div>
+            </>
+          )}
           
           <div 
-            className="grid gap-0 relative board-with-water"
+            className="grid gap-0 relative board-strategy"
             style={{ 
               gridTemplateColumns: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
               gridTemplateRows: `repeat(${BOARD_SIZE + 1}, ${CELL_SIZE}px)`,
               zIndex: 1
             }}
           >
+            {!showOceanVideo && gamePhase === 'placement' && (
+              <>
+                <div className="radar-sweep-overlay">
+                  <div className="radar-sweep" />
+                </div>
+                <div className="bearing-ticks">
+                  {Array.from({ length: BOARD_SIZE + 1 }, (_, i) => (
+                    <div
+                      key={`tick-top-${i}`}
+                      className="bearing-tick bearing-tick-top"
+                      style={{ left: `${i * CELL_SIZE + 8}px`, top: '8px' }}
+                    />
+                  ))}
+                  {Array.from({ length: BOARD_SIZE + 1 }, (_, i) => (
+                    <div
+                      key={`tick-bottom-${i}`}
+                      className="bearing-tick bearing-tick-bottom"
+                      style={{ left: `${i * CELL_SIZE + 8}px`, bottom: '8px' }}
+                    />
+                  ))}
+                  {Array.from({ length: BOARD_SIZE + 1 }, (_, i) => (
+                    <div
+                      key={`tick-left-${i}`}
+                      className="bearing-tick bearing-tick-left"
+                      style={{ top: `${i * CELL_SIZE + 8}px`, left: '8px' }}
+                    />
+                  ))}
+                  {Array.from({ length: BOARD_SIZE + 1 }, (_, i) => (
+                    <div
+                      key={`tick-right-${i}`}
+                      className="bearing-tick bearing-tick-right"
+                      style={{ top: `${i * CELL_SIZE + 8}px`, right: '8px' }}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           <div style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px` }}></div>
           {Array.from({ length: BOARD_SIZE }, (_, i) => (
             <div key={i} style={{ width: `${CELL_SIZE}px`, height: `${CELL_SIZE}px`, fontFamily: 'Rajdhani, sans-serif', color: '#ffffff', fontWeight: 700 }} className="flex items-center justify-center text-xs">
@@ -950,14 +1225,6 @@ function App() {
                       }
                     }}
                   >
-                    {cell.showExplosion && (
-                      <div className="explosion-effect"></div>
-                    )}
-                    {cell.state === 'hit' && !cell.showExplosion && !isOnSunkShip && (
-                      <div className="absolute inset-0 z-20 pointer-events-none">
-                        <div className="fire-effect absolute inset-0"></div>
-                      </div>
-                    )}
                     {isOnSunkShip && (
                       <div className="rubble-effect">
                         <div className="rubble-piece"></div>
@@ -968,9 +1235,7 @@ function App() {
                       </div>
                     )}
                     {cell.state === 'miss' && (
-                      <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                        <Waves className="w-5 h-5 text-white opacity-70" />
-                      </div>
+                      <div className="water-ripple-effect"></div>
                     )}
                   </div>
                 )
@@ -1002,56 +1267,57 @@ function App() {
             <div className="flex justify-center mb-3">
               <SonarRadar />
             </div>
-            <CardTitle className="text-4xl font-bold text-hud-accent-glow mb-2 tracking-wider uppercase" style={{ letterSpacing: '0.2em', textShadow: '0 0 20px rgba(0, 255, 0, 0.5)' }}>
-              FLEET COMMAND OPS
+            <CardTitle className="mw2-title uppercase mb-2" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: '1' }}>
+              <span className="mw2-title-main">FLEET COMMAND </span>
+              <span className="mw2-title-ops">OPS</span>
             </CardTitle>
-            <CardDescription className="text-text-primary text-lg font-semibold mb-1 uppercase tracking-widest">
+            <CardDescription className="mw2-subtitle uppercase mb-1">
               TACTICAL STRIKE MISSION
             </CardDescription>
-            <CardDescription className="text-text-subtle text-sm mt-2 monospace">
+            <CardDescription className="text-sm mt-2 monospace mw-type-white--muted">
               &gt; PRIMARY OBJECTIVE: Locate and neutralize all hostile vessels
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 py-4">
             <div className="space-y-3">
-              <h3 className="text-lg font-bold text-hud-accent flex items-center gap-2 uppercase tracking-wide">
+              <h3 className="text-lg font-bold flex items-center gap-2 uppercase tracking-wide mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>
                 <Info className="w-4 h-4" />
                 Mission Briefing
               </h3>
-              <div className="space-y-2 text-sm leading-snug text-white">
+              <div className="space-y-2 text-sm leading-snug mw-type-white--muted">
                 <p className="flex items-start gap-2">
-                  <span className="text-hud-accent font-bold">1.</span>
-                  <span>Deploy your naval fleet of 5 warships across the tactical grid. Maintain operational spacing - vessels cannot be adjacent, even diagonally.</span>
+                  <span className="font-bold mw-type-green">1.</span>
+                  <span>Deploy your fleet of 7 warships across the tactical grid. Ships cannot overlap or be adjacent (including diagonally).</span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <span className="text-hud-accent font-bold">2.</span>
-                  <span>Press R to rotate ship orientation between horizontal and vertical during deployment phase.</span>
+                  <span className="font-bold mw-type-green">2.</span>
+                  <span>Press R to rotate ship orientation between horizontal and vertical during deployment.</span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <span className="text-hud-accent font-bold">3.</span>
-                  <span>Engage in tactical combat. Select coordinates on enemy waters to launch strikes.</span>
+                  <span className="font-bold mw-type-green">3.</span>
+                  <span>Launch missile strikes on enemy grid coordinates. Watch for arc trajectory and impact effects.</span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <span className="text-hud-accent font-bold">4.</span>
-                  <span>💥 Direct hits marked in red. 💧 Missed shots marked in blue.</span>
+                  <span className="font-bold mw-type-green">4.</span>
+                  <span>Direct hits trigger explosions followed by persistent fire. Misses create white water ripple effects.</span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <span className="text-hud-accent font-bold">5.</span>
-                  <span>Sink the entire enemy armada to achieve total naval supremacy!</span>
+                  <span className="font-bold mw-type-green">5.</span>
+                  <span>Sink all enemy vessels to complete the mission. Monitor sonar radar for tactical awareness.</span>
                 </p>
               </div>
             </div>
             
             <Button 
               onClick={startGame}
-              className="w-full bg-gradient-to-r from-hud-accent to-hud-accent-soft hover:from-hud-accent-glow hover:to-hud-accent text-white font-bold text-lg py-5 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-hud-accent/50 uppercase tracking-wider"
-              style={{ textShadow: '0 0 10px rgba(0, 255, 0, 0.5)' }}
+              className="w-full bg-gradient-to-r from-hud-accent to-hud-accent-soft hover:from-hud-accent-glow hover:to-hud-accent font-bold text-lg py-5 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-hud-accent/50 uppercase tracking-wider mw-type-white"
+              style={{ fontFamily: 'Teko, sans-serif' }}
             >
               ◈ COMMENCE OPERATIONS ◈
             </Button>
             
             <div className="text-center pt-4 border-t border-panel-stroke">
-              <p className="text-text-subtle text-sm">Created by <span className="text-hud-accent font-semibold">Rudi Willner</span></p>
+              <p className="text-sm mw-type-white--muted">Created by <span className="font-semibold mw-type-green--muted">Rudi Willner</span></p>
             </div>
           </CardContent>
         </Card>
@@ -1137,28 +1403,181 @@ function App() {
     <>
       <div className="theme-cod min-h-screen p-8" style={{ 
         background: 'linear-gradient(180deg, #0c0f12 0%, #0a0d10 60%, #080a0c 100%)',
-        backgroundAttachment: 'fixed'
+        backgroundAttachment: 'fixed',
+        position: 'relative'
       }}>
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold mb-2 flex items-center justify-center gap-3 tracking-wider uppercase" style={{ fontFamily: 'Teko, sans-serif', letterSpacing: '0.15em', color: '#8cff4f', textShadow: '0 0 20px rgba(140, 255, 79, 0.5)' }}>
-            <SonarRadar />
-            FLEET COMMAND OPS
-            <SonarRadar />
-          </h1>
-          <p className="text-2xl text-white font-semibold" style={{ fontFamily: 'Rajdhani, sans-serif' }}>{message}</p>
-          {gamePhase === 'placement' && (
-            <p className="text-lg mt-2 font-bold" style={{ fontFamily: 'Rajdhani, sans-serif', color: '#8cff4f' }}>
-              Press R to rotate • Orientation: {shipOrientation.toUpperCase()}
-            </p>
-          )}
-        </div>
+      {gamePhase === 'placement' && (
+        <>
+          {/* JTAC Targeting Interface - Background Atmosphere */}
+          <div className="jtac-atmosphere">
+            <div className="jtac-fog-layer-1" />
+            <div className="jtac-fog-layer-2" />
+            <div className="jtac-scanlines" />
+            <div className="jtac-vignette" />
+            <div className="jtac-radar-arcs">
+              <div className="jtac-radar-arc" />
+              <div className="jtac-radar-arc" />
+              <div className="jtac-radar-arc" />
+            </div>
+          </div>
 
+          <div className="military-dashboard-frame">
+            <div className="dashboard-corner dashboard-corner-tl" />
+            <div className="dashboard-corner dashboard-corner-tr" />
+            <div className="dashboard-corner dashboard-corner-bl" />
+            <div className="dashboard-corner dashboard-corner-br" />
+          </div>
+          <div className="placement-hud-overlay">
+            <div className="hud-ticker">
+              <div className="ticker-content">
+                LINK-16 ONLINE • IFF AUTH: GREEN • COMMS: ENCRYPTED • THREAT LEVEL: MODERATE • TACTICAL NET: ACTIVE • DATALINK: SECURE
+              </div>
+            </div>
+            <div className="hud-systems-panel">
+              <div className="system-meter">
+                <div className="meter-label">PWR</div>
+                <div className="meter-bar">
+                  <div className="meter-fill" style={{ height: '85%' }} />
+                </div>
+              </div>
+              <div className="system-meter">
+                <div className="meter-label">COM</div>
+                <div className="meter-bar">
+                  <div className="meter-fill" style={{ height: '92%' }} />
+                </div>
+              </div>
+              <div className="system-meter">
+                <div className="meter-label">SNR</div>
+                <div className="meter-bar">
+                  <div className="meter-fill" style={{ height: '78%' }} />
+                </div>
+              </div>
+            </div>
+            <div className="hud-threat-indicator">
+              <div className="threat-label">THREAT INDEX</div>
+              <div className="threat-value">02</div>
+              <div className="threat-bar">
+                <div className="threat-fill" style={{ width: '20%' }} />
+              </div>
+            </div>
+            
+            {/* Phase 5: Additional HUD Metadata Blocks */}
+            <div className="hud-metadata-block hud-metadata-tl">
+              <div className="hud-metadata-label">GPS SYNC</div>
+              <div className="hud-metadata-value">LOCKED</div>
+            </div>
+            
+            <div className="hud-metadata-block hud-metadata-tr">
+              <div className="hud-metadata-label">SATCOM</div>
+              <div className="hud-metadata-value">ONLINE</div>
+            </div>
+            
+            <div className="hud-metadata-block hud-metadata-bl">
+              <div className="hud-metadata-label">CALLSIGN</div>
+              <div className="hud-metadata-value">VIPER-1</div>
+            </div>
+            
+            <div className="hud-metadata-block hud-metadata-br-top">
+              <div className="hud-metadata-label">FLEET STATUS</div>
+              <div className="hud-metadata-value">{currentShipIndex}/{playerShips.length}</div>
+            </div>
+            
+            <div className="hud-metadata-block hud-metadata-left">
+              <div className="hud-metadata-label">OPS CONSOLE</div>
+              <div className="hud-metadata-value">ACTIVE</div>
+            </div>
+          </div>
+        </>
+      )}
+      <div className="max-w-7xl mx-auto">
+        <header className="header-banner mb-6">
+          <div className="header-smoke-layer" />
+          
+          {/* Phase 4: Corner Metadata Clusters */}
+          {gamePhase === 'placement' && (
+            <>
+              <div className="header-metadata-corner header-metadata-tl">
+                <div className="metadata-label">IFF AUTH</div>
+                <div className="metadata-value">GREEN</div>
+              </div>
+              <div className="header-metadata-corner header-metadata-tr">
+                <div className="metadata-label">COMMS LINK</div>
+                <div className="metadata-value">SECURE</div>
+              </div>
+              <div className="header-metadata-corner header-metadata-bl">
+                <div className="metadata-label">DATALINK</div>
+                <div className="metadata-value">ACTIVE</div>
+              </div>
+              <div className="header-metadata-corner header-metadata-br">
+                <div className="metadata-label">MISSION PHASE</div>
+                <div className="metadata-value">DEPLOY</div>
+              </div>
+            </>
+          )}
+          
+          <div className="header-inner">
+            <div className="header-text-block">
+              <div className="header-text-smoke" />
+              <h1 className="cod-heading header-title mw2-title" style={{ lineHeight: '1' }}>
+                <span className="mw2-title-main">FLEET COMMAND </span>
+                <span className="mw2-title-ops">OPS</span>
+              </h1>
+              <h2 className="cod-subheading header-subtitle mw2-subtitle">{message}</h2>
+              {gamePhase === 'placement' && (
+                <>
+                  <p className="header-hint mw-type-white--muted" style={{ fontSize: '12px' }}>
+                    ROTATION COMMAND: [R] — ORIENTATION: {shipOrientation.toUpperCase()}
+                  </p>
+                  {/* Phase 4: Dynamic Asset Status */}
+                  <div className="header-asset-status">
+                    <span className="asset-status-label">CURRENT ASSET:</span>
+                    <span className="asset-status-value">
+                      {currentShipIndex < playerShips.length 
+                        ? playerShips[currentShipIndex].name.toUpperCase()
+                        : 'ALL DEPLOYED'}
+                    </span>
+                    <span className="asset-status-separator">|</span>
+                    <span className="asset-status-label">BEARING:</span>
+                    <span className="asset-status-value">
+                      {shipOrientation === 'horizontal' ? '090°' : '000°'}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+          
+          {/* Phase 4: Compass Strip */}
+          {gamePhase === 'placement' && (
+            <div className="header-compass-strip">
+              <div className="compass-tick">N</div>
+              <div className="compass-tick compass-tick-minor">030</div>
+              <div className="compass-tick">E</div>
+              <div className="compass-tick compass-tick-minor">120</div>
+              <div className="compass-tick">S</div>
+              <div className="compass-tick compass-tick-minor">210</div>
+              <div className="compass-tick">W</div>
+              <div className="compass-tick compass-tick-minor">300</div>
+            </div>
+          )}
+          
+          <div className="hud-header-separator" />
+        </header>
+        
+        <div className="section-bridge" />
+        
         <div className="flex flex-col lg:flex-row justify-center gap-8 mb-8 items-start">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ fontFamily: 'Teko, sans-serif', color: '#8cff4f' }}>◈ ALLIED SECTOR ◈</h2>
+            <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ ALLIED SECTOR ◈</h2>
             <div className="relative inline-block">
-              {renderBoard(playerBoard, true, playerGridRef)}
+              {gamePhase === 'battle' && (
+                <img 
+                  src="/img/allied_overlay.png" 
+                  alt="" 
+                  className="soldier-overlay soldier-overlay-allied"
+                />
+              )}
+              {renderBoard(playerBoard, true, playerGridRef, gamePhase === 'battle')}
               {(gamePhase === 'placement' || gamePhase === 'battle') && (
                 <ShipOverlays
                   placements={playerPlacements}
@@ -1166,67 +1585,143 @@ function App() {
                 />
               )}
             </div>
-            <div className="mt-4 space-y-2">
-              {playerShips.map(ship => (
-                <div 
-                  key={ship.id} 
-                  className={`text-sm font-semibold ${ship.sunk ? 'text-red-400 line-through' : ''}`}
-                  style={{ fontFamily: 'Rajdhani, sans-serif', color: ship.sunk ? '#f87171' : '#8cff4f' }}
-                >
-                  {ship.name}: {ship.sunk ? '💀 SUNK' : `${ship.hits}/${ship.size} hits`}
-                </div>
-              ))}
-            </div>
-            {gamePhase === 'placement' && (
-              <div className="mt-4 flex justify-center gap-2">
-                <Button
-                  onClick={() => setShipOrientation('horizontal')}
-                  className={`text-white font-bold px-4 py-2`}
-                  style={{ 
-                    fontFamily: 'Rajdhani, sans-serif',
-                    backgroundColor: shipOrientation === 'horizontal' ? '#8cff4f' : '#475569',
-                    color: shipOrientation === 'horizontal' ? '#000' : '#fff'
-                  }}
-                >
-                  HORIZONTAL
-                </Button>
-                <Button
-                  onClick={() => setShipOrientation('vertical')}
-                  className={`text-white font-bold px-4 py-2`}
-                  style={{ 
-                    fontFamily: 'Rajdhani, sans-serif',
-                    backgroundColor: shipOrientation === 'vertical' ? '#8cff4f' : '#475569',
-                    color: shipOrientation === 'vertical' ? '#000' : '#fff'
-                  }}
-                >
-                  VERTICAL
-                </Button>
-                <Button
-                  onClick={() => setShipOrientation(prev => prev === 'horizontal' ? 'vertical' : 'horizontal')}
-                  className="text-white font-bold px-4 py-2"
-                  style={{ fontFamily: 'Rajdhani, sans-serif', backgroundColor: '#f59e0b' }}
-                >
-                  <RotateCw className="w-4 h-4" />
-                </Button>
+            {gamePhase === 'battle' && (
+              <div className="mt-4 space-y-2">
+                {playerShips.map(ship => (
+                  <div 
+                    key={ship.id} 
+                    className={`text-sm font-semibold ${ship.sunk ? 'text-red-400 line-through' : 'mw-type-green--muted'}`}
+                    style={{ fontFamily: 'Rajdhani, sans-serif' }}
+                  >
+                    {ship.name}: {ship.sunk ? '💀 SUNK' : `${ship.hits}/${ship.size} hits`}
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
+          {gamePhase === 'placement' && (
+            <div className="w-full lg:w-[380px] xl:w-[420px] text-left space-y-6 self-start jtac-asset-panel">
+              <h3 className="text-xl font-bold uppercase tracking-wider mt-2 mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ NAVAL ASSETS ◈</h3>
+              <div className="space-y-3">
+                {playerShips.map((ship, index) => {
+                  const isDeployed = index < currentShipIndex
+                  const isSelected = index === currentShipIndex
+                  
+                  let cardClass = 'jtac-asset-card'
+                  let statusClass = 'jtac-asset-status'
+                  
+                  if (isDeployed) {
+                    cardClass += ' jtac-asset-card-deployed'
+                    statusClass += ' jtac-asset-status-deployed'
+                  } else if (isSelected) {
+                    cardClass += ' jtac-asset-card-selected'
+                    statusClass += ' jtac-asset-status-selected'
+                  } else {
+                    cardClass += ' jtac-asset-card-available'
+                    statusClass += ' jtac-asset-status-available'
+                  }
+                  
+                  return (
+                    <div key={ship.id} className={cardClass}>
+                      <div className="jtac-asset-header">
+                        <div>
+                          <div className="jtac-asset-label">ASSET</div>
+                          <div className="jtac-asset-name">{ship.name}</div>
+                        </div>
+                        <div className={statusClass} />
+                      </div>
+                      
+                      <div className="jtac-asset-silhouette">
+                        <div className="jtac-ship-outline">
+                          {Array.from({ length: ship.size }, (_, i) => (
+                            <div key={i} className="jtac-ship-segment" />
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="jtac-asset-info">
+                        <div className="jtac-info-block">
+                          <div className="jtac-info-label">LENGTH</div>
+                          <div className="jtac-info-value">{ship.size}</div>
+                          <div className="jtac-length-bar">
+                            <div className="jtac-length-fill" style={{ width: `${(ship.size / 5) * 100}%` }} />
+                          </div>
+                        </div>
+                        <div className="jtac-info-block">
+                          <div className="jtac-info-label">STATUS</div>
+                          <div className="jtac-info-value" style={{ 
+                            fontSize: '11px',
+                            color: isDeployed ? 'rgba(255, 0, 0, 0.8)' : isSelected ? 'rgba(255, 200, 0, 0.8)' : 'rgba(0, 255, 120, 0.8)'
+                          }}>
+                            {isDeployed ? 'DEPLOYED' : isSelected ? 'ACTIVE' : 'STANDBY'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="pt-4 space-y-4 border-t border-white/5">
+                <h3 className="text-lg font-bold uppercase tracking-wider mt-2 mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ ORIENTATION ◈</h3>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    onClick={() => setShipOrientation('horizontal')}
+                    className={`text-white font-bold px-4 py-3.5 w-full rounded-lg`}
+                    style={{ 
+                      fontFamily: 'Rajdhani, sans-serif',
+                      backgroundColor: shipOrientation === 'horizontal' ? '#8cff4f' : '#475569',
+                      color: shipOrientation === 'horizontal' ? '#000' : '#fff'
+                    }}
+                  >
+                    HORIZONTAL
+                  </Button>
+                  <Button
+                    onClick={() => setShipOrientation('vertical')}
+                    className={`text-white font-bold px-4 py-3.5 w-full rounded-lg`}
+                    style={{ 
+                      fontFamily: 'Rajdhani, sans-serif',
+                      backgroundColor: shipOrientation === 'vertical' ? '#8cff4f' : '#475569',
+                      color: shipOrientation === 'vertical' ? '#000' : '#fff'
+                    }}
+                  >
+                    VERTICAL
+                  </Button>
+                  <Button
+                    onClick={() => setShipOrientation(prev => prev === 'horizontal' ? 'vertical' : 'horizontal')}
+                    className="text-white font-bold px-4 py-3.5 w-full flex items-center justify-center gap-2 rounded-lg"
+                    style={{ fontFamily: 'Rajdhani, sans-serif', backgroundColor: '#f59e0b' }}
+                  >
+                    <RotateCw className="w-4 h-4" />
+                    ROTATE
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {gamePhase === 'battle' && (
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ fontFamily: 'Teko, sans-serif', color: '#ef4444' }}>◈ HOSTILE SECTOR ◈</h2>
+              <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest" style={{ 
+              fontFamily: 'Teko, sans-serif', 
+              color: '#ef4444',
+              textShadow: '0 0 2px rgba(0, 0, 0, 0.95), 0 0 6px rgba(239, 68, 68, 0.7), 0 0 12px rgba(239, 68, 68, 0.4)'
+            }}>◈ HOSTILE SECTOR ◈</h2>
               <div 
                 className="relative inline-block"
-                onMouseMove={(e) => {
+                onMouseMove={() => {
                   if (isPlayerTurn && !attackInProgress) {
-                    setCrosshairPixel({ x: e.clientX, y: e.clientY });
                   }
                 }}
                 onMouseLeave={() => {
-                  setCrosshairPixel(null);
                 }}
               >
-                {renderBoard(aiBoard, false, aiGridRef)}
+                <img 
+                  src="/img/hostile_overlay.png" 
+                  alt="" 
+                  className="soldier-overlay soldier-overlay-hostile"
+                />
+                {renderBoard(aiBoard, false, aiGridRef, gamePhase === 'battle')}
                 <ShipOverlays
                   placements={aiPlacements}
                   gridRef={aiGridRef}
@@ -1236,8 +1731,8 @@ function App() {
                 {aiShips.map(ship => (
                   <div 
                     key={ship.id} 
-                    className={`text-sm font-semibold`}
-                    style={{ fontFamily: 'Rajdhani, sans-serif', color: ship.sunk ? '#ef4444' : '#94a3b8' }}
+                    className={`text-sm font-semibold ${ship.sunk ? '' : 'mw-type-white--muted'}`}
+                    style={{ fontFamily: 'Rajdhani, sans-serif', color: ship.sunk ? '#ef4444' : undefined }}
                   >
                     {ship.name}: {ship.sunk ? '💀 SUNK' : '❓ UNKNOWN'}
                   </div>
@@ -1265,12 +1760,23 @@ function App() {
             playerGridRef={playerGridRef}
             aiGridRef={aiGridRef}
           />
-          <SonarRadar />
+          <EffectsOverlay
+            gridRef={playerGridRef}
+            effects={playerEffects}
+            onExplosionEnd={(key) => swapToFire(true, key)}
+          />
+          <EffectsOverlay
+            gridRef={aiGridRef}
+            effects={aiEffects}
+            onExplosionEnd={(key) => swapToFire(false, key)}
+          />
+          <div className="sonar-bottom-left">
+            <SonarRadar />
+          </div>
           {isPlayerTurn && !attackInProgress && (
             <TargetingOverlay 
               gridRef={aiGridRef}
               crosshairPosition={crosshairPosition}
-              crosshairPixel={crosshairPixel}
             />
           )}
         </>

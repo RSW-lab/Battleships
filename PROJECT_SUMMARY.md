@@ -3,10 +3,12 @@
 ## Overview
 A fully functional Fleet Command Ops Battleships game with AI opponent, realistic ship visuals, and immersive modern military tactical theming. Built with React + TypeScript + Vite + Tailwind CSS.
 
-**Deployed at:** https://battleships-game-27hrkx3v.devinapps.com (Best Version V3)  
+**Deployed at:** https://battleshipsgameapp-4e538ovk.devinapps.com (Latest with MW Visual Polish + All Fixes)  
+**Previous deployment:** https://battleships-game-27hrkx3v.devinapps.com (Best Version V3)  
 **Legacy deployment (outdated):** https://battleships-game-7m8gss8s.devinapps.com  
 **GitHub repo:** https://github.com/RSW-lab/Battleships  
-**Current Stable Version:** Best Version V3 (commit 436efe0, tagged as `Best-Version-V3`)
+**Current Branch:** devin/1763167358-gameplay-improvements (PR #11)  
+**Base Version:** Best Version V3 (commit 436efe0, tagged as `Best-Version-V3`)
 
 ---
 
