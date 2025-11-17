@@ -710,3 +710,265 @@ Verified rubble appears on all cells of sunk ships, replacing flame effects.
 **Impact:**
 All 8 user-reported issues resolved. Game now has proper turn-based mechanics, persistent visual feedback for hits, modern military aesthetic, and improved asset quality. Ready for deployment and user testing.
 
+
+---
+
+## Error 12-25: Drag-and-Drop Ship Placement Console Implementation
+
+**Date:** November 17, 2025  
+**Session:** f91c6993404f4839baa01f9bbf29ec11  
+**Severity:** Major Redesign  
+**Status:** ✅ Implemented
+
+### Requirements
+User requested complete redesign of ship placement screen with:
+1. Full-screen HUD frame border (metal frame with bolts and naval hardware)
+2. Two-column layout inside frame (70% grid left, 30% ship sprites right)
+3. Drag-and-drop ship placement functionality
+4. R key rotation during drag
+5. Remove all existing JTAC UI elements (atmosphere, metadata, asset cards)
+6. Clean green 15×15 grid matching STRATEGY PANEL aesthetic
+
+### Implementation Timeline
+
+#### Phase 1: Component Creation
+Created new `PlacementConsole` component (331 lines) with:
+- Full-screen HUD frame container with aspect-ratio: 1456/816
+- Two-column CSS grid layout (grid-template-columns: 7fr 3fr)
+- Clean 15×15 grid without labels on left side
+- Vertically stacked draggable ship sprites on right side
+- Custom pointer event handlers for drag-and-drop
+- Drag preview showing ship footprint with valid/invalid highlighting
+- R key rotation during drag
+- Collision detection and snap-to-grid functionality
+
+#### Phase 2: App.tsx Integration
+Modified `App.tsx` to:
+- Add import for `PlacementConsole` component
+- Add early return when `gamePhase === 'placement'` to route to PlacementConsole
+- Create `handlePlacementComplete` callback
+- Create wrapper functions to adapt existing game logic signatures
+
+### Errors Encountered and Fixed
+
+#### Error 12: TS6133 - Unused Parameter 'placements'
+**Line:** 1439  
+**Message:** `'placements' is declared but its value is never read.`
+
+**Root Cause:** The `handlePlacementComplete` function was defined with a `placements` parameter that was never used.
+
+**Solution:** Removed the unused parameter.
+```typescript
+// Before:
+const handlePlacementComplete = (placements: Array<...>) => { ... }
+
+// After:
+const handlePlacementComplete = () => { ... }
+```
+
+**Status:** ✅ Fixed
+
+#### Error 13: TS2322 - Function Signature Mismatch for canPlaceShip
+**Line:** 1446  
+**Message:** Type mismatch between expected and provided function signatures.
+
+**Root Cause:** Existing `canPlaceShip` takes `(board, row, col, width, length, orientation)` but `PlacementConsole` expects `(board, row, col, ship, orientation)`.
+
+**Solution:** Created wrapper function to adapt the signature.
+```typescript
+const canPlaceShipWrapper = (board: Cell[][], row: number, col: number, ship: Ship, orientation: 'horizontal' | 'vertical'): boolean => {
+  return canPlaceShip(board, row, col, ship.width, ship.length, orientation)
+}
+```
+
+**Status:** ✅ Fixed
+
+#### Error 14: TS2322 - Function Signature Mismatch for placeShip
+**Line:** 1450  
+**Message:** Type mismatch between expected and provided function signatures.
+
+**Root Cause:** Existing `placeShip` takes `(board, row, col, width, length, orientation, shipId)` but `PlacementConsole` expects `(board, row, col, ship, orientation)`.
+
+**Solution:** Created wrapper function to adapt the signature.
+```typescript
+const placeShipWrapper = (board: Cell[][], row: number, col: number, ship: Ship, orientation: 'horizontal' | 'vertical'): Cell[][] => {
+  return placeShip(board, row, col, ship.width, ship.length, orientation, ship.id)
+}
+```
+
+**Status:** ✅ Fixed
+
+#### Errors 15-23: TS2367 - Unreachable gamePhase === 'placement' Checks (9 errors)
+**Lines:** Multiple (1544, 1632, 1661, 1686, 1707, 1750, etc.)  
+**Message:** `This comparison appears to be unintentional because the types '"battle" | "gameOver"' and '"placement"' have no overlap.`
+
+**Root Cause:** Old placement UI code still existed in the main return statement with checks for `gamePhase === 'placement'`. These checks were unreachable since we route to `PlacementConsole` earlier when `gamePhase === 'placement'`, making TypeScript detect that `gamePhase` can only be `'battle' | 'gameOver'` in that code path.
+
+**Solution:** Removed entire old placement UI block (~200 lines) including:
+- JTAC atmosphere effects (fog layers, scanlines, vignette, radar arcs)
+- Military dashboard frame with corner decorations
+- Placement HUD overlay with ticker, systems panel, threat indicator
+- HUD metadata blocks (GPS SYNC, SATCOM, CALLSIGN, FLEET STATUS, OPS CONSOLE)
+- Header metadata corner clusters (IFF AUTH, COMMS LINK, DATALINK, MISSION PHASE)
+- Dynamic asset status in header
+- Compass strip
+- JTAC asset panel with holographic ship cards
+- Orientation buttons (HORIZONTAL, VERTICAL, ROTATE)
+
+**Status:** ✅ Fixed (all 9 errors resolved by removing old code)
+
+#### Error 24: TS6133 - Unused Import 'RotateCw'
+**Line:** 5  
+**Message:** `'RotateCw' is declared but its value is never read.`
+
+**Root Cause:** The `RotateCw` icon was imported from `lucide-react` but was only used in the old orientation buttons that were removed.
+
+**Solution:** Removed `RotateCw` from the import statement.
+```typescript
+// Before:
+import { Trophy, RotateCcw, Info, RotateCw } from 'lucide-react'
+
+// After:
+import { Trophy, RotateCcw, Info } from 'lucide-react'
+```
+
+**Status:** ✅ Fixed
+
+#### Error 25: TS6133 - Unused Function 'HudFrameViewport'
+**Line:** 438  
+**Message:** `'HudFrameViewport' is declared but its value is never read.`
+
+**Root Cause:** The `HudFrameViewport` component was created in an earlier iteration but is no longer used since the `PlacementConsole` component handles the HUD frame internally.
+
+**Solution:** Removed the entire `HudFrameViewport` function (93 lines).
+
+**Status:** ✅ Fixed
+
+### Build Results
+
+**First Build Attempt:**
+- 14 TypeScript errors (1 unused parameter, 2 signature mismatches, 9 unreachable checks, 1 unused import, 1 unused function)
+
+**Second Build Attempt (after fixing errors 12-23):**
+- 2 TypeScript errors (unused import, unused function)
+
+**Third Build Attempt (after fixing errors 24-25):**
+- ✅ SUCCESS - 0 errors
+- Build time: 2.81s
+- Bundle size: 211.81 kB (gzip: 67.37 kB)
+
+### Local Testing
+
+**Command:** `npm run dev`  
+**URL:** http://localhost:5173
+
+**Test Results:**
+- ✅ Full-screen HUD frame displaying correctly
+- ✅ Two-column layout working (grid left, ships right)
+- ✅ Clean green 15×15 grid with no labels
+- ✅ All 7 ship sprites vertically stacked on right side
+- ✅ HUD frame overlay with transparent center
+- ✅ No console errors (only Vite connection logs)
+
+**Browser Console Output:**
+```
+[debug] [vite] connecting...
+[info] Download the React DevTools for a better development experience
+[debug] [vite] connected.
+```
+
+**Screenshots Captured:**
+- Title screen
+- Instructions screen
+- PlacementConsole initial view
+- PlacementConsole with ships visible
+- PlacementConsole final view
+
+**Testing Limitations:**
+Due to browser automation limitations, actual drag-and-drop interaction was not tested. Manual testing by the user is required to verify:
+- Drag-and-drop functionality
+- R key rotation during drag
+- Collision detection
+- Snap-to-grid behavior
+- Transition to battle phase after all ships placed
+
+### Files Created/Modified
+
+**Created:**
+1. `src/components/PlacementConsole.tsx` (331 lines)
+   - New component for drag-and-drop ship placement
+   - Full-screen HUD frame layout
+   - Two-column grid layout
+   - Custom pointer event handlers
+   - Drag preview and collision detection
+
+**Modified:**
+1. `src/App.tsx`
+   - Added PlacementConsole import
+   - Added early return for placement phase routing
+   - Created wrapper functions for game logic integration
+   - Removed old JTAC placement UI code (~200 lines)
+   - Removed unused HudFrameViewport component (93 lines)
+   - Removed unused RotateCw import
+   - Net change: 331 insertions(+), 363 deletions(-)
+
+### Deployment
+
+**Branch:** devin/1763401262-hud-missile-improvements  
+**PR:** #13 - https://github.com/RSW-lab/Battleships/pull/13  
+**Commit:** 2f81bd8  
+**Production URL:** https://jtac-battleships-app-ir6gb94a.devinapps.com
+
+**Deployment Status:** ✅ Successfully deployed
+
+### Key Technical Decisions
+
+1. **Custom Pointer Events vs HTML5 Drag-and-Drop**
+   - Chose custom `onPointerDown/Move/Up` handlers for better control
+   - Avoids adding new dependencies (react-dnd)
+   - More flexible for custom preview and rotation logic
+
+2. **Wrapper Functions for Game Logic Integration**
+   - Created adapter functions instead of modifying core game logic
+   - Maintains backward compatibility with existing code
+   - Cleaner separation of concerns
+
+3. **Percentage-Based Positioning**
+   - Used percentage-based positioning to align grid with HUD frame opening
+   - Ensures responsive scaling at different screen sizes
+   - Avoids hardcoded pixel values
+
+4. **Component Architecture**
+   - Created new component instead of modifying existing one
+   - Cleaner implementation for complete redesign
+   - Easier to test and maintain
+
+### Testing Checklist for User
+
+**⚠️ CRITICAL - Manual testing required:**
+
+- [ ] Drag each of the 7 ships from right panel onto grid
+- [ ] Press R while dragging to rotate ship orientation
+- [ ] Verify ships cannot overlap or be adjacent
+- [ ] Verify ships snap to valid cells on drop
+- [ ] Verify green (valid) and red (invalid) cell highlighting during drag
+- [ ] Place all 7 ships and verify transition to battle phase
+- [ ] Test on mobile/touch devices for pointer event compatibility
+- [ ] Test edge cases (rapid clicking, dragging outside grid, etc.)
+- [ ] Verify HUD frame alignment at different screen sizes
+
+### Summary Statistics
+
+**Total Errors:** 14 (numbered 12-25 in this session)  
+**TypeScript Errors:** 14  
+**Runtime Errors:** 0  
+**All Errors Resolved:** ✅ Yes  
+**Build Status:** ✅ Passing  
+**Deployment Status:** ✅ Deployed
+
+---
+
+**Last Updated:** November 17, 2025  
+**Session:** f91c6993404f4839baa01f9bbf29ec11  
+**Maintained By:** Devin AI  
+**Project Owner:** Rudi Willner
