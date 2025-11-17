@@ -427,61 +427,81 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
               gap: '8px',
             }}
           >
-            {/* Title Header */}
+            {/* Title Header with Dark Backplate */}
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                pointerEvents: 'auto',
+                background: 'rgba(0, 12, 6, 0.65)',
+                backdropFilter: 'blur(2px)',
+                padding: '6px 10px',
+                border: '1px solid rgba(0, 255, 102, 0.25)',
+                boxShadow: 'inset 0 0 6px rgba(0, 255, 102, 0.15)',
+                borderRadius: '4px',
+                marginBottom: '4px',
               }}
             >
-              <h1
+              <div
                 style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontSize: 'clamp(14px, 1.4vw, 20px)',
-                  fontWeight: 800,
-                  letterSpacing: '0.16em',
-                  textTransform: 'uppercase',
-                  background: 'linear-gradient(to bottom, #ffffff 0%, #f5fff2 40%, #b4ffb5 70%, #4bff6f 100%)',
-                  WebkitBackgroundClip: 'text',
-                  backgroundClip: 'text',
-                  color: 'transparent',
-                  textShadow: '0 0 2px rgba(0, 0, 0, 0.95), 0 0 4px rgba(255, 255, 255, 0.8), 0 0 10px rgba(0, 255, 120, 0.85), 0 0 22px rgba(0, 255, 120, 0.6)',
-                  margin: 0,
-                }}
-              >
-                Fleet Asset Deployment
-              </h1>
-              <button
-                onClick={() => setShowInstructions(!showInstructions)}
-                style={{
-                  background: 'rgba(0, 255, 102, 0.2)',
-                  border: '2px solid rgba(0, 255, 102, 0.6)',
-                  borderRadius: '50%',
-                  width: '24px',
-                  height: '24px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer',
+                  gap: '8px',
                   pointerEvents: 'auto',
-                  color: '#00FF66',
-                  transition: 'all 0.3s ease',
-                  flexShrink: 0,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 255, 102, 0.4)'
-                  e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 255, 102, 0.6)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 255, 102, 0.2)'
-                  e.currentTarget.style.boxShadow = 'none'
                 }}
               >
-                <Info size={16} />
-              </button>
+                <h1
+                  style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: 'clamp(16px, 1.6vw, 22px)',
+                    fontWeight: 800,
+                    letterSpacing: '0.20em',
+                    textTransform: 'uppercase',
+                    background: 'linear-gradient(to bottom, #ffffff 0%, #f5fff2 40%, #b4ffb5 70%, #4bff6f 100%)',
+                    WebkitBackgroundClip: 'text',
+                    backgroundClip: 'text',
+                    color: 'transparent',
+                    textShadow: '0 0 2px rgba(0, 0, 0, 0.95), 0 0 4px rgba(255, 255, 255, 0.8), 0 0 10px rgba(0, 255, 120, 0.85), 0 0 22px rgba(0, 255, 120, 0.6)',
+                    margin: 0,
+                  }}
+                >
+                  Fleet Asset Deployment
+                </h1>
+                <button
+                  onClick={() => setShowInstructions(!showInstructions)}
+                  style={{
+                    background: 'rgba(0, 255, 102, 0.2)',
+                    border: '2px solid rgba(0, 255, 102, 0.6)',
+                    borderRadius: '50%',
+                    width: '24px',
+                    height: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    pointerEvents: 'auto',
+                    color: '#00FF66',
+                    transition: 'all 0.3s ease',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(0, 255, 102, 0.4)'
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 255, 102, 0.6)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(0, 255, 102, 0.2)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                >
+                  <Info size={16} />
+                </button>
+              </div>
+              {/* Divider Line */}
+              <div
+                style={{
+                  height: '1px',
+                  background: 'rgba(0, 255, 102, 0.3)',
+                  marginTop: '6px',
+                }}
+              />
             </div>
 
             {/* Naval Assets Panel */}

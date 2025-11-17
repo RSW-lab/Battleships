@@ -362,26 +362,44 @@ function AnimatedMissile({
     const duration = 600
     const startTime = startTimeRef.current
 
-    const arcHeight = -150
-    const midX = (startX + endX) / 2
-    const midY = (startY + endY) / 2 + arcHeight
+    const vx = endX - startX
+    const vy = endY - startY
+    const baseAngle = Math.atan2(vy, vx)
+    const baseAngleDeg = baseAngle * 180 / Math.PI
+    
+    const distance = Math.sqrt(vx * vx + vy * vy)
+    const amplitude = Math.min(24, 0.08 * distance)
+    
+    const nx = -Math.sin(baseAngle)
+    const ny = Math.cos(baseAngle)
 
     const animate = () => {
       const elapsed = Date.now() - startTime
       const progress = Math.min(elapsed / duration, 1)
 
       const t = progress
-      const oneMinusT = 1 - t
-
-      const x = oneMinusT * oneMinusT * startX + 2 * oneMinusT * t * midX + t * t * endX
-      const y = oneMinusT * oneMinusT * startY + 2 * oneMinusT * t * midY + t * t * endY
-
-      const dx = 2 * oneMinusT * (midX - startX) + 2 * t * (endX - midX)
-      const dy = 2 * oneMinusT * (midY - startY) + 2 * t * (endY - midY)
       
-      const angle = Math.atan2(dy, dx) * 180 / Math.PI + 90
+      const perpOffset = amplitude * Math.sin(Math.PI * t)
+      const x = startX + vx * t + nx * perpOffset
+      const y = startY + vy * t + ny * perpOffset
+      
+      const dPerpOffset = amplitude * Math.PI * Math.cos(Math.PI * t)
+      const tangentX = vx + nx * dPerpOffset
+      const tangentY = vy + ny * dPerpOffset
+      
+      let angleDeg = Math.atan2(tangentY, tangentX) * 180 / Math.PI
+      
+      const normalizeAngle = (a: number) => {
+        while (a > 180) a -= 360
+        while (a < -180) a += 360
+        return a
+      }
+      
+      const delta = normalizeAngle(angleDeg - baseAngleDeg)
+      const clampedDelta = Math.max(-15, Math.min(15, delta))
+      angleDeg = baseAngleDeg + clampedDelta + 90
 
-      setPosition({ x, y, angle })
+      setPosition({ x, y, angle: angleDeg })
 
       if (progress < 1) {
         animationFrameRef.current = requestAnimationFrame(animate)
@@ -412,7 +430,7 @@ function AnimatedMissile({
           src="/assets/missile_sprite.png"
           alt="missile"
           style={{
-            width: '21px',
+            width: '42px',
             height: 'auto',
             filter: 'drop-shadow(0 0 4px rgba(255, 140, 0, 0.5))',
             pointerEvents: 'none',
