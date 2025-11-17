@@ -418,7 +418,9 @@ function AnimatedMissile({
     }
   }, [missile, playerMetrics, aiMetrics, playerGridRef, aiGridRef])
 
-  const spriteSize = Math.max(18, Math.round((cellSize || 0) * 0.7))
+  const spriteSize = Math.max(24, Math.round((cellSize || 0) * 0.7))
+  
+  if (!fromMetrics.cell) return null
   
   return (
     <div
@@ -426,8 +428,10 @@ function AnimatedMissile({
       style={{
         left: 0,
         top: 0,
-        transform: `translate3d(${position.x}px, ${position.y}px, 0) rotate(${position.angle}deg)`,
+        transform: `translate3d(${position.x - spriteSize/2}px, ${position.y - spriteSize/2}px, 0) rotate(${position.angle}deg)`,
         transformOrigin: 'center center',
+        willChange: 'transform, opacity',
+        opacity: 0.98,
       }}
     >
       <img
@@ -440,6 +444,7 @@ function AnimatedMissile({
           pointerEvents: 'none',
         }}
         onError={(e) => console.error('Missile image failed to load:', e)}
+        onLoad={() => console.log('Missile image loaded successfully')}
       />
     </div>
   )
@@ -719,7 +724,8 @@ function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefOb
 function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [enabled, setEnabled] = useState(() => {
-    return localStorage.getItem('audio-enabled') === 'true'
+    const stored = localStorage.getItem('audio-enabled')
+    return stored === null ? true : stored === 'true'
   })
 
   useEffect(() => {
