@@ -949,6 +949,719 @@
   }
 }
 
+/* Phase 4: Military System Banner Header Enhancements */
+
+/* Corner Metadata Clusters */
+.header-metadata-corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 255, 120, 0.3);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.header-metadata-tl {
+  top: 12px;
+  left: 12px;
+}
+
+.header-metadata-tr {
+  top: 12px;
+  right: 12px;
+}
+
+.header-metadata-bl {
+  bottom: 12px;
+  left: 12px;
+}
+
+.header-metadata-br {
+  bottom: 12px;
+  right: 12px;
+}
+
+.metadata-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.metadata-value {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(0, 255, 120, 0.9);
+  text-shadow: 0 0 6px rgba(0, 255, 120, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Dynamic Asset Status Line */
+.header-asset-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.asset-status-label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.asset-status-value {
+  color: rgba(0, 255, 120, 0.9);
+  text-shadow: 0 0 6px rgba(0, 255, 120, 0.5);
+  font-weight: 700;
+}
+
+.asset-status-separator {
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0 4px;
+}
+
+/* Compass Strip */
+.header-compass-strip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6));
+  border-top: 1px solid rgba(0, 255, 120, 0.3);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.compass-tick {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(0, 255, 120, 0.8);
+  text-shadow: 0 0 6px rgba(0, 255, 120, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.compass-tick-minor {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-shadow: 0 0 4px rgba(0, 255, 120, 0.3);
+}
+
+/* Phase 5: HUD Metadata Blocks (Periphery) */
+
+.hud-metadata-block {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 255, 120, 0.25);
+  pointer-events: none;
+  z-index: 15;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+}
+
+.hud-metadata-tl {
+  top: 120px;
+  left: 40px;
+}
+
+.hud-metadata-tr {
+  top: 120px;
+  right: 40px;
+}
+
+.hud-metadata-bl {
+  bottom: 120px;
+  left: 40px;
+}
+
+.hud-metadata-br-top {
+  bottom: 180px;
+  right: 40px;
+}
+
+.hud-metadata-left {
+  top: 50%;
+  left: 40px;
+  transform: translateY(-50%);
+}
+
+.hud-metadata-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.hud-metadata-value {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(0, 255, 120, 0.85);
+  text-shadow: 0 0 5px rgba(0, 255, 120, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  animation: data-flicker 4s ease-in-out infinite;
+}
+
+/* Phase 6: Micro-Animations */
+
+/* Data Flicker Animation */
+@keyframes data-flicker {
+  0%, 100% { opacity: 0.85; }
+  5% { opacity: 0.7; }
+  10% { opacity: 0.85; }
+  15% { opacity: 0.75; }
+  20%, 80% { opacity: 0.85; }
+  85% { opacity: 0.8; }
+  90% { opacity: 0.85; }
+}
+
+/* Apply flicker to all metadata values */
+.metadata-value,
+.asset-status-value {
+  animation: data-flicker 5s ease-in-out infinite;
+}
+
+/* Blinking Cursor Effect */
+@keyframes cursor-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.hud-metadata-value::after,
+.metadata-value::after {
+  content: '_';
+  animation: cursor-blink 1.2s step-end infinite;
+  margin-left: 2px;
+}
+
+/* Soft Distortion Pulse */
+@keyframes distortion-pulse {
+  0%, 100% { 
+    transform: scale(1) translateX(0);
+    filter: blur(0px);
+  }
+  50% { 
+    transform: scale(1.002) translateX(0.5px);
+    filter: blur(0.3px);
+  }
+}
+
+.jtac-atmosphere {
+  animation: distortion-pulse 8s ease-in-out infinite;
+}
+
+/* Triangle Reticle Pings */
+@keyframes reticle-ping {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+.placement-hud-overlay::before,
+.placement-hud-overlay::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  pointer-events: none;
+  animation: reticle-ping 3s ease-out infinite;
+}
+
+.placement-hud-overlay::before {
+  top: 60px;
+  left: 60px;
+  border-width: 0 12px 12px 0;
+  border-color: transparent rgba(0, 255, 120, 0.6) transparent transparent;
+}
+
+.placement-hud-overlay::after {
+  bottom: 60px;
+  right: 60px;
+  border-width: 12px 0 0 12px;
+  border-color: transparent transparent transparent rgba(0, 255, 120, 0.6);
+  animation-delay: 1.5s;
+}
+
+/* Text Jitter Animation */
+@keyframes text-jitter {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-0.5px, 0.3px); }
+  20% { transform: translate(0.3px, -0.5px); }
+  30% { transform: translate(-0.3px, 0.5px); }
+  40% { transform: translate(0.5px, -0.3px); }
+  50% { transform: translate(-0.5px, -0.5px); }
+  60% { transform: translate(0.5px, 0.5px); }
+  70% { transform: translate(-0.3px, -0.3px); }
+  80% { transform: translate(0.3px, 0.3px); }
+  90% { transform: translate(-0.5px, 0.5px); }
+}
+
+.hud-ticker .ticker-content,
+.hud-metadata-label {
+  animation: text-jitter 6s ease-in-out infinite;
+}
+
+/* Scanline Drift Animation */
+@keyframes scanline-drift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(100%); }
+}
+
+/* Reduce animations for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .hud-metadata-value,
+  .metadata-value,
+  .asset-status-value,
+  .jtac-atmosphere,
+  .hud-ticker .ticker-content,
+  .hud-metadata-label {
+    animation: none;
+  }
+  
+  .hud-metadata-value::after,
+  .metadata-value::after {
+    animation: none;
+    opacity: 1;
+  }
+  
+  .placement-hud-overlay::before,
+  .placement-hud-overlay::after {
+    display: none;
+  }
+}
+
+/* Phase 7: Ship Placement Feedback */
+
+/* Enhanced Holographic Preview Cells */
+.ring-2.ring-yellow-400 {
+  background: linear-gradient(135deg, 
+    rgba(0, 255, 120, 0.15) 0%, 
+    rgba(0, 255, 120, 0.08) 50%, 
+    rgba(0, 255, 120, 0.15) 100%) !important;
+  box-shadow: 
+    inset 0 0 20px rgba(0, 255, 120, 0.3),
+    0 0 15px rgba(0, 255, 120, 0.4) !important;
+  border: 2px solid rgba(0, 255, 120, 0.7) !important;
+  animation: holographic-pulse 2s ease-in-out infinite;
+}
+
+@keyframes holographic-pulse {
+  0%, 100% { 
+    opacity: 0.8;
+    box-shadow: 
+      inset 0 0 20px rgba(0, 255, 120, 0.3),
+      0 0 15px rgba(0, 255, 120, 0.4);
+  }
+  50% { 
+    opacity: 1;
+    box-shadow: 
+      inset 0 0 25px rgba(0, 255, 120, 0.4),
+      0 0 20px rgba(0, 255, 120, 0.6);
+  }
+}
+
+/* Scanlines on preview cells */
+.ring-2.ring-yellow-400::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    rgba(0, 255, 120, 0.1) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  pointer-events: none;
+  animation: scanline-drift 3s linear infinite;
+}
+
+/* Locking Clamp Animation on Placement */
+@keyframes lock-clamp {
+  0% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(0.95);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Pulse Wave Animation */
+@keyframes pulse-wave {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Apply lock animation to newly placed ships */
+.board-strategy [data-cell] {
+  position: relative;
+}
+
+/* Invalid Placement Indicator */
+@keyframes invalid-flash {
+  0%, 100% { 
+    border-color: rgba(255, 0, 0, 0.8);
+    background: rgba(255, 0, 0, 0.2);
+  }
+  50% { 
+    border-color: rgba(255, 0, 0, 1);
+    background: rgba(255, 0, 0, 0.35);
+  }
+}
+
+/* Rotation Icon Indicator */
+@keyframes rotation-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(90deg) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* Grid Highlight Enhancement */
+.ring-2.ring-yellow-400::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 1px solid rgba(0, 255, 120, 0.4);
+  pointer-events: none;
+  animation: grid-highlight-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes grid-highlight-pulse {
+  0%, 100% { 
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* Corner Brackets on Preview Cells */
+.ring-2.ring-yellow-400 {
+  position: relative;
+}
+
+/* Reduce Phase 7 animations for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .ring-2.ring-yellow-400,
+  .ring-2.ring-yellow-400::before,
+  .ring-2.ring-yellow-400::after {
+    animation: none !important;
+  }
+}
+
+/* Phase 9: Layout Refinement */
+
+/* Improved Layout Container */
+.max-w-7xl {
+  max-width: 1400px !important;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Enhanced Grid Centering */
+.flex.flex-col.lg\:flex-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 48px;
+  margin-bottom: 32px;
+}
+
+/* Fixed Ship Asset Panel Positioning */
+.jtac-asset-panel {
+  position: sticky;
+  top: 120px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 255, 120, 0.25);
+  border-radius: 4px;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.8);
+}
+
+/* Custom Scrollbar for Asset Panel */
+.jtac-asset-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.jtac-asset-panel::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+}
+
+.jtac-asset-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 120, 0.3);
+  border-radius: 4px;
+}
+
+.jtac-asset-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 120, 0.5);
+}
+
+/* Better Spacing Between Panels */
+.section-bridge {
+  height: 24px;
+  margin: 16px 0;
+}
+
+/* Centered Header */
+.header-banner {
+  margin-bottom: 32px;
+  padding: 40px 0 32px;
+}
+
+/* Grid Container Improvements */
+.grid-frame {
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(28, 32, 36, 0.2) !important;
+  box-shadow: 
+    0 0 32px rgba(0, 0, 0, 0.9),
+    inset 0 0 24px rgba(0, 0, 0, 0.6);
+}
+
+/* Board Strategy Grid */
+.board-strategy {
+  position: relative;
+  z-index: 1;
+}
+
+/* Tactical Consistency - Alignment */
+.text-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Responsive Layout Adjustments */
+@media (max-width: 1024px) {
+  .flex.flex-col.lg\:flex-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+  
+  .jtac-asset-panel {
+    position: relative;
+    top: 0;
+    max-height: none;
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  .max-w-7xl {
+    padding: 0 16px;
+  }
+}
+
+/* Improved Breathing Room */
+.space-y-6 > * + * {
+  margin-top: 24px !important;
+}
+
+.space-y-3 > * + * {
+  margin-top: 12px !important;
+}
+
+/* Better Panel Separation */
+.jtac-asset-card {
+  margin-bottom: 16px;
+}
+
+.jtac-asset-card:last-child {
+  margin-bottom: 0;
+}
+
+/* Phase 10: Final Polish */
+
+/* Ensure all decorative overlays have pointer-events: none */
+.jtac-atmosphere,
+.jtac-fog-layer-1,
+.jtac-fog-layer-2,
+.jtac-scanlines,
+.jtac-vignette,
+.jtac-radar-arcs,
+.military-dashboard-frame,
+.placement-hud-overlay,
+.header-metadata-corner,
+.hud-metadata-block,
+.header-compass-strip,
+.radar-sweep-overlay,
+.bearing-ticks {
+  pointer-events: none !important;
+}
+
+/* Z-index layering consistency */
+.jtac-atmosphere {
+  z-index: 0;
+}
+
+.board-strategy {
+  z-index: 1;
+}
+
+.ring-2.ring-yellow-400 {
+  z-index: 2;
+}
+
+.placement-hud-overlay {
+  z-index: 10;
+}
+
+.hud-metadata-block {
+  z-index: 15;
+}
+
+.header-metadata-corner {
+  z-index: 10;
+}
+
+/* Smooth transitions for all interactive elements */
+.jtac-asset-card,
+button,
+.cursor-pointer {
+  transition: all 0.3s ease;
+}
+
+/* Ensure MW2 HUD green consistency */
+:root {
+  --mw2-hud-green: #00FF78;
+  --mw2-hud-green-dark: #00CC60;
+  --mw2-hud-green-light: #66FFB3;
+}
+
+/* Performance optimization - GPU acceleration */
+.jtac-atmosphere,
+.radar-sweep,
+.jtac-asset-card,
+.hud-metadata-block,
+.header-metadata-corner {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Cohesive glow effects */
+.mw-type-green,
+.jtac-asset-name,
+.metadata-value,
+.hud-metadata-value,
+.asset-status-value {
+  text-shadow: 
+    0 0 2px rgba(0, 0, 0, 0.95),
+    0 0 6px rgba(0, 255, 120, 0.6),
+    0 0 12px rgba(0, 255, 120, 0.3);
+}
+
+/* Ensure all animations respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .jtac-atmosphere,
+  .radar-sweep,
+  .jtac-asset-card,
+  .hud-metadata-block,
+  .header-metadata-corner {
+    will-change: auto;
+  }
+}
+
+/* Ensure proper contrast for accessibility */
+.metadata-label,
+.hud-metadata-label,
+.asset-status-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 700;
+}
+
+/* Focus states for keyboard navigation */
+button:focus-visible,
+.cursor-pointer:focus-visible {
+  outline: 2px solid rgba(0, 255, 120, 0.8);
+  outline-offset: 2px;
+}
+
+/* Ensure text remains readable */
+.jtac-asset-label,
+.jtac-info-label,
+.metadata-label,
+.hud-metadata-label {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 .hud-radar {
   position: relative;
   width: 120px;

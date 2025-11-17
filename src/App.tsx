@@ -1460,12 +1460,61 @@ function App() {
                 <div className="threat-fill" style={{ width: '20%' }} />
               </div>
             </div>
+            
+            {/* Phase 5: Additional HUD Metadata Blocks */}
+            <div className="hud-metadata-block hud-metadata-tl">
+              <div className="hud-metadata-label">GPS SYNC</div>
+              <div className="hud-metadata-value">LOCKED</div>
+            </div>
+            
+            <div className="hud-metadata-block hud-metadata-tr">
+              <div className="hud-metadata-label">SATCOM</div>
+              <div className="hud-metadata-value">ONLINE</div>
+            </div>
+            
+            <div className="hud-metadata-block hud-metadata-bl">
+              <div className="hud-metadata-label">CALLSIGN</div>
+              <div className="hud-metadata-value">VIPER-1</div>
+            </div>
+            
+            <div className="hud-metadata-block hud-metadata-br-top">
+              <div className="hud-metadata-label">FLEET STATUS</div>
+              <div className="hud-metadata-value">{currentShipIndex}/{playerShips.length}</div>
+            </div>
+            
+            <div className="hud-metadata-block hud-metadata-left">
+              <div className="hud-metadata-label">OPS CONSOLE</div>
+              <div className="hud-metadata-value">ACTIVE</div>
+            </div>
           </div>
         </>
       )}
       <div className="max-w-7xl mx-auto">
         <header className="header-banner mb-6">
           <div className="header-smoke-layer" />
+          
+          {/* Phase 4: Corner Metadata Clusters */}
+          {gamePhase === 'placement' && (
+            <>
+              <div className="header-metadata-corner header-metadata-tl">
+                <div className="metadata-label">IFF AUTH</div>
+                <div className="metadata-value">GREEN</div>
+              </div>
+              <div className="header-metadata-corner header-metadata-tr">
+                <div className="metadata-label">COMMS LINK</div>
+                <div className="metadata-value">SECURE</div>
+              </div>
+              <div className="header-metadata-corner header-metadata-bl">
+                <div className="metadata-label">DATALINK</div>
+                <div className="metadata-value">ACTIVE</div>
+              </div>
+              <div className="header-metadata-corner header-metadata-br">
+                <div className="metadata-label">MISSION PHASE</div>
+                <div className="metadata-value">DEPLOY</div>
+              </div>
+            </>
+          )}
+          
           <div className="header-inner">
             <div className="header-text-block">
               <div className="header-text-smoke" />
@@ -1475,12 +1524,43 @@ function App() {
               </h1>
               <h2 className="cod-subheading header-subtitle mw2-subtitle">{message}</h2>
               {gamePhase === 'placement' && (
-                <p className="header-hint mw-type-white--muted" style={{ fontSize: '12px' }}>
-                  ROTATION COMMAND: [R] — ORIENTATION: {shipOrientation.toUpperCase()}
-                </p>
+                <>
+                  <p className="header-hint mw-type-white--muted" style={{ fontSize: '12px' }}>
+                    ROTATION COMMAND: [R] — ORIENTATION: {shipOrientation.toUpperCase()}
+                  </p>
+                  {/* Phase 4: Dynamic Asset Status */}
+                  <div className="header-asset-status">
+                    <span className="asset-status-label">CURRENT ASSET:</span>
+                    <span className="asset-status-value">
+                      {currentShipIndex < playerShips.length 
+                        ? playerShips[currentShipIndex].name.toUpperCase()
+                        : 'ALL DEPLOYED'}
+                    </span>
+                    <span className="asset-status-separator">|</span>
+                    <span className="asset-status-label">BEARING:</span>
+                    <span className="asset-status-value">
+                      {shipOrientation === 'horizontal' ? '090°' : '000°'}
+                    </span>
+                  </div>
+                </>
               )}
             </div>
           </div>
+          
+          {/* Phase 4: Compass Strip */}
+          {gamePhase === 'placement' && (
+            <div className="header-compass-strip">
+              <div className="compass-tick">N</div>
+              <div className="compass-tick compass-tick-minor">030</div>
+              <div className="compass-tick">E</div>
+              <div className="compass-tick compass-tick-minor">120</div>
+              <div className="compass-tick">S</div>
+              <div className="compass-tick compass-tick-minor">210</div>
+              <div className="compass-tick">W</div>
+              <div className="compass-tick compass-tick-minor">300</div>
+            </div>
+          )}
+          
           <div className="hud-header-separator" />
         </header>
         
