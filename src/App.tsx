@@ -434,6 +434,100 @@ function AnimatedMissile({
   )
 }
 
+function HudFrameViewport({ children }: { children: React.ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
+
+  useEffect(() => {
+    const updateScale = () => {
+      if (!containerRef.current) return
+      
+      const FRAME_WIDTH = 1456
+      const FRAME_HEIGHT = 816
+      const OPENING_WIDTH = 1135
+      const OPENING_HEIGHT = 603
+      
+      const containerWidth = containerRef.current.offsetWidth
+      const containerHeight = containerRef.current.offsetHeight
+      
+      const openingWidthScaled = (OPENING_WIDTH / FRAME_WIDTH) * containerWidth
+      const openingHeightScaled = (OPENING_HEIGHT / FRAME_HEIGHT) * containerHeight
+      
+      const GRID_SIZE = 768
+      
+      const scaleX = openingWidthScaled / GRID_SIZE
+      const scaleY = openingHeightScaled / GRID_SIZE
+      const newScale = Math.min(scaleX, scaleY)
+      
+      setScale(newScale)
+    }
+
+    updateScale()
+    
+    const resizeObserver = new ResizeObserver(updateScale)
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current)
+    }
+    
+    return () => resizeObserver.disconnect()
+  }, [])
+
+  const OPENING_LEFT_PCT = (163 / 1456) * 100
+  const OPENING_TOP_PCT = (105 / 816) * 100
+  const OPENING_WIDTH_PCT = (1135 / 1456) * 100
+  const OPENING_HEIGHT_PCT = (603 / 816) * 100
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        width: 'min(92vw, 1456px)',
+        aspectRatio: '1456 / 816',
+        margin: '0 auto',
+      }}
+    >
+      {/* Inner viewport for the grid */}
+      <div
+        style={{
+          position: 'absolute',
+          left: `${OPENING_LEFT_PCT}%`,
+          top: `${OPENING_TOP_PCT}%`,
+          width: `${OPENING_WIDTH_PCT}%`,
+          height: `${OPENING_HEIGHT_PCT}%`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            transform: `scale(${scale})`,
+            transformOrigin: 'center center',
+          }}
+        >
+          {children}
+        </div>
+      </div>
+      
+      {/* Frame overlay with transparent center */}
+      <img
+        src="/img/hud_frame_overlay.png"
+        alt=""
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: 10,
+        }}
+      />
+    </div>
+  )
+}
+
 function SonarRadar() {
   return (
     <div className="hud-radar">
@@ -1583,22 +1677,34 @@ function App() {
         <div className="flex flex-col lg:flex-row justify-center gap-8 mb-8 items-start">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ ALLIED SECTOR ◈</h2>
-            <div className="relative inline-block">
-              {gamePhase === 'battle' && (
-                <img 
-                  src="/img/allied_overlay.png" 
-                  alt="" 
-                  className="soldier-overlay soldier-overlay-allied"
-                />
-              )}
-              {renderBoard(playerBoard, true, playerGridRef, gamePhase === 'battle')}
-              {(gamePhase === 'placement' || gamePhase === 'battle') && (
-                <ShipOverlays
-                  placements={playerPlacements}
-                  gridRef={playerGridRef}
-                />
-              )}
-            </div>
+            {gamePhase === 'placement' ? (
+              <HudFrameViewport>
+                <div className="relative inline-block">
+                  {renderBoard(playerBoard, true, playerGridRef, false)}
+                  <ShipOverlays
+                    placements={playerPlacements}
+                    gridRef={playerGridRef}
+                  />
+                </div>
+              </HudFrameViewport>
+            ) : (
+              <div className="relative inline-block">
+                {gamePhase === 'battle' && (
+                  <img 
+                    src="/img/allied_overlay.png" 
+                    alt="" 
+                    className="soldier-overlay soldier-overlay-allied"
+                  />
+                )}
+                {renderBoard(playerBoard, true, playerGridRef, gamePhase === 'battle')}
+                {gamePhase === 'battle' && (
+                  <ShipOverlays
+                    placements={playerPlacements}
+                    gridRef={playerGridRef}
+                  />
+                )}
+              </div>
+            )}
             {gamePhase === 'battle' && (
               <div className="mt-4 space-y-2">
                 {playerShips.map(ship => (
