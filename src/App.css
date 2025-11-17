@@ -275,6 +275,15 @@
   }
 }
 
+@keyframes radarSweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes radar-ping {
   0% {
     transform: scale(0.5);
@@ -361,7 +370,7 @@
     rgba(255, 255, 255, 0.98),
     rgba(255, 255, 255, 0.2)
   );
-  transform-origin: 0 50%;
+  transform-origin: 0% 50%;
   animation: radar-rotate 2.8s linear infinite;
   mix-blend-mode: screen;
   pointer-events: none;

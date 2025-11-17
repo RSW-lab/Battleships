@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Info } from 'lucide-react'
 
 interface Ship {
   id: number
@@ -24,6 +25,16 @@ interface DragState {
   orientation: 'horizontal' | 'vertical'
 }
 
+const SHIP_IMG: Record<string, string> = {
+  Carrier: '/ships/ShipCarrierHull.png',
+  Battleship: '/ships/ShipBattleshipHull.png',
+  Cruiser: '/ships/ShipCruiserHull.png',
+  Submarine: '/ships/ShipSubMarineHull.png',
+  Destroyer: '/ships/ShipDestroyerHull.png',
+  Rescue: '/ships/ShipRescue.png',
+  Patrol: '/ships/ShipPatrolHull.png',
+}
+
 export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, placeShip }: PlacementConsoleProps) {
   const [board, setBoard] = useState<any[][]>(() => 
     Array(15).fill(null).map(() => Array(15).fill({ state: 'empty' }))
@@ -31,9 +42,12 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
   const [placements, setPlacements] = useState<Array<{ shipId: number; startRow: number; startCol: number; orientation: 'horizontal' | 'vertical' }>>([])
   const [dragState, setDragState] = useState<DragState | null>(null)
   const [previewCells, setPreviewCells] = useState<Array<{ row: number; col: number; valid: boolean }>>([])
+  const [showInstructions, setShowInstructions] = useState(false)
+  const [gridSize, setGridSize] = useState(600)
   
   const containerRef = useRef<HTMLDivElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
+  const leftColumnRef = useRef<HTMLDivElement>(null)
   
   const BOARD_SIZE = 15
   const FRAME_WIDTH = 1456
@@ -51,6 +65,21 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
       onPlacementComplete(placements)
     }
   }, [placements, ships.length, onPlacementComplete])
+
+  useEffect(() => {
+    if (!leftColumnRef.current) return
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        const size = Math.min(width, height) * 0.9
+        setGridSize(size)
+      }
+    })
+
+    resizeObserver.observe(leftColumnRef.current)
+    return () => resizeObserver.disconnect()
+  }, [])
 
   useEffect(() => {
     if (!dragState) return
@@ -186,12 +215,177 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
             width: `${(OPENING_WIDTH / FRAME_WIDTH) * 100}%`,
             height: `${(OPENING_HEIGHT / FRAME_HEIGHT) * 100}%`,
             display: 'grid',
+            gridTemplateRows: 'auto 1fr',
             gridTemplateColumns: '7fr 3fr',
             gap: '2%',
             padding: '2%',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Title and Info Widget */}
+          <div
+            style={{
+              gridColumn: '1 / -1',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '16px',
+              marginBottom: '8px',
+              position: 'relative',
+            }}
+          >
+            <h1
+              style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                fontSize: 'clamp(24px, 3vw, 36px)',
+                fontWeight: 800,
+                letterSpacing: '0.32em',
+                textTransform: 'uppercase',
+                background: 'linear-gradient(to bottom, #ffffff 0%, #f5fff2 40%, #b4ffb5 70%, #4bff6f 100%)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+                textShadow: '0 0 2px rgba(0, 0, 0, 0.95), 0 0 4px rgba(255, 255, 255, 0.8), 0 0 10px rgba(0, 255, 120, 0.85), 0 0 22px rgba(0, 255, 120, 0.6)',
+                margin: 0,
+              }}
+            >
+              Strategy Console
+            </h1>
+            <button
+              onClick={() => setShowInstructions(!showInstructions)}
+              style={{
+                background: 'rgba(0, 255, 102, 0.2)',
+                border: '2px solid rgba(0, 255, 102, 0.6)',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                pointerEvents: 'auto',
+                color: '#00FF66',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 255, 102, 0.4)'
+                e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 255, 102, 0.6)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 255, 102, 0.2)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+            >
+              <Info size={20} />
+            </button>
+          </div>
+
+          {/* Instructions Dialog */}
+          {showInstructions && (
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(0, 0, 0, 0.8)',
+                zIndex: 1000,
+                pointerEvents: 'auto',
+              }}
+              onClick={() => setShowInstructions(false)}
+            >
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, rgba(10, 20, 15, 0.95), rgba(5, 15, 10, 0.95))',
+                  border: '2px solid rgba(0, 255, 102, 0.6)',
+                  borderRadius: '8px',
+                  padding: '32px',
+                  maxWidth: '500px',
+                  boxShadow: '0 0 40px rgba(0, 255, 102, 0.4)',
+                  pointerEvents: 'auto',
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2
+                  style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '28px',
+                    fontWeight: 700,
+                    color: '#00FF66',
+                    marginTop: 0,
+                    marginBottom: '20px',
+                    textShadow: '0 0 10px rgba(0, 255, 102, 0.6)',
+                  }}
+                >
+                  Deployment Instructions
+                </h2>
+                <div
+                  style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '16px',
+                    color: '#e0e0e0',
+                    lineHeight: '1.6',
+                  }}
+                >
+                  <p>1. Drag each ship from the right panel onto the strategy grid</p>
+                  <p>2. Press <strong style={{ color: '#00FF66' }}>R</strong> while dragging to rotate ship orientation</p>
+                  <p>3. Ships cannot overlap or be adjacent to each other</p>
+                  <p>4. Green cells indicate valid placement, red cells indicate invalid</p>
+                  <p>5. Once all 7 ships are deployed, battle phase will commence</p>
+                </div>
+                <button
+                  onClick={() => setShowInstructions(false)}
+                  style={{
+                    marginTop: '24px',
+                    background: 'rgba(0, 255, 102, 0.2)',
+                    border: '2px solid rgba(0, 255, 102, 0.6)',
+                    borderRadius: '4px',
+                    padding: '12px 24px',
+                    color: '#00FF66',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '16px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(0, 255, 102, 0.4)'
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 255, 102, 0.6)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(0, 255, 102, 0.2)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                >
+                  UNDERSTOOD
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Sweeping Radar Effect */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              overflow: 'hidden',
+              mixBlendMode: 'screen',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'conic-gradient(rgba(0, 255, 120, 0.15) 0deg 30deg, transparent 30deg 360deg)',
+                transformOrigin: '50% 50%',
+                animation: 'radarSweep 4s linear infinite',
+              }}
+            />
+          </div>
+
+          <div ref={leftColumnRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div
               ref={gridRef}
               style={{
@@ -199,9 +393,8 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
                 gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)`,
                 gridTemplateRows: `repeat(${BOARD_SIZE}, 1fr)`,
                 gap: 0,
-                width: '100%',
-                maxWidth: '600px',
-                aspectRatio: '1 / 1',
+                width: `${gridSize}px`,
+                height: `${gridSize}px`,
                 border: '2px solid rgba(0, 255, 102, 0.6)',
                 boxShadow: '0 0 20px rgba(0, 255, 102, 0.3)',
               }}
@@ -235,7 +428,7 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
             style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '16px',
+              gap: '12px',
               alignItems: 'center',
               justifyContent: 'center',
               overflowY: 'auto',
@@ -250,20 +443,34 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
                   cursor: 'grab',
                   touchAction: 'none',
                   userSelect: 'none',
+                  width: '180px',
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                <img
-                  src={`/ships/Ship${ship.name}Hull.png`}
-                  alt={ship.name}
+                <div
                   style={{
-                    maxWidth: '120px',
-                    height: 'auto',
-                    objectFit: 'contain',
-                    filter: 'drop-shadow(0 0 8px rgba(0, 255, 102, 0.5))',
-                    pointerEvents: 'none',
+                    width: '48px',
+                    height: '180px',
+                    transform: 'rotate(90deg)',
+                    transformOrigin: 'center',
                   }}
-                  draggable={false}
-                />
+                >
+                  <img
+                    src={SHIP_IMG[ship.name] || `/ships/Ship${ship.name}Hull.png`}
+                    alt={ship.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 0 8px rgba(0, 255, 102, 0.5))',
+                      pointerEvents: 'none',
+                    }}
+                    draggable={false}
+                  />
+                </div>
               </div>
             ))}
           </div>

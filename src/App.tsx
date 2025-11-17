@@ -416,7 +416,7 @@ function AnimatedMissile({
       <div className="missile-sprite">
         <video
           ref={videoRef}
-          src="/assets/missile_rocket.mp4"
+          src="/assets/rocket_missile.mp4"
           muted
           playsInline
           autoPlay
