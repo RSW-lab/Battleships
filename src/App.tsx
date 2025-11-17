@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 import './App.css'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Trophy, RotateCcw, Info } from 'lucide-react'
+import { RotateCcw, Info } from 'lucide-react'
 import BackgroundVideo from '@/components/ui/BackgroundVideo'
 import { PlacementConsole } from '@/components/PlacementConsole'
 
@@ -368,7 +368,7 @@ function AnimatedMissile({
     const baseAngleDeg = baseAngle * 180 / Math.PI
     
     const distance = Math.sqrt(vx * vx + vy * vy)
-    const amplitude = Math.min(24, 0.08 * distance)
+    const amplitude = Math.min(12, 0.04 * distance)
     
     const nx = -Math.sin(baseAngle)
     const ny = Math.cos(baseAngle)
@@ -396,7 +396,7 @@ function AnimatedMissile({
       }
       
       const delta = normalizeAngle(angleDeg - baseAngleDeg)
-      const clampedDelta = Math.max(-15, Math.min(15, delta))
+      const clampedDelta = Math.max(-10, Math.min(10, delta)) * 0.6
       angleDeg = baseAngleDeg + clampedDelta + 90
 
       setPosition({ x, y, angle: angleDeg })
@@ -425,17 +425,9 @@ function AnimatedMissile({
         transformOrigin: 'center center',
       }}
     >
-      <div className="missile-sprite">
-        <img
-          src="/assets/missile_sprite.png"
-          alt="missile"
-          style={{
-            width: '42px',
-            height: 'auto',
-            filter: 'drop-shadow(0 0 4px rgba(255, 140, 0, 0.5))',
-            pointerEvents: 'none',
-          }}
-        />
+      <div className="missile">
+        <div className="missile-head" />
+        <div className="missile-trail" />
       </div>
     </div>
   )
@@ -694,9 +686,14 @@ function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefOb
               position: 'absolute',
               left: `${reticleX}px`,
               top: `${reticleY}px`,
-              transform: 'translate(-50%, -50%)'
+              transform: 'translate(-50%, -50%)',
+              width: '60px',
+              height: '60px',
+              pointerEvents: 'none'
             }}
           >
+            <div className="crosshair-ring" />
+            <div className="crosshair-lines" />
             <div className="coordinates-display" style={{ whiteSpace: 'nowrap' }}>
               {String.fromCharCode(65 + crosshairPosition.row)}{crosshairPosition.col + 1}
             </div>
@@ -1377,71 +1374,179 @@ function App() {
     return (
       <>
         <BackgroundVideo />
-        <div className="min-h-screen flex items-center justify-center p-8" style={{ background: 'transparent' }}>
-        <Card className="max-w-2xl w-full bg-slate-800/90 backdrop-blur-sm border-cyan-500 border-2 shadow-2xl">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              {winner === 'player' ? (
-                <Trophy className="w-20 h-20 text-yellow-400 animate-bounce" />
-              ) : (
-                <div className="relative w-20 h-20">
-                  <div className="absolute inset-0 rounded-full border-4 border-red-400 opacity-60"></div>
-                  <div className="absolute inset-2 rounded-full border-2 border-red-400 opacity-80"></div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-1 h-8 bg-gradient-to-t from-red-400 to-transparent" style={{ transformOrigin: 'center center' }}></div>
-                  </div>
-                </div>
-              )}
-            </div>
-            <CardTitle className="text-5xl font-bold text-cyan-400 mb-2 tracking-wider">
-              {winner === 'player' ? '⭐ TACTICAL VICTORY ⭐' : '💀 MISSION FAILED 💀'}
-            </CardTitle>
-            <CardDescription className="text-slate-300 text-xl font-semibold">
-              {winner === 'player' 
-                ? 'Congratulations, Admiral! Total domination of enemy waters!' 
-                : 'The enemy has prevailed. Our forces have been overwhelmed.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-700 p-4 rounded-lg border border-slate-600">
-                <h3 className="text-cyan-400 font-bold mb-3 uppercase tracking-wide">Allied Fleet Status</h3>
+        <div className="min-h-screen flex items-center justify-center p-8" style={{ 
+          background: 'transparent',
+          position: 'relative'
+        }}>
+          {/* HUD Frame Overlay */}
+          <img
+            src="/img/hud_frame_overlay.png"
+            alt=""
+            style={{
+              position: 'fixed',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 100,
+            }}
+          />
+          
+          {/* Game Over Content */}
+          <div style={{
+            maxWidth: '800px',
+            width: '100%',
+            background: 'rgba(0, 12, 6, 0.65)',
+            backdropFilter: 'blur(2px)',
+            border: '1px solid rgba(0, 255, 102, 0.25)',
+            boxShadow: 'inset 0 0 6px rgba(0, 255, 102, 0.15)',
+            borderRadius: '4px',
+            padding: '32px',
+            zIndex: 50,
+          }}>
+            {/* Title */}
+            <h1 style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              fontSize: 'clamp(32px, 4vw, 48px)',
+              fontWeight: 800,
+              letterSpacing: '0.20em',
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              background: 'linear-gradient(to bottom, #ffffff 0%, #f5fff2 40%, #b4ffb5 70%, #4bff6f 100%)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              color: 'transparent',
+              textShadow: '0 0 2px rgba(0, 0, 0, 0.95), 0 0 4px rgba(255, 255, 255, 0.8), 0 0 10px rgba(0, 255, 120, 0.85), 0 0 22px rgba(0, 255, 120, 0.6)',
+              margin: '0 0 8px 0',
+            }}>
+              {winner === 'player' ? 'MISSION COMPLETE' : 'MISSION FAILED'}
+            </h1>
+            
+            {/* Divider */}
+            <div style={{
+              height: '1px',
+              background: 'rgba(0, 255, 102, 0.3)',
+              marginBottom: '24px',
+            }} />
+            
+            {/* Fleet Status Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '16px',
+              marginBottom: '24px',
+            }}>
+              {/* Allied Fleet */}
+              <div style={{
+                background: 'rgba(0, 20, 10, 0.4)',
+                border: '1px solid rgba(0, 255, 102, 0.4)',
+                borderRadius: '4px',
+                padding: '16px',
+              }}>
+                <h3 style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: '#00FF66',
+                  letterSpacing: '0.15em',
+                  textShadow: '0 0 6px rgba(0, 255, 102, 0.6)',
+                  marginBottom: '12px',
+                  textTransform: 'uppercase',
+                }}>
+                  Allied Fleet Status
+                </h3>
                 {playerShips.map(ship => (
-                  <div key={ship.id} className="flex justify-between text-sm mb-2">
-                    <span className={ship.sunk ? 'text-red-400 line-through' : 'text-slate-200'}>
-                      {ship.name}
-                    </span>
-                    <span className={ship.sunk ? 'text-red-400 font-bold' : 'text-green-400 font-bold'}>
-                      {ship.sunk ? '💀 SUNK' : '✓ OPERATIONAL'}
+                  <div key={ship.id} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '14px',
+                    marginBottom: '8px',
+                    color: ship.sunk ? '#ef4444' : '#00CC55',
+                    textDecoration: ship.sunk ? 'line-through' : 'none',
+                  }}>
+                    <span>{ship.name}</span>
+                    <span style={{ fontWeight: 700 }}>
+                      {ship.sunk ? 'SUNK' : 'OPERATIONAL'}
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="bg-slate-700 p-4 rounded-lg border border-slate-600">
-                <h3 className="text-red-400 font-bold mb-3 uppercase tracking-wide">Enemy Fleet Status</h3>
+              
+              {/* Enemy Fleet */}
+              <div style={{
+                background: 'rgba(0, 20, 10, 0.4)',
+                border: '1px solid rgba(0, 255, 102, 0.4)',
+                borderRadius: '4px',
+                padding: '16px',
+              }}>
+                <h3 style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: '#ef4444',
+                  letterSpacing: '0.15em',
+                  textShadow: '0 0 6px rgba(239, 68, 68, 0.6)',
+                  marginBottom: '12px',
+                  textTransform: 'uppercase',
+                }}>
+                  Enemy Fleet Status
+                </h3>
                 {aiShips.map(ship => (
-                  <div key={ship.id} className="flex justify-between text-sm mb-2">
-                    <span className={ship.sunk ? 'text-red-400 line-through' : 'text-slate-200'}>
-                      {ship.name}
-                    </span>
-                    <span className={ship.sunk ? 'text-red-400 font-bold' : 'text-green-400 font-bold'}>
-                      {ship.sunk ? '💀 SUNK' : '✓ OPERATIONAL'}
+                  <div key={ship.id} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '14px',
+                    marginBottom: '8px',
+                    color: ship.sunk ? '#ef4444' : '#00CC55',
+                    textDecoration: ship.sunk ? 'line-through' : 'none',
+                  }}>
+                    <span>{ship.name}</span>
+                    <span style={{ fontWeight: 700 }}>
+                      {ship.sunk ? 'SUNK' : 'OPERATIONAL'}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
             
-            <Button 
+            {/* New Campaign Button */}
+            <button
               onClick={resetGame}
-              className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold text-xl py-7 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/50 uppercase tracking-wider"
+              style={{
+                width: '100%',
+                padding: '16px',
+                background: 'rgba(0, 255, 102, 0.2)',
+                border: '2px solid rgba(0, 255, 102, 0.6)',
+                borderRadius: '4px',
+                fontFamily: 'Rajdhani, sans-serif',
+                fontSize: '18px',
+                fontWeight: 700,
+                color: '#00FF66',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 255, 102, 0.4)'
+                e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 255, 102, 0.6)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 255, 102, 0.2)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
             >
-              <RotateCcw className="w-5 h-5 mr-2" />
+              <RotateCcw className="w-5 h-5" />
               NEW CAMPAIGN
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+            </button>
+          </div>
+        </div>
       </>
     )
   }

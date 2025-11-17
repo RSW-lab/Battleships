@@ -70,24 +70,27 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
   }, [placements, ships.length, onPlacementComplete])
 
   useEffect(() => {
-    if (!leftColumnRef.current) return
+    if (!containerRef.current) return
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect
-        const labelPad = 20        // space for numbers/letters
-        const frameGutter = 10     // small buffer from inner frame
-        const maxByWidth = width - labelPad - frameGutter
-        const maxByHeight = height - labelPad - frameGutter
-        const size = Math.min(maxByWidth, maxByHeight)
-        setGridSize(size)
-        setGridOffsetTop(frameGutter)
-        setGridOffsetLeft(frameGutter)
-      }
-    })
+    const computeGridSize = () => {
+      if (!containerRef.current) return
+      
+      const rect = containerRef.current.getBoundingClientRect()
+      const labelPad = 20
+      const frameGutter = 10
+      
+      const availableWidth = (rect.width * 0.7) - labelPad - frameGutter
+      const availableHeight = rect.height - labelPad - frameGutter
+      const size = Math.min(availableWidth, availableHeight)
+      
+      setGridSize(size)
+      setGridOffsetTop(frameGutter)
+      setGridOffsetLeft(frameGutter)
+    }
 
-    resizeObserver.observe(leftColumnRef.current)
-    return () => resizeObserver.disconnect()
+    computeGridSize()
+    window.addEventListener('resize', computeGridSize)
+    return () => window.removeEventListener('resize', computeGridSize)
   }, [])
 
   useEffect(() => {
@@ -419,60 +422,55 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
             </div>
           </div>
 
-          {/* Right Column: Title + Naval Assets Panel */}
+          {/* Right Column: Naval Assets Panel */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateRows: 'auto 1fr',
-              gap: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+              marginTop: `${gridOffsetTop}px`,
             }}
           >
-            {/* Title Header with Dark Backplate */}
+            {/* Naval Assets Panel */}
             <div
               style={{
-                background: 'rgba(0, 12, 6, 0.65)',
-                backdropFilter: 'blur(2px)',
-                padding: '6px 10px',
-                border: '1px solid rgba(0, 255, 102, 0.25)',
-                boxShadow: 'inset 0 0 6px rgba(0, 255, 102, 0.15)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                overflowY: 'auto',
+                height: '100%',
+                padding: '12px',
+                background: 'rgba(0, 20, 10, 0.4)',
+                border: '1px solid rgba(0, 255, 102, 0.4)',
                 borderRadius: '4px',
-                marginBottom: '4px',
+                boxShadow: '0 0 12px rgba(0, 255, 102, 0.2)',
               }}
             >
+              {/* Panel Title with Info Button */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  pointerEvents: 'auto',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: '#00FF66',
+                  letterSpacing: '0.15em',
+                  textShadow: '0 0 6px rgba(0, 255, 102, 0.6)',
+                  marginBottom: '4px',
+                  textTransform: 'uppercase',
                 }}
               >
-                <h1
-                  style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: 'clamp(16px, 1.6vw, 22px)',
-                    fontWeight: 800,
-                    letterSpacing: '0.20em',
-                    textTransform: 'uppercase',
-                    background: 'linear-gradient(to bottom, #ffffff 0%, #f5fff2 40%, #b4ffb5 70%, #4bff6f 100%)',
-                    WebkitBackgroundClip: 'text',
-                    backgroundClip: 'text',
-                    color: 'transparent',
-                    textShadow: '0 0 2px rgba(0, 0, 0, 0.95), 0 0 4px rgba(255, 255, 255, 0.8), 0 0 10px rgba(0, 255, 120, 0.85), 0 0 22px rgba(0, 255, 120, 0.6)',
-                    margin: 0,
-                  }}
-                >
-                  Fleet Asset Deployment
-                </h1>
+                Naval Assets
                 <button
                   onClick={() => setShowInstructions(!showInstructions)}
                   style={{
                     background: 'rgba(0, 255, 102, 0.2)',
                     border: '2px solid rgba(0, 255, 102, 0.6)',
                     borderRadius: '50%',
-                    width: '24px',
-                    height: '24px',
+                    width: '20px',
+                    height: '20px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -491,48 +489,8 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
                     e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
-                  <Info size={16} />
+                  <Info size={14} />
                 </button>
-              </div>
-              {/* Divider Line */}
-              <div
-                style={{
-                  height: '1px',
-                  background: 'rgba(0, 255, 102, 0.3)',
-                  marginTop: '6px',
-                }}
-              />
-            </div>
-
-            {/* Naval Assets Panel */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                overflowY: 'auto',
-                padding: '12px',
-                background: 'rgba(0, 20, 10, 0.4)',
-                border: '1px solid rgba(0, 255, 102, 0.4)',
-                borderRadius: '4px',
-                boxShadow: '0 0 12px rgba(0, 255, 102, 0.2)',
-              }}
-            >
-              {/* Panel Title */}
-              <div
-                style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  color: '#00FF66',
-                  textAlign: 'center',
-                  letterSpacing: '0.15em',
-                  textShadow: '0 0 6px rgba(0, 255, 102, 0.6)',
-                  marginBottom: '4px',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Naval Assets
               </div>
 
             {/* Ship Cards */}
