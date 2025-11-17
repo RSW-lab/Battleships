@@ -51,6 +51,7 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
   const containerRef = useRef<HTMLDivElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
   const leftColumnRef = useRef<HTMLDivElement>(null)
+  const openingRef = useRef<HTMLDivElement>(null)
   
   const BOARD_SIZE = 15
   const FRAME_WIDTH = 1456
@@ -70,28 +71,32 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
   }, [placements, ships.length, onPlacementComplete])
 
   useEffect(() => {
-    if (!containerRef.current) return
+    if (!openingRef.current) return
 
     const computeGridSize = () => {
-      if (!containerRef.current) return
+      if (!openingRef.current) return
       
-      const rect = containerRef.current.getBoundingClientRect()
-      const labelPadTop = 20    // for numbers on top
-      const labelPadLeft = 20   // for letters on left
-      const frameGutter = 10    // visual breathing room away from inner frame
+      const openingRect = openingRef.current.getBoundingClientRect()
+      const s = getComputedStyle(openingRef.current)
+      const padY = parseFloat(s.paddingTop) + parseFloat(s.paddingBottom)
+      const padX = parseFloat(s.paddingLeft) + parseFloat(s.paddingRight)
       
-      const leftWidth = rect.width * 0.7
+      const labelPadTop = 20
+      const labelPadLeft = 20
+      const labelPadBottom = 20
+      const frameGutter = 10
       
-      const availableHeight = rect.height - (labelPadTop + 2 * frameGutter)
+      const leftWidth = (openingRect.width - padX) * 0.7
       
+      const availableHeight = (openingRect.height - padY) - (labelPadTop + labelPadBottom + 2 * frameGutter)
       const availableWidth = leftWidth - (labelPadLeft + 2 * frameGutter)
       
       const cell = Math.max(1, Math.floor(Math.min(availableWidth, availableHeight) / BOARD_SIZE))
       const gridPx = cell * BOARD_SIZE
       
       setGridSize(gridPx)
-      setGridOffsetTop(frameGutter)
-      setGridOffsetLeft(frameGutter)
+      setGridOffsetTop(frameGutter + labelPadTop)
+      setGridOffsetLeft(frameGutter + labelPadLeft)
     }
 
     computeGridSize()
@@ -227,6 +232,7 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
         }}
       >
         <div
+          ref={openingRef}
           style={{
             position: 'absolute',
             left: `${(OPENING_LEFT / FRAME_WIDTH) * 100}%`,

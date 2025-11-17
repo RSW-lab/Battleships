@@ -2500,7 +2500,7 @@ body::after {
   transform: translate(-50%, -50%) scale(0.25);
   opacity: 0;
   will-change: transform, opacity, filter;
-  animation: ripple-wave 900ms ease-out forwards;
+  animation: ripple-wave 900ms ease-out infinite;
   filter: blur(0.3px);
   box-shadow:
     0 0 6px rgba(255, 255, 255, 0.5),

@@ -418,11 +418,11 @@ function AnimatedMissile({
     }
   }, [missile, playerMetrics, aiMetrics, playerGridRef, aiGridRef])
 
-  const spriteSize = Math.round(cellSize * 0.7)
+  const spriteSize = Math.max(18, Math.round((cellSize || 0) * 0.7))
   
   return (
     <div
-      className="fixed pointer-events-none z-50"
+      className="fixed pointer-events-none z-[120]"
       style={{
         left: 0,
         top: 0,
@@ -439,6 +439,7 @@ function AnimatedMissile({
           filter: 'drop-shadow(0 0 4px rgba(255, 140, 0, 0.6))',
           pointerEvents: 'none',
         }}
+        onError={(e) => console.error('Missile image failed to load:', e)}
       />
     </div>
   )
@@ -711,6 +712,105 @@ function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefOb
           </div>
         )}
       </div>
+    </>
+  )
+}
+
+function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [enabled, setEnabled] = useState(() => {
+    return localStorage.getItem('audio-enabled') === 'true'
+  })
+
+  useEffect(() => {
+    if (!audioRef.current) return
+
+    const audio = audioRef.current
+    let desiredSrc = ''
+
+    if (gamePhase === 'title' || gamePhase === 'instructions' || gamePhase === 'gameOver') {
+      desiredSrc = '/assets/past-deeds.mp3'
+    } else if (gamePhase === 'placement' || gamePhase === 'battle') {
+      desiredSrc = '/assets/under-siege.mp3'
+    }
+
+    if (desiredSrc && audio.src !== window.location.origin + desiredSrc) {
+      audio.src = desiredSrc
+      
+      if (enabled) {
+        audio.load()
+        const playPromise = audio.play()
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            console.log('Audio autoplay prevented by browser')
+          })
+        }
+      }
+    }
+  }, [gamePhase, enabled])
+
+  const handleToggle = () => {
+    const newEnabled = !enabled
+    setEnabled(newEnabled)
+    localStorage.setItem('audio-enabled', String(newEnabled))
+
+    if (audioRef.current) {
+      if (newEnabled) {
+        const playPromise = audioRef.current.play()
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            console.log('Audio play failed')
+          })
+        }
+      } else {
+        audioRef.current.pause()
+      }
+    }
+  }
+
+  return (
+    <>
+      <audio
+        ref={audioRef}
+        loop
+        preload="auto"
+        playsInline
+        style={{ display: 'none' }}
+        onLoadedData={() => {
+          if (audioRef.current && enabled) {
+            audioRef.current.volume = 0.35
+          }
+        }}
+      />
+      <button
+        onClick={handleToggle}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          zIndex: 150,
+          background: enabled ? 'rgba(0, 255, 102, 0.2)' : 'rgba(100, 100, 100, 0.2)',
+          border: `2px solid ${enabled ? 'rgba(0, 255, 102, 0.6)' : 'rgba(150, 150, 150, 0.6)'}`,
+          borderRadius: '4px',
+          padding: '8px 16px',
+          color: enabled ? '#00FF66' : '#999',
+          fontFamily: 'Rajdhani, sans-serif',
+          fontSize: '14px',
+          fontWeight: 700,
+          cursor: 'pointer',
+          pointerEvents: 'auto',
+          textShadow: enabled ? '0 0 6px rgba(0, 255, 102, 0.6)' : 'none',
+          transition: 'all 0.3s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = enabled ? 'rgba(0, 255, 102, 0.4)' : 'rgba(120, 120, 120, 0.4)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = enabled ? 'rgba(0, 255, 102, 0.2)' : 'rgba(100, 100, 100, 0.2)'
+        }}
+      >
+        {enabled ? '🔊 AUDIO ON' : '🔇 AUDIO OFF'}
+      </button>
     </>
   )
 }
@@ -1280,6 +1380,7 @@ function App() {
   if (gamePhase === 'title') {
     return (
       <>
+        <AudioController gamePhase={gamePhase} />
         <BackgroundVideo />
         <TitleScreen onStart={() => setGamePhase('instructions')} />
       </>
@@ -1289,6 +1390,7 @@ function App() {
   if (gamePhase === 'instructions') {
     return (
       <>
+        <AudioController gamePhase={gamePhase} />
         <BackgroundVideo />
         <div className="min-h-screen flex items-center justify-center p-4 overflow-hidden" style={{ background: 'transparent' }}>
         <Card className="max-w-2xl w-full bg-panel-bg/80 backdrop-blur-sm border-hud-accent-soft border-2 shadow-2xl shadow-hud-accent/20">
@@ -1372,18 +1474,22 @@ function App() {
     }
 
     return (
-      <PlacementConsole
-        ships={playerShips}
-        onPlacementComplete={handlePlacementComplete}
-        canPlaceShip={canPlaceShipWrapper}
-        placeShip={placeShipWrapper}
-      />
+      <>
+        <AudioController gamePhase={gamePhase} />
+        <PlacementConsole
+          ships={playerShips}
+          onPlacementComplete={handlePlacementComplete}
+          canPlaceShip={canPlaceShipWrapper}
+          placeShip={placeShipWrapper}
+        />
+      </>
     )
   }
 
   if (gamePhase === 'gameOver') {
     return (
       <>
+        <AudioController gamePhase={gamePhase} />
         <BackgroundVideo />
         <div className="min-h-screen flex items-center justify-center p-8" style={{ 
           background: 'transparent',
@@ -1564,7 +1670,8 @@ function App() {
 
   return (
     <>
-      <div className="theme-cod min-h-screen p-8" style={{ 
+      <AudioController gamePhase={gamePhase} />
+      <div className="theme-cod min-h-screen p-8" style={{
         background: 'linear-gradient(180deg, #0c0f12 0%, #0a0d10 60%, #080a0c 100%)',
         backgroundAttachment: 'fixed',
         position: 'relative'
