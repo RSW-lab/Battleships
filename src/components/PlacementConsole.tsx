@@ -70,21 +70,41 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
 
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-      const oscillator = audioContext.createOscillator()
-      const gainNode = audioContext.createGain()
+      
+      const lowOsc = audioContext.createOscillator()
+      const lowGain = audioContext.createGain()
+      lowOsc.type = 'sine'
+      lowOsc.frequency.setValueAtTime(800, audioContext.currentTime)
+      lowGain.gain.setValueAtTime(0.3, audioContext.currentTime)
+      lowGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05)
+      lowOsc.connect(lowGain)
+      lowGain.connect(audioContext.destination)
+      lowOsc.start(audioContext.currentTime)
+      lowOsc.stop(audioContext.currentTime + 0.05)
 
-      oscillator.connect(gainNode)
-      gainNode.connect(audioContext.destination)
+      const bufferSize = audioContext.sampleRate * 0.03
+      const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate)
+      const data = buffer.getChannelData(0)
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3))
+      }
 
-      oscillator.type = 'square'
-      oscillator.frequency.setValueAtTime(1800, audioContext.currentTime)
-      oscillator.frequency.exponentialRampToValueAtTime(2200, audioContext.currentTime + 0.04)
+      const noiseSource = audioContext.createBufferSource()
+      noiseSource.buffer = buffer
 
-      gainNode.gain.setValueAtTime(0.15, audioContext.currentTime)
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.08)
+      const bandpass = audioContext.createBiquadFilter()
+      bandpass.type = 'bandpass'
+      bandpass.frequency.setValueAtTime(3000, audioContext.currentTime)
+      bandpass.Q.setValueAtTime(2, audioContext.currentTime)
 
-      oscillator.start(audioContext.currentTime)
-      oscillator.stop(audioContext.currentTime + 0.08)
+      const noiseGain = audioContext.createGain()
+      noiseGain.gain.setValueAtTime(0.2, audioContext.currentTime)
+
+      noiseSource.connect(bandpass)
+      bandpass.connect(noiseGain)
+      noiseGain.connect(audioContext.destination)
+
+      noiseSource.start(audioContext.currentTime)
 
       setTimeout(() => {
         audioContext.close()

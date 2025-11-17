@@ -430,30 +430,22 @@ function AnimatedMissile({
   if (!ready) return null
   
   return (
-    <div
+    <img
+      src="/assets/missile-exhaust.gif"
+      alt="missile"
       className="fixed pointer-events-none z-[120]"
       style={{
         left: 0,
         top: 0,
-        transform: `translate3d(${position.x - spriteSize/2}px, ${position.y - spriteSize/2}px, 0) rotate(${position.angle}deg)`,
+        width: `${spriteSize}px`,
+        height: 'auto',
+        transform: `translate3d(${position.x - spriteSize/2}px, ${position.y - spriteSize/2}px, 0) rotate(${position.angle + 90}deg)`,
         transformOrigin: 'center center',
-        willChange: 'transform, opacity',
-        opacity: 0.98,
+        willChange: 'transform',
+        filter: 'drop-shadow(0 0 4px rgba(255, 140, 0, 0.6))',
+        mixBlendMode: 'screen',
       }}
-    >
-      <img
-        src="/assets/missile-body.png"
-        alt="missile"
-        style={{
-          width: `${spriteSize}px`,
-          height: 'auto',
-          filter: 'drop-shadow(0 0 4px rgba(255, 140, 0, 0.6))',
-          pointerEvents: 'none',
-        }}
-        onError={(e) => console.error('Missile image failed to load:', e)}
-        onLoad={() => console.log('Missile image loaded successfully')}
-      />
-    </div>
+    />
   )
 }
 
@@ -730,6 +722,7 @@ function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefOb
 
 function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
   const audioRef = useRef<HTMLAudioElement>(null)
+  const firstGestureDoneRef = useRef(false)
   const [enabled, setEnabled] = useState(() => {
     const stored = localStorage.getItem('audio-enabled')
     return stored === null ? true : stored === 'true'
@@ -778,12 +771,24 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
   }, [enabled])
 
   const handleToggle = () => {
+    if (enabled && audioRef.current && audioRef.current.paused && !firstGestureDoneRef.current) {
+      firstGestureDoneRef.current = true
+      const playPromise = audioRef.current.play()
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          console.log('Audio unlock play failed')
+        })
+      }
+      return
+    }
+
     const newEnabled = !enabled
     setEnabled(newEnabled)
     localStorage.setItem('audio-enabled', String(newEnabled))
 
     if (audioRef.current) {
       if (newEnabled) {
+        firstGestureDoneRef.current = true
         const playPromise = audioRef.current.play()
         if (playPromise !== undefined) {
           playPromise.catch(() => {
