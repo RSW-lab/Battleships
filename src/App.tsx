@@ -1371,29 +1371,19 @@ function App() {
       }}>
       {gamePhase === 'placement' && (
         <>
-          <video
-            className="bg-video bg-video--placement"
-            autoPlay
-            muted
-            loop
-            playsInline
-            style={{
-              position: 'fixed',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              zIndex: 0,
-              filter: 'grayscale(1) saturate(0.6) brightness(0.45) contrast(1.08)'
-            }}
-          >
-            <source src="/video/placement_bg.mp4" type="video/mp4" />
-          </video>
-          <div className="tactical-hud-overlay">
-            <div className="hud-scanlines" />
-            <div className="hud-grid" />
-            <div className="hud-radar-pulse" />
+          {/* JTAC Targeting Interface - Background Atmosphere */}
+          <div className="jtac-atmosphere">
+            <div className="jtac-fog-layer-1" />
+            <div className="jtac-fog-layer-2" />
+            <div className="jtac-scanlines" />
+            <div className="jtac-vignette" />
+            <div className="jtac-radar-arcs">
+              <div className="jtac-radar-arc" />
+              <div className="jtac-radar-arc" />
+              <div className="jtac-radar-arc" />
+            </div>
           </div>
+
           <div className="military-dashboard-frame">
             <div className="dashboard-corner dashboard-corner-tl" />
             <div className="dashboard-corner dashboard-corner-tr" />
