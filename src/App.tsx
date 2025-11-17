@@ -846,10 +846,10 @@ function App() {
         const aiBoard = placeAIShips()
         setAiBoard(aiBoard)
         setGamePhase('battle')
-        setMessage('⚔️ BATTLE STATIONS! Select enemy coordinates to fire!')
+        setMessage('⚔️ BATTLE STATIONS! ENGAGE HOSTILE TARGETS!')
       } else {
         setCurrentShipIndex(currentShipIndex + 1)
-        setMessage(`DEPLOY ${SHIPS[currentShipIndex + 1].name.toUpperCase()} - ${SHIPS[currentShipIndex + 1].size} grid units`)
+        setMessage(`ASSIGN ASSET TO GRID: ${SHIPS[currentShipIndex + 1].name.toUpperCase()} — ${SHIPS[currentShipIndex + 1].size} HULL LENGTH UNITS`)
       }
     }
   }
@@ -1476,7 +1476,7 @@ function App() {
               <h2 className="cod-subheading header-subtitle mw2-subtitle">{message}</h2>
               {gamePhase === 'placement' && (
                 <p className="header-hint mw-type-white--muted" style={{ fontSize: '12px' }}>
-                  Press R to rotate • Orientation: {shipOrientation.toUpperCase()}
+                  ROTATION COMMAND: [R] — ORIENTATION: {shipOrientation.toUpperCase()}
                 </p>
               )}
             </div>
