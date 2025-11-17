@@ -795,7 +795,7 @@ function App() {
 
   const startGame = () => {
     setGamePhase('placement')
-    setMessage(`DEPLOY ${SHIPS[0].name.toUpperCase()} - ${SHIPS[0].size} grid units`)
+    setMessage(`ASSIGN ASSET TO GRID: ${SHIPS[0].name.toUpperCase()} — ${SHIPS[0].size} HULL LENGTH UNITS`)
   }
 
   const canPlaceShip = (board: Cell[][], row: number, col: number, width: number, length: number, orientation: Orientation): boolean => {
