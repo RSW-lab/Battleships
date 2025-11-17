@@ -1521,18 +1521,67 @@ function App() {
           </div>
 
           {gamePhase === 'placement' && (
-            <div className="w-full lg:w-[380px] xl:w-[420px] text-left space-y-6 self-start">
-              <h3 className="text-xl font-bold uppercase tracking-wider mt-2 mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ FLEET STATUS ◈</h3>
+            <div className="w-full lg:w-[380px] xl:w-[420px] text-left space-y-6 self-start jtac-asset-panel">
+              <h3 className="text-xl font-bold uppercase tracking-wider mt-2 mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ NAVAL ASSETS ◈</h3>
               <div className="space-y-3">
-                {playerShips.map(ship => (
-                  <div 
-                    key={ship.id} 
-                    className="text-sm font-semibold fleet-status-item mw-type-green--muted"
-                    style={{ fontFamily: 'Rajdhani, sans-serif' }}
-                  >
-                    {ship.name}: {ship.size} grid units
-                  </div>
-                ))}
+                {playerShips.map((ship, index) => {
+                  const isDeployed = index < currentShipIndex
+                  const isSelected = index === currentShipIndex
+                  const isAvailable = index > currentShipIndex
+                  
+                  let cardClass = 'jtac-asset-card'
+                  let statusClass = 'jtac-asset-status'
+                  
+                  if (isDeployed) {
+                    cardClass += ' jtac-asset-card-deployed'
+                    statusClass += ' jtac-asset-status-deployed'
+                  } else if (isSelected) {
+                    cardClass += ' jtac-asset-card-selected'
+                    statusClass += ' jtac-asset-status-selected'
+                  } else {
+                    cardClass += ' jtac-asset-card-available'
+                    statusClass += ' jtac-asset-status-available'
+                  }
+                  
+                  return (
+                    <div key={ship.id} className={cardClass}>
+                      <div className="jtac-asset-header">
+                        <div>
+                          <div className="jtac-asset-label">ASSET</div>
+                          <div className="jtac-asset-name">{ship.name}</div>
+                        </div>
+                        <div className={statusClass} />
+                      </div>
+                      
+                      <div className="jtac-asset-silhouette">
+                        <div className="jtac-ship-outline">
+                          {Array.from({ length: ship.size }, (_, i) => (
+                            <div key={i} className="jtac-ship-segment" />
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="jtac-asset-info">
+                        <div className="jtac-info-block">
+                          <div className="jtac-info-label">LENGTH</div>
+                          <div className="jtac-info-value">{ship.size}</div>
+                          <div className="jtac-length-bar">
+                            <div className="jtac-length-fill" style={{ width: `${(ship.size / 5) * 100}%` }} />
+                          </div>
+                        </div>
+                        <div className="jtac-info-block">
+                          <div className="jtac-info-label">STATUS</div>
+                          <div className="jtac-info-value" style={{ 
+                            fontSize: '11px',
+                            color: isDeployed ? 'rgba(255, 0, 0, 0.8)' : isSelected ? 'rgba(255, 200, 0, 0.8)' : 'rgba(0, 255, 120, 0.8)'
+                          }}>
+                            {isDeployed ? 'DEPLOYED' : isSelected ? 'ACTIVE' : 'STANDBY'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
               <div className="pt-4 space-y-4 border-t border-white/5">
                 <h3 className="text-lg font-bold uppercase tracking-wider mt-2 mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ ORIENTATION ◈</h3>

@@ -1279,6 +1279,283 @@ body::after {
   }
 }
 
+/* Radar Sweep Overlay on Strategy Grid */
+.radar-sweep-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 8px;
+  z-index: 2;
+}
+
+.radar-sweep {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  height: 200%;
+  transform-origin: center center;
+  animation: radar-rotate 8s linear infinite;
+}
+
+.radar-sweep::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 50%;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 255, 120, 0) 0%,
+    rgba(0, 255, 120, 0.6) 20%,
+    rgba(0, 255, 120, 0.3) 50%,
+    rgba(0, 255, 120, 0) 100%
+  );
+  transform-origin: top center;
+  filter: blur(1px);
+}
+
+@keyframes radar-rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Bearing Ticks on Grid Edges */
+.bearing-ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.bearing-tick {
+  position: absolute;
+  background: rgba(0, 255, 120, 0.4);
+  box-shadow: 0 0 2px rgba(0, 255, 120, 0.6);
+}
+
+.bearing-tick-top,
+.bearing-tick-bottom {
+  width: 1px;
+  height: 8px;
+}
+
+.bearing-tick-left,
+.bearing-tick-right {
+  width: 8px;
+  height: 1px;
+}
+
+/* Phase 3: Holographic Ship Asset Cards */
+.jtac-asset-panel {
+  position: relative;
+  z-index: 3;
+}
+
+.jtac-asset-card {
+  position: relative;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 255, 120, 0.3);
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 
+    0 0 12px rgba(0, 255, 120, 0.15),
+    inset 0 0 20px rgba(0, 0, 0, 0.8);
+  transition: all 0.3s ease;
+}
+
+.jtac-asset-card:hover {
+  border-color: rgba(0, 255, 120, 0.5);
+  box-shadow: 
+    0 0 20px rgba(0, 255, 120, 0.25),
+    inset 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+.jtac-asset-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 255, 120, 0.02) 0px,
+    transparent 1px,
+    transparent 2px,
+    rgba(0, 255, 120, 0.02) 3px
+  );
+  pointer-events: none;
+  border-radius: 4px;
+}
+
+/* Corner brackets */
+.jtac-asset-card::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(0, 255, 120, 0.2);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.jtac-asset-card-available {
+  border-color: rgba(0, 255, 120, 0.4);
+}
+
+.jtac-asset-card-selected {
+  border-color: rgba(255, 200, 0, 0.6);
+  box-shadow: 
+    0 0 24px rgba(255, 200, 0, 0.3),
+    inset 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+.jtac-asset-card-deployed {
+  border-color: rgba(255, 0, 0, 0.4);
+  opacity: 0.5;
+}
+
+.jtac-asset-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.jtac-asset-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.jtac-asset-name {
+  font-family: 'Teko', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(0, 255, 120, 0.9);
+  text-shadow: 0 0 8px rgba(0, 255, 120, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.jtac-asset-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+.jtac-asset-status-available {
+  background: rgba(0, 255, 120, 0.9);
+  color: rgba(0, 255, 120, 0.9);
+}
+
+.jtac-asset-status-selected {
+  background: rgba(255, 200, 0, 0.9);
+  color: rgba(255, 200, 0, 0.9);
+}
+
+.jtac-asset-status-deployed {
+  background: rgba(255, 0, 0, 0.9);
+  color: rgba(255, 0, 0, 0.9);
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+.jtac-asset-silhouette {
+  width: 100%;
+  height: 60px;
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.jtac-asset-silhouette::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 255, 120, 0.03) 0px,
+    transparent 1px,
+    transparent 3px,
+    rgba(0, 255, 120, 0.03) 4px
+  );
+  animation: scanline-drift 6s linear infinite;
+}
+
+.jtac-ship-outline {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.jtac-ship-segment {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(0, 255, 120, 0.6);
+  background: rgba(0, 255, 120, 0.05);
+  box-shadow: 
+    0 0 8px rgba(0, 255, 120, 0.3),
+    inset 0 0 8px rgba(0, 255, 120, 0.1);
+}
+
+.jtac-asset-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.jtac-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.jtac-info-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.jtac-info-value {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(0, 255, 120, 0.8);
+  text-shadow: 0 0 4px rgba(0, 255, 120, 0.4);
+}
+
+.jtac-length-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 255, 120, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.jtac-length-fill {
+  height: 100%;
+  background: linear-gradient(to right, rgba(0, 255, 120, 0.8), rgba(0, 255, 120, 0.4));
+  box-shadow: 0 0 8px rgba(0, 255, 120, 0.6);
+}
+
 /* Placement HUD Overlay - Command Center Widgets */
 .placement-hud-overlay {
   position: fixed;
