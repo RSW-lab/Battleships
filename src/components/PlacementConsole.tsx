@@ -44,6 +44,8 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
   const [previewCells, setPreviewCells] = useState<Array<{ row: number; col: number; valid: boolean }>>([])
   const [showInstructions, setShowInstructions] = useState(false)
   const [gridSize, setGridSize] = useState(600)
+  const [gridOffset, setGridOffset] = useState(0)
+  const [selectedShipId, setSelectedShipId] = useState<number | null>(null)
   
   const containerRef = useRef<HTMLDivElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
@@ -72,8 +74,10 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect
-        const size = Math.min(width, height) * 0.9
+        const size = Math.min(width, height) * 0.96
+        const offset = height * 0.04
         setGridSize(size)
+        setGridOffset(offset)
       }
     })
 
@@ -104,6 +108,7 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
     target.setPointerCapture(e.pointerId)
     
     const rect = target.getBoundingClientRect()
+    setSelectedShipId(ship.id)
     setDragState({
       shipId: ship.id,
       offsetX: e.clientX - rect.left,
@@ -226,57 +231,69 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
             style={{
               gridColumn: '1 / -1',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '16px',
-              marginBottom: '8px',
+              gap: '8px',
+              marginBottom: '12px',
               position: 'relative',
             }}
           >
-            <h1
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <h1
+                style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: 'clamp(22px, 2.4vw, 32px)',
+                  fontWeight: 800,
+                  letterSpacing: '0.24em',
+                  textTransform: 'uppercase',
+                  background: 'linear-gradient(to bottom, #ffffff 0%, #f5fff2 40%, #b4ffb5 70%, #4bff6f 100%)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                  textShadow: '0 0 2px rgba(0, 0, 0, 0.95), 0 0 4px rgba(255, 255, 255, 0.8), 0 0 10px rgba(0, 255, 120, 0.85), 0 0 22px rgba(0, 255, 120, 0.6)',
+                  margin: 0,
+                }}
+              >
+                Fleet Asset Deployment
+              </h1>
+              <button
+                onClick={() => setShowInstructions(!showInstructions)}
+                style={{
+                  background: 'rgba(0, 255, 102, 0.2)',
+                  border: '2px solid rgba(0, 255, 102, 0.6)',
+                  borderRadius: '50%',
+                  width: '28px',
+                  height: '28px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  pointerEvents: 'auto',
+                  color: '#00FF66',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(0, 255, 102, 0.4)'
+                  e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 255, 102, 0.6)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(0, 255, 102, 0.2)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+              >
+                <Info size={18} />
+              </button>
+            </div>
+            {/* Divider line */}
+            <div
               style={{
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: 'clamp(24px, 3vw, 36px)',
-                fontWeight: 800,
-                letterSpacing: '0.32em',
-                textTransform: 'uppercase',
-                background: 'linear-gradient(to bottom, #ffffff 0%, #f5fff2 40%, #b4ffb5 70%, #4bff6f 100%)',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                color: 'transparent',
-                textShadow: '0 0 2px rgba(0, 0, 0, 0.95), 0 0 4px rgba(255, 255, 255, 0.8), 0 0 10px rgba(0, 255, 120, 0.85), 0 0 22px rgba(0, 255, 120, 0.6)',
-                margin: 0,
+                width: '55%',
+                height: '1px',
+                background: 'linear-gradient(to right, transparent, rgba(0, 255, 120, 0.45), transparent)',
+                pointerEvents: 'none',
               }}
-            >
-              Strategy Console
-            </h1>
-            <button
-              onClick={() => setShowInstructions(!showInstructions)}
-              style={{
-                background: 'rgba(0, 255, 102, 0.2)',
-                border: '2px solid rgba(0, 255, 102, 0.6)',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                pointerEvents: 'auto',
-                color: '#00FF66',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 255, 102, 0.4)'
-                e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 255, 102, 0.6)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 255, 102, 0.2)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            >
-              <Info size={20} />
-            </button>
+            />
           </div>
 
           {/* Instructions Dialog */}
@@ -364,41 +381,83 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
             </div>
           )}
 
-          {/* Sweeping Radar Effect */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              overflow: 'hidden',
-              mixBlendMode: 'screen',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'conic-gradient(rgba(0, 255, 120, 0.15) 0deg 30deg, transparent 30deg 360deg)',
-                transformOrigin: '50% 50%',
-                animation: 'radarSweep 4s linear infinite',
-              }}
-            />
-          </div>
+          <div ref={leftColumnRef} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+            <div style={{ position: 'relative', marginTop: `${gridOffset}px` }}>
+              {/* Coordinate labels - Top (numbers 1-15) */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-20px',
+                  left: 0,
+                  right: 0,
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)`,
+                  pointerEvents: 'none',
+                }}
+              >
+                {Array.from({ length: BOARD_SIZE }, (_, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#00FF66',
+                      textAlign: 'center',
+                      textShadow: '0 0 4px rgba(0, 255, 120, 0.6)',
+                    }}
+                  >
+                    {i + 1}
+                  </div>
+                ))}
+              </div>
 
-          <div ref={leftColumnRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div
-              ref={gridRef}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)`,
-                gridTemplateRows: `repeat(${BOARD_SIZE}, 1fr)`,
-                gap: 0,
-                width: `${gridSize}px`,
-                height: `${gridSize}px`,
-                border: '2px solid rgba(0, 255, 102, 0.6)',
-                boxShadow: '0 0 20px rgba(0, 255, 102, 0.3)',
-              }}
-            >
+              {/* Coordinate labels - Left (letters A-O) */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: '-20px',
+                  bottom: 0,
+                  display: 'grid',
+                  gridTemplateRows: `repeat(${BOARD_SIZE}, 1fr)`,
+                  pointerEvents: 'none',
+                }}
+              >
+                {Array.from({ length: BOARD_SIZE }, (_, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#00FF66',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      paddingRight: '4px',
+                      textShadow: '0 0 4px rgba(0, 255, 120, 0.6)',
+                    }}
+                  >
+                    {String.fromCharCode(65 + i)}
+                  </div>
+                ))}
+              </div>
+
+              {/* Grid */}
+              <div
+                ref={gridRef}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)`,
+                  gridTemplateRows: `repeat(${BOARD_SIZE}, 1fr)`,
+                  gap: 0,
+                  width: `${gridSize}px`,
+                  height: `${gridSize}px`,
+                  border: '2px solid rgba(0, 255, 102, 0.6)',
+                  boxShadow: '0 0 20px rgba(0, 255, 102, 0.3)',
+                }}
+              >
               {Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, i) => {
                 const row = Math.floor(i / BOARD_SIZE)
                 const col = i % BOARD_SIZE
@@ -421,58 +480,143 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
                   />
                 )
               })}
+              </div>
             </div>
           </div>
 
+          {/* Naval Assets Panel */}
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px',
-              alignItems: 'center',
-              justifyContent: 'center',
+              gap: '8px',
               overflowY: 'auto',
-              padding: '8px',
+              padding: '12px',
+              background: 'rgba(0, 20, 10, 0.4)',
+              border: '1px solid rgba(0, 255, 102, 0.4)',
+              borderRadius: '4px',
+              boxShadow: '0 0 12px rgba(0, 255, 102, 0.2)',
             }}
           >
-            {availableShips.map(ship => (
-              <div
-                key={ship.id}
-                onPointerDown={(e) => handleShipPointerDown(e, ship)}
-                style={{
-                  cursor: 'grab',
-                  touchAction: 'none',
-                  userSelect: 'none',
-                  width: '180px',
-                  height: '48px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+            {/* Panel Title */}
+            <div
+              style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                fontSize: '14px',
+                fontWeight: 700,
+                color: '#00FF66',
+                textAlign: 'center',
+                letterSpacing: '0.15em',
+                textShadow: '0 0 6px rgba(0, 255, 102, 0.6)',
+                marginBottom: '4px',
+                textTransform: 'uppercase',
+              }}
+            >
+              Naval Assets
+            </div>
+
+            {/* Ship Cards */}
+            {availableShips.map(ship => {
+              const isSelected = selectedShipId === ship.id
+              return (
                 <div
+                  key={ship.id}
+                  onPointerDown={(e) => handleShipPointerDown(e, ship)}
+                  onClick={() => setSelectedShipId(ship.id)}
                   style={{
-                    width: '48px',
-                    height: '180px',
-                    transform: 'rotate(90deg)',
-                    transformOrigin: 'center',
+                    display: 'grid',
+                    gridTemplateColumns: '56px 1fr auto',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px',
+                    background: isSelected ? 'rgba(0, 255, 102, 0.15)' : 'rgba(0, 255, 102, 0.05)',
+                    border: `1px solid ${isSelected ? 'rgba(0, 255, 102, 0.6)' : 'rgba(0, 255, 102, 0.25)'}`,
+                    borderRadius: '4px',
+                    cursor: 'grab',
+                    touchAction: 'none',
+                    userSelect: 'none',
+                    transition: 'all 0.2s ease',
+                    boxShadow: isSelected ? '0 0 12px rgba(0, 255, 102, 0.4)' : 'none',
                   }}
                 >
-                  <img
-                    src={SHIP_IMG[ship.name] || `/ships/Ship${ship.name}Hull.png`}
-                    alt={ship.name}
+                  {/* Ship Sprite */}
+                  <div
                     style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      filter: 'drop-shadow(0 0 8px rgba(0, 255, 102, 0.5))',
-                      pointerEvents: 'none',
+                      width: '56px',
+                      height: '48px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
-                    draggable={false}
-                  />
+                  >
+                    <div
+                      style={{
+                        width: '48px',
+                        height: '56px',
+                        transform: 'rotate(90deg)',
+                        transformOrigin: 'center',
+                      }}
+                    >
+                      <img
+                        src={SHIP_IMG[ship.name] || `/ships/Ship${ship.name}Hull.png`}
+                        alt={ship.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          filter: isSelected 
+                            ? 'drop-shadow(0 0 8px rgba(0, 255, 102, 0.8))' 
+                            : 'drop-shadow(0 0 4px rgba(0, 255, 102, 0.4))',
+                          pointerEvents: 'none',
+                        }}
+                        draggable={false}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Ship Info */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <div
+                      style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: isSelected ? '#00FF66' : '#00CC55',
+                        letterSpacing: '0.08em',
+                        textShadow: isSelected ? '0 0 6px rgba(0, 255, 102, 0.6)' : 'none',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {ship.name}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        color: 'rgba(0, 255, 102, 0.7)',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      Hull Length: {ship.length}
+                    </div>
+                  </div>
+
+                  {/* Selected Indicator */}
+                  {isSelected && (
+                    <div
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: '#00FF66',
+                        boxShadow: '0 0 8px rgba(0, 255, 102, 0.8)',
+                      }}
+                    />
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 

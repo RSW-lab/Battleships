@@ -342,7 +342,6 @@ function AnimatedMissile({
   const aiMetrics = useGridMetrics(aiGridRef, [missile])
   const startTimeRef = useRef<number>(Date.now())
   const animationFrameRef = useRef<number>()
-  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     const fromMetrics = missile.fromBoard === 'player' ? playerMetrics : aiMetrics
@@ -395,14 +394,6 @@ function AnimatedMissile({
     }
   }, [missile, playerMetrics, aiMetrics, playerGridRef, aiGridRef])
 
-  const handleVideoLoaded = () => {
-    if (videoRef.current) {
-      const videoDuration = videoRef.current.duration * 1000
-      const desiredFlightMs = 600
-      videoRef.current.playbackRate = videoDuration / desiredFlightMs
-    }
-  }
-
   return (
     <div
       className="fixed pointer-events-none z-50"
@@ -414,22 +405,19 @@ function AnimatedMissile({
       }}
     >
       <div className="missile-sprite">
-        <video
-          ref={videoRef}
-          src="/assets/rocket_missile.mp4"
-          muted
-          playsInline
-          autoPlay
-          preload="auto"
-          onLoadedMetadata={handleVideoLoaded}
+        <img
+          src="/assets/missile_sprite.png"
+          alt="missile"
           style={{
             width: '64px',
             height: 'auto',
-            mixBlendMode: 'screen',
-            filter: 'drop-shadow(0 0 8px rgba(255, 100, 0, 0.8))',
+            filter: 'drop-shadow(0 0 8px rgba(255, 140, 0, 0.8))',
             pointerEvents: 'none',
+            animation: 'fire-flicker 180ms ease-in-out infinite alternate',
+            transformOrigin: '20% 50%',
           }}
         />
+        <div className="missile-flame-trail" />
       </div>
     </div>
   )
