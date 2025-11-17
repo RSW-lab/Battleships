@@ -2,8 +2,9 @@ import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 import './App.css'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Trophy, RotateCcw, Info, RotateCw } from 'lucide-react'
+import { Trophy, RotateCcw, Info } from 'lucide-react'
 import BackgroundVideo from '@/components/ui/BackgroundVideo'
+import { PlacementConsole } from '@/components/PlacementConsole'
 
 type CellState = 'empty' | 'ship' | 'hit' | 'miss'
 type GamePhase = 'title' | 'instructions' | 'placement' | 'battle' | 'gameOver'
@@ -430,100 +431,6 @@ function AnimatedMissile({
           }}
         />
       </div>
-    </div>
-  )
-}
-
-function HudFrameViewport({ children }: { children: React.ReactNode }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [scale, setScale] = useState(1)
-
-  useEffect(() => {
-    const updateScale = () => {
-      if (!containerRef.current) return
-      
-      const FRAME_WIDTH = 1456
-      const FRAME_HEIGHT = 816
-      const OPENING_WIDTH = 1135
-      const OPENING_HEIGHT = 603
-      
-      const containerWidth = containerRef.current.offsetWidth
-      const containerHeight = containerRef.current.offsetHeight
-      
-      const openingWidthScaled = (OPENING_WIDTH / FRAME_WIDTH) * containerWidth
-      const openingHeightScaled = (OPENING_HEIGHT / FRAME_HEIGHT) * containerHeight
-      
-      const GRID_SIZE = 768
-      
-      const scaleX = openingWidthScaled / GRID_SIZE
-      const scaleY = openingHeightScaled / GRID_SIZE
-      const newScale = Math.min(scaleX, scaleY)
-      
-      setScale(newScale)
-    }
-
-    updateScale()
-    
-    const resizeObserver = new ResizeObserver(updateScale)
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current)
-    }
-    
-    return () => resizeObserver.disconnect()
-  }, [])
-
-  const OPENING_LEFT_PCT = (163 / 1456) * 100
-  const OPENING_TOP_PCT = (105 / 816) * 100
-  const OPENING_WIDTH_PCT = (1135 / 1456) * 100
-  const OPENING_HEIGHT_PCT = (603 / 816) * 100
-
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        position: 'relative',
-        width: 'min(92vw, 1456px)',
-        aspectRatio: '1456 / 816',
-        margin: '0 auto',
-      }}
-    >
-      {/* Inner viewport for the grid */}
-      <div
-        style={{
-          position: 'absolute',
-          left: `${OPENING_LEFT_PCT}%`,
-          top: `${OPENING_TOP_PCT}%`,
-          width: `${OPENING_WIDTH_PCT}%`,
-          height: `${OPENING_HEIGHT_PCT}%`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            transform: `scale(${scale})`,
-            transformOrigin: 'center center',
-          }}
-        >
-          {children}
-        </div>
-      </div>
-      
-      {/* Frame overlay with transparent center */}
-      <img
-        src="/img/hud_frame_overlay.png"
-        alt=""
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          zIndex: 10,
-        }}
-      />
     </div>
   )
 }
@@ -1434,6 +1341,32 @@ function App() {
     )
   }
 
+  if (gamePhase === 'placement') {
+    const handlePlacementComplete = () => {
+      const aiBoard = placeAIShips()
+      setAiBoard(aiBoard)
+      setGamePhase('battle')
+      setMessage('⚔️ BATTLE STATIONS! ENGAGE HOSTILE TARGETS!')
+    }
+
+    const canPlaceShipWrapper = (board: Cell[][], row: number, col: number, ship: Ship, orientation: 'horizontal' | 'vertical'): boolean => {
+      return canPlaceShip(board, row, col, ship.width, ship.length, orientation)
+    }
+
+    const placeShipWrapper = (board: Cell[][], row: number, col: number, ship: Ship, orientation: 'horizontal' | 'vertical'): Cell[][] => {
+      return placeShip(board, row, col, ship.width, ship.length, orientation, ship.id)
+    }
+
+    return (
+      <PlacementConsole
+        ships={playerShips}
+        onPlacementComplete={handlePlacementComplete}
+        canPlaceShip={canPlaceShipWrapper}
+        placeShip={placeShipWrapper}
+      />
+    )
+  }
+
   if (gamePhase === 'gameOver') {
     return (
       <>
@@ -1514,114 +1447,9 @@ function App() {
         backgroundAttachment: 'fixed',
         position: 'relative'
       }}>
-      {gamePhase === 'placement' && (
-        <>
-          {/* JTAC Targeting Interface - Background Atmosphere */}
-          <div className="jtac-atmosphere">
-            <div className="jtac-fog-layer-1" />
-            <div className="jtac-fog-layer-2" />
-            <div className="jtac-scanlines" />
-            <div className="jtac-vignette" />
-            <div className="jtac-radar-arcs">
-              <div className="jtac-radar-arc" />
-              <div className="jtac-radar-arc" />
-              <div className="jtac-radar-arc" />
-            </div>
-          </div>
-
-          <div className="military-dashboard-frame">
-            <div className="dashboard-corner dashboard-corner-tl" />
-            <div className="dashboard-corner dashboard-corner-tr" />
-            <div className="dashboard-corner dashboard-corner-bl" />
-            <div className="dashboard-corner dashboard-corner-br" />
-          </div>
-          <div className="placement-hud-overlay">
-            <div className="hud-ticker">
-              <div className="ticker-content">
-                LINK-16 ONLINE • IFF AUTH: GREEN • COMMS: ENCRYPTED • THREAT LEVEL: MODERATE • TACTICAL NET: ACTIVE • DATALINK: SECURE
-              </div>
-            </div>
-            <div className="hud-systems-panel">
-              <div className="system-meter">
-                <div className="meter-label">PWR</div>
-                <div className="meter-bar">
-                  <div className="meter-fill" style={{ height: '85%' }} />
-                </div>
-              </div>
-              <div className="system-meter">
-                <div className="meter-label">COM</div>
-                <div className="meter-bar">
-                  <div className="meter-fill" style={{ height: '92%' }} />
-                </div>
-              </div>
-              <div className="system-meter">
-                <div className="meter-label">SNR</div>
-                <div className="meter-bar">
-                  <div className="meter-fill" style={{ height: '78%' }} />
-                </div>
-              </div>
-            </div>
-            <div className="hud-threat-indicator">
-              <div className="threat-label">THREAT INDEX</div>
-              <div className="threat-value">02</div>
-              <div className="threat-bar">
-                <div className="threat-fill" style={{ width: '20%' }} />
-              </div>
-            </div>
-            
-            {/* Phase 5: Additional HUD Metadata Blocks */}
-            <div className="hud-metadata-block hud-metadata-tl">
-              <div className="hud-metadata-label">GPS SYNC</div>
-              <div className="hud-metadata-value">LOCKED</div>
-            </div>
-            
-            <div className="hud-metadata-block hud-metadata-tr">
-              <div className="hud-metadata-label">SATCOM</div>
-              <div className="hud-metadata-value">ONLINE</div>
-            </div>
-            
-            <div className="hud-metadata-block hud-metadata-bl">
-              <div className="hud-metadata-label">CALLSIGN</div>
-              <div className="hud-metadata-value">VIPER-1</div>
-            </div>
-            
-            <div className="hud-metadata-block hud-metadata-br-top">
-              <div className="hud-metadata-label">FLEET STATUS</div>
-              <div className="hud-metadata-value">{currentShipIndex}/{playerShips.length}</div>
-            </div>
-            
-            <div className="hud-metadata-block hud-metadata-left">
-              <div className="hud-metadata-label">OPS CONSOLE</div>
-              <div className="hud-metadata-value">ACTIVE</div>
-            </div>
-          </div>
-        </>
-      )}
       <div className="max-w-7xl mx-auto">
         <header className="header-banner mb-6">
           <div className="header-smoke-layer" />
-          
-          {/* Phase 4: Corner Metadata Clusters */}
-          {gamePhase === 'placement' && (
-            <>
-              <div className="header-metadata-corner header-metadata-tl">
-                <div className="metadata-label">IFF AUTH</div>
-                <div className="metadata-value">GREEN</div>
-              </div>
-              <div className="header-metadata-corner header-metadata-tr">
-                <div className="metadata-label">COMMS LINK</div>
-                <div className="metadata-value">SECURE</div>
-              </div>
-              <div className="header-metadata-corner header-metadata-bl">
-                <div className="metadata-label">DATALINK</div>
-                <div className="metadata-value">ACTIVE</div>
-              </div>
-              <div className="header-metadata-corner header-metadata-br">
-                <div className="metadata-label">MISSION PHASE</div>
-                <div className="metadata-value">DEPLOY</div>
-              </div>
-            </>
-          )}
           
           <div className="header-inner">
             <div className="header-text-block">
@@ -1631,43 +1459,8 @@ function App() {
                 <span className="mw2-title-ops">OPS</span>
               </h1>
               <h2 className="cod-subheading header-subtitle mw2-subtitle">{message}</h2>
-              {gamePhase === 'placement' && (
-                <>
-                  <p className="header-hint mw-type-white--muted" style={{ fontSize: '12px' }}>
-                    ROTATION COMMAND: [R] — ORIENTATION: {shipOrientation.toUpperCase()}
-                  </p>
-                  {/* Phase 4: Dynamic Asset Status */}
-                  <div className="header-asset-status">
-                    <span className="asset-status-label">CURRENT ASSET:</span>
-                    <span className="asset-status-value">
-                      {currentShipIndex < playerShips.length 
-                        ? playerShips[currentShipIndex].name.toUpperCase()
-                        : 'ALL DEPLOYED'}
-                    </span>
-                    <span className="asset-status-separator">|</span>
-                    <span className="asset-status-label">BEARING:</span>
-                    <span className="asset-status-value">
-                      {shipOrientation === 'horizontal' ? '090°' : '000°'}
-                    </span>
-                  </div>
-                </>
-              )}
             </div>
           </div>
-          
-          {/* Phase 4: Compass Strip */}
-          {gamePhase === 'placement' && (
-            <div className="header-compass-strip">
-              <div className="compass-tick">N</div>
-              <div className="compass-tick compass-tick-minor">030</div>
-              <div className="compass-tick">E</div>
-              <div className="compass-tick compass-tick-minor">120</div>
-              <div className="compass-tick">S</div>
-              <div className="compass-tick compass-tick-minor">210</div>
-              <div className="compass-tick">W</div>
-              <div className="compass-tick compass-tick-minor">300</div>
-            </div>
-          )}
           
           <div className="hud-header-separator" />
         </header>
@@ -1677,34 +1470,22 @@ function App() {
         <div className="flex flex-col lg:flex-row justify-center gap-8 mb-8 items-start">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4 uppercase tracking-widest mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ ALLIED SECTOR ◈</h2>
-            {gamePhase === 'placement' ? (
-              <HudFrameViewport>
-                <div className="relative inline-block">
-                  {renderBoard(playerBoard, true, playerGridRef, false)}
-                  <ShipOverlays
-                    placements={playerPlacements}
-                    gridRef={playerGridRef}
-                  />
-                </div>
-              </HudFrameViewport>
-            ) : (
-              <div className="relative inline-block">
-                {gamePhase === 'battle' && (
-                  <img 
-                    src="/img/allied_overlay.png" 
-                    alt="" 
-                    className="soldier-overlay soldier-overlay-allied"
-                  />
-                )}
-                {renderBoard(playerBoard, true, playerGridRef, gamePhase === 'battle')}
-                {gamePhase === 'battle' && (
-                  <ShipOverlays
-                    placements={playerPlacements}
-                    gridRef={playerGridRef}
-                  />
-                )}
-              </div>
-            )}
+            <div className="relative inline-block">
+              {gamePhase === 'battle' && (
+                <img 
+                  src="/img/allied_overlay.png" 
+                  alt="" 
+                  className="soldier-overlay soldier-overlay-allied"
+                />
+              )}
+              {renderBoard(playerBoard, true, playerGridRef, gamePhase === 'battle')}
+              {gamePhase === 'battle' && (
+                <ShipOverlays
+                  placements={playerPlacements}
+                  gridRef={playerGridRef}
+                />
+              )}
+            </div>
             {gamePhase === 'battle' && (
               <div className="mt-4 space-y-2">
                 {playerShips.map(ship => (
@@ -1719,106 +1500,6 @@ function App() {
               </div>
             )}
           </div>
-
-          {gamePhase === 'placement' && (
-            <div className="w-full lg:w-[380px] xl:w-[420px] text-left space-y-6 self-start jtac-asset-panel">
-              <h3 className="text-xl font-bold uppercase tracking-wider mt-2 mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ NAVAL ASSETS ◈</h3>
-              <div className="space-y-3">
-                {playerShips.map((ship, index) => {
-                  const isDeployed = index < currentShipIndex
-                  const isSelected = index === currentShipIndex
-                  
-                  let cardClass = 'jtac-asset-card'
-                  let statusClass = 'jtac-asset-status'
-                  
-                  if (isDeployed) {
-                    cardClass += ' jtac-asset-card-deployed'
-                    statusClass += ' jtac-asset-status-deployed'
-                  } else if (isSelected) {
-                    cardClass += ' jtac-asset-card-selected'
-                    statusClass += ' jtac-asset-status-selected'
-                  } else {
-                    cardClass += ' jtac-asset-card-available'
-                    statusClass += ' jtac-asset-status-available'
-                  }
-                  
-                  return (
-                    <div key={ship.id} className={cardClass}>
-                      <div className="jtac-asset-header">
-                        <div>
-                          <div className="jtac-asset-label">ASSET</div>
-                          <div className="jtac-asset-name">{ship.name}</div>
-                        </div>
-                        <div className={statusClass} />
-                      </div>
-                      
-                      <div className="jtac-asset-silhouette">
-                        <div className="jtac-ship-outline">
-                          {Array.from({ length: ship.size }, (_, i) => (
-                            <div key={i} className="jtac-ship-segment" />
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div className="jtac-asset-info">
-                        <div className="jtac-info-block">
-                          <div className="jtac-info-label">LENGTH</div>
-                          <div className="jtac-info-value">{ship.size}</div>
-                          <div className="jtac-length-bar">
-                            <div className="jtac-length-fill" style={{ width: `${(ship.size / 5) * 100}%` }} />
-                          </div>
-                        </div>
-                        <div className="jtac-info-block">
-                          <div className="jtac-info-label">STATUS</div>
-                          <div className="jtac-info-value" style={{ 
-                            fontSize: '11px',
-                            color: isDeployed ? 'rgba(255, 0, 0, 0.8)' : isSelected ? 'rgba(255, 200, 0, 0.8)' : 'rgba(0, 255, 120, 0.8)'
-                          }}>
-                            {isDeployed ? 'DEPLOYED' : isSelected ? 'ACTIVE' : 'STANDBY'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="pt-4 space-y-4 border-t border-white/5">
-                <h3 className="text-lg font-bold uppercase tracking-wider mt-2 mw-type-green" style={{ fontFamily: 'Teko, sans-serif' }}>◈ ORIENTATION ◈</h3>
-                <div className="flex flex-col gap-3">
-                  <Button
-                    onClick={() => setShipOrientation('horizontal')}
-                    className={`text-white font-bold px-4 py-3.5 w-full rounded-lg`}
-                    style={{ 
-                      fontFamily: 'Rajdhani, sans-serif',
-                      backgroundColor: shipOrientation === 'horizontal' ? '#8cff4f' : '#475569',
-                      color: shipOrientation === 'horizontal' ? '#000' : '#fff'
-                    }}
-                  >
-                    HORIZONTAL
-                  </Button>
-                  <Button
-                    onClick={() => setShipOrientation('vertical')}
-                    className={`text-white font-bold px-4 py-3.5 w-full rounded-lg`}
-                    style={{ 
-                      fontFamily: 'Rajdhani, sans-serif',
-                      backgroundColor: shipOrientation === 'vertical' ? '#8cff4f' : '#475569',
-                      color: shipOrientation === 'vertical' ? '#000' : '#fff'
-                    }}
-                  >
-                    VERTICAL
-                  </Button>
-                  <Button
-                    onClick={() => setShipOrientation(prev => prev === 'horizontal' ? 'vertical' : 'horizontal')}
-                    className="text-white font-bold px-4 py-3.5 w-full flex items-center justify-center gap-2 rounded-lg"
-                    style={{ fontFamily: 'Rajdhani, sans-serif', backgroundColor: '#f59e0b' }}
-                  >
-                    <RotateCw className="w-4 h-4" />
-                    ROTATE
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {gamePhase === 'battle' && (
             <div className="text-center">
