@@ -1107,7 +1107,7 @@ function App() {
     return `${baseClass} ${borderStyle} ${stateClass}`
   }
 
-  const renderBoard = (board: Cell[][], isPlayerBoard: boolean, gridRef?: React.RefObject<HTMLDivElement>) => {
+  const renderBoard = (board: Cell[][], isPlayerBoard: boolean, gridRef?: React.RefObject<HTMLDivElement>, showOceanVideo: boolean = false) => {
     const ships = isPlayerBoard ? playerShips : aiShips
     
     const isCellOnSunkShip = (cell: Cell): boolean => {
@@ -1119,6 +1119,25 @@ function App() {
     return (
       <div className="inline-block p-2 rounded-lg shadow-2xl grid-frame" style={{ backgroundColor: 'rgba(28, 32, 36, 0.15)' }}>
         <div ref={gridRef} className="relative inline-block">
+          {showOceanVideo && (
+            <>
+              <video 
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-50"
+                style={{ zIndex: 0 }}
+                src="/video/grid_surf.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                onTimeUpdate={(e) => {
+                  if (e.currentTarget.currentTime > 7) {
+                    e.currentTarget.currentTime = 0;
+                  }
+                }}
+              />
+              <div className="absolute inset-0 pointer-events-none bg-black/40" style={{ zIndex: 0 }}></div>
+            </>
+          )}
           
           <div 
             className="grid gap-0 relative board-strategy"
@@ -1451,7 +1470,7 @@ function App() {
                   className="soldier-overlay soldier-overlay-allied"
                 />
               )}
-              {renderBoard(playerBoard, true, playerGridRef)}
+              {renderBoard(playerBoard, true, playerGridRef, gamePhase === 'battle')}
               {(gamePhase === 'placement' || gamePhase === 'battle') && (
                 <ShipOverlays
                   placements={playerPlacements}
@@ -1547,7 +1566,7 @@ function App() {
                   alt="" 
                   className="soldier-overlay soldier-overlay-hostile"
                 />
-                {renderBoard(aiBoard, false, aiGridRef)}
+                {renderBoard(aiBoard, false, aiGridRef, gamePhase === 'battle')}
                 <ShipOverlays
                   placements={aiPlacements}
                   gridRef={aiGridRef}
