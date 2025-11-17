@@ -64,6 +64,36 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
   const placedShipIds = new Set(placements.map(p => p.shipId))
   const availableShips = ships.filter(ship => !placedShipIds.has(ship.id))
 
+  const playPlacementSound = () => {
+    const audioEnabled = localStorage.getItem('audio-enabled')
+    if (audioEnabled !== 'true' && audioEnabled !== null) return
+
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.type = 'square'
+      oscillator.frequency.setValueAtTime(1800, audioContext.currentTime)
+      oscillator.frequency.exponentialRampToValueAtTime(2200, audioContext.currentTime + 0.04)
+
+      gainNode.gain.setValueAtTime(0.15, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.08)
+
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + 0.08)
+
+      setTimeout(() => {
+        audioContext.close()
+      }, 100)
+    } catch (error) {
+      console.log('Placement sound failed:', error)
+    }
+  }
+
   useEffect(() => {
     if (placements.length === ships.length) {
       onPlacementComplete(placements)
@@ -203,6 +233,7 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
           startCol: col,
           orientation: dragState.orientation
         }])
+        playPlacementSound()
       }
     }
 

@@ -340,19 +340,26 @@ function AnimatedMissile({
   const [position, setPosition] = useState({ x: 0, y: 0, angle: 0 })
   const playerMetrics = useGridMetrics(playerGridRef, [missile])
   const aiMetrics = useGridMetrics(aiGridRef, [missile])
-  const startTimeRef = useRef<number>(Date.now())
+  const startTimeRef = useRef<number | null>(null)
   const animationFrameRef = useRef<number>()
   
   const fromMetrics = missile.fromBoard === 'player' ? playerMetrics : aiMetrics
   const cellSize = fromMetrics.cell
+  const ready = playerMetrics.cell > 0 && aiMetrics.cell > 0
 
   useEffect(() => {
+    if (!ready) return
+    
     const fromMetrics = missile.fromBoard === 'player' ? playerMetrics : aiMetrics
     const toMetrics = missile.fromBoard === 'player' ? aiMetrics : playerMetrics
     const fromGridRef = missile.fromBoard === 'player' ? playerGridRef : aiGridRef
     const toGridRef = missile.fromBoard === 'player' ? aiGridRef : playerGridRef
 
     if (!fromGridRef.current || !toGridRef.current) return
+    
+    if (startTimeRef.current === null) {
+      startTimeRef.current = performance.now()
+    }
 
     const fromGridRect = fromGridRef.current.getBoundingClientRect()
     const toGridRect = toGridRef.current.getBoundingClientRect()
@@ -363,7 +370,7 @@ function AnimatedMissile({
     const endY = toGridRect.top + toMetrics.offsetTop + missile.toRow * toMetrics.cell + toMetrics.cell / 2
 
     const duration = 600
-    const startTime = startTimeRef.current
+    const startTime = startTimeRef.current!
 
     const vx = endX - startX
     const vy = endY - startY
@@ -377,7 +384,7 @@ function AnimatedMissile({
     const ny = Math.cos(baseAngle)
 
     const animate = () => {
-      const elapsed = Date.now() - startTime
+      const elapsed = performance.now() - startTime
       const progress = Math.min(elapsed / duration, 1)
 
       const t = progress
@@ -416,11 +423,11 @@ function AnimatedMissile({
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, [missile, playerMetrics, aiMetrics, playerGridRef, aiGridRef])
+  }, [ready, missile, playerMetrics, aiMetrics, playerGridRef, aiGridRef])
 
-  const spriteSize = Math.max(24, Math.round((cellSize || 0) * 0.7))
+  const spriteSize = Math.max(28, Math.round((cellSize || 0) * 0.7))
   
-  if (!fromMetrics.cell) return null
+  if (!ready) return null
   
   return (
     <div
@@ -754,6 +761,21 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
       }
     }
   }, [gamePhase, enabled])
+
+  useEffect(() => {
+    if (!enabled || !audioRef.current) return
+
+    const unlock = () => {
+      if (audioRef.current && audioRef.current.paused) {
+        audioRef.current.play().catch(() => {
+          console.log('Audio unlock failed')
+        })
+      }
+    }
+
+    window.addEventListener('pointerdown', unlock, { once: true })
+    return () => window.removeEventListener('pointerdown', unlock)
+  }, [enabled])
 
   const handleToggle = () => {
     const newEnabled = !enabled
