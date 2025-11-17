@@ -375,7 +375,6 @@ function AnimatedMissile({
     const vx = endX - startX
     const vy = endY - startY
     const baseAngle = Math.atan2(vy, vx)
-    const baseAngleDeg = baseAngle * 180 / Math.PI
     
     const distance = Math.sqrt(vx * vx + vy * vy)
     const amplitude = Math.min(8, 0.02 * distance)
@@ -397,17 +396,7 @@ function AnimatedMissile({
       const tangentX = vx + nx * dPerpOffset
       const tangentY = vy + ny * dPerpOffset
       
-      let angleDeg = Math.atan2(tangentY, tangentX) * 180 / Math.PI
-      
-      const normalizeAngle = (a: number) => {
-        while (a > 180) a -= 360
-        while (a < -180) a += 360
-        return a
-      }
-      
-      const delta = normalizeAngle(angleDeg - baseAngleDeg)
-      const clampedDelta = Math.max(-8, Math.min(8, delta)) * 0.5
-      angleDeg = baseAngleDeg + clampedDelta
+      const angleDeg = Math.atan2(tangentY, tangentX) * 180 / Math.PI
 
       setPosition({ x, y, angle: angleDeg })
 
@@ -425,7 +414,7 @@ function AnimatedMissile({
     }
   }, [ready, missile, playerMetrics, aiMetrics, playerGridRef, aiGridRef])
 
-  const spriteSize = Math.max(28, Math.round((cellSize || 0) * 0.7))
+  const spriteSize = Math.round((cellSize || 0) * 0.7 * 4)
   
   if (!ready) return null
   
@@ -439,7 +428,7 @@ function AnimatedMissile({
         top: 0,
         width: `${spriteSize}px`,
         height: 'auto',
-        transform: `translate3d(${position.x - spriteSize/2}px, ${position.y - spriteSize/2}px, 0) rotate(${position.angle + 90}deg)`,
+        transform: `translate3d(${position.x - spriteSize/2}px, ${position.y - spriteSize/2}px, 0) rotate(${position.angle}deg)`,
         transformOrigin: 'center center',
         willChange: 'transform',
         filter: 'drop-shadow(0 0 4px rgba(255, 140, 0, 0.6))',
@@ -722,11 +711,8 @@ function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefOb
 
 function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
   const audioRef = useRef<HTMLAudioElement>(null)
-  const firstGestureDoneRef = useRef(false)
-  const [enabled, setEnabled] = useState(() => {
-    const stored = localStorage.getItem('audio-enabled')
-    return stored === null ? true : stored === 'true'
-  })
+  const unlockedRef = useRef(false)
+  const [enabled, setEnabled] = useState(true)
 
   useEffect(() => {
     if (!audioRef.current) return
@@ -742,62 +728,51 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
 
     if (desiredSrc && audio.src !== window.location.origin + desiredSrc) {
       audio.src = desiredSrc
+      audio.load()
       
-      if (enabled) {
-        audio.load()
-        const playPromise = audio.play()
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {
-            console.log('Audio autoplay prevented by browser')
-          })
-        }
+      if (unlockedRef.current) {
+        audio.muted = !enabled
+        audio.play().catch(() => {
+          console.log('Audio play after src change failed')
+        })
       }
     }
   }, [gamePhase, enabled])
 
   useEffect(() => {
-    if (!enabled || !audioRef.current) return
+    if (!audioRef.current) return
 
     const unlock = () => {
-      if (audioRef.current && audioRef.current.paused) {
-        audioRef.current.play().catch(() => {
-          console.log('Audio unlock failed')
-        })
-      }
+      if (!audioRef.current || unlockedRef.current) return
+      
+      unlockedRef.current = true
+      const audio = audioRef.current
+      audio.muted = !enabled
+      audio.volume = 0.35
+      
+      audio.play().catch((err) => {
+        console.log('Audio unlock play failed:', err)
+      })
     }
 
-    window.addEventListener('pointerdown', unlock, { once: true })
-    return () => window.removeEventListener('pointerdown', unlock)
+    window.addEventListener('pointerdown', unlock, { once: true, capture: true })
+    window.addEventListener('touchstart', unlock, { once: true, passive: true, capture: true })
+    window.addEventListener('keydown', unlock, { once: true, capture: true })
+
+    return () => {
+      window.removeEventListener('pointerdown', unlock, { capture: true })
+      window.removeEventListener('touchstart', unlock, { capture: true })
+      window.removeEventListener('keydown', unlock, { capture: true })
+    }
   }, [enabled])
 
   const handleToggle = () => {
-    if (enabled && audioRef.current && audioRef.current.paused && !firstGestureDoneRef.current) {
-      firstGestureDoneRef.current = true
-      const playPromise = audioRef.current.play()
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          console.log('Audio unlock play failed')
-        })
-      }
-      return
-    }
-
     const newEnabled = !enabled
     setEnabled(newEnabled)
     localStorage.setItem('audio-enabled', String(newEnabled))
 
     if (audioRef.current) {
-      if (newEnabled) {
-        firstGestureDoneRef.current = true
-        const playPromise = audioRef.current.play()
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {
-            console.log('Audio play failed')
-          })
-        }
-      } else {
-        audioRef.current.pause()
-      }
+      audioRef.current.muted = !newEnabled
     }
   }
 
