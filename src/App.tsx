@@ -714,7 +714,7 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
   const unlockedRef = useRef(false)
   const [enabled, setEnabled] = useState(() => {
     const stored = localStorage.getItem('audio-enabled')
-    return stored === null ? true : stored === 'true'
+    return stored === null ? false : stored === 'true'
   })
 
   useEffect(() => {
@@ -733,7 +733,6 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
       const audio = audioRef.current
       audio.muted = !enabled
       audio.volume = 0.35
-      localStorage.setItem('audio-enabled', 'true')
       
       audio.play().catch((err) => {
         console.log('Audio unlock play failed:', err)
