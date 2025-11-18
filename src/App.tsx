@@ -712,36 +712,20 @@ function TargetingOverlay({ gridRef, crosshairPosition }: { gridRef: React.RefOb
 function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const unlockedRef = useRef(false)
-  const [enabled, setEnabled] = useState(true)
+  const [enabled, setEnabled] = useState(() => {
+    const stored = localStorage.getItem('audio-enabled')
+    return stored === null ? true : stored === 'true'
+  })
 
   useEffect(() => {
     if (!audioRef.current) return
-
     const audio = audioRef.current
-    let desiredSrc = ''
-
-    if (gamePhase === 'title' || gamePhase === 'instructions' || gamePhase === 'gameOver') {
-      desiredSrc = '/assets/past-deeds.mp3'
-    } else if (gamePhase === 'placement' || gamePhase === 'battle') {
-      desiredSrc = '/assets/under-siege.mp3'
-    }
-
-    if (desiredSrc && audio.src !== window.location.origin + desiredSrc) {
-      audio.src = desiredSrc
-      audio.load()
-      
-      if (unlockedRef.current) {
-        audio.muted = !enabled
-        audio.play().catch(() => {
-          console.log('Audio play after src change failed')
-        })
-      }
-    }
-  }, [gamePhase, enabled])
+    audio.muted = true
+    audio.volume = 0.35
+    audio.play().catch(() => {})
+  }, [])
 
   useEffect(() => {
-    if (!audioRef.current) return
-
     const unlock = () => {
       if (!audioRef.current || unlockedRef.current) return
       
@@ -749,6 +733,7 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
       const audio = audioRef.current
       audio.muted = !enabled
       audio.volume = 0.35
+      localStorage.setItem('audio-enabled', 'true')
       
       audio.play().catch((err) => {
         console.log('Audio unlock play failed:', err)
@@ -766,6 +751,25 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
     }
   }, [enabled])
 
+  useEffect(() => {
+    if (audioRef.current && unlockedRef.current && enabled) {
+      audioRef.current.muted = false
+      audioRef.current.play().catch(() => {})
+    }
+  }, [enabled])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio || !unlockedRef.current || !enabled) return
+    
+    const onReady = () => {
+      audio.play().catch(() => {})
+    }
+    
+    audio.addEventListener('loadeddata', onReady, { once: true })
+    return () => audio.removeEventListener('loadeddata', onReady)
+  }, [gamePhase, enabled])
+
   const handleToggle = () => {
     if (!audioRef.current) return
 
@@ -773,6 +777,7 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
       unlockedRef.current = true
       audioRef.current.muted = false
       setEnabled(true)
+      localStorage.setItem('audio-enabled', 'true')
       audioRef.current.volume = 0.35
       audioRef.current.play().catch((err) => {
         console.log('Audio unlock in toggle failed:', err)
@@ -785,30 +790,23 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
     localStorage.setItem('audio-enabled', String(newEnabled))
     audioRef.current.muted = !newEnabled
     
-    if (newEnabled && unlockedRef.current) {
+    if (newEnabled) {
       audioRef.current.play().catch(() => {})
     }
   }
-
-  const initialSrc = gamePhase === 'title' || gamePhase === 'instructions' || gamePhase === 'gameOver' 
-    ? '/assets/past-deeds.mp3' 
-    : '/assets/under-siege.mp3'
 
   return (
     <>
       <audio
         ref={audioRef}
-        src={initialSrc}
+        src={gamePhase === 'title' || gamePhase === 'instructions' || gamePhase === 'gameOver'
+          ? '/assets/past-deeds.mp3'
+          : '/assets/under-siege.mp3'}
         loop
         preload="auto"
         playsInline
-        muted={!enabled}
         style={{ display: 'none' }}
-        onLoadedData={() => {
-          if (audioRef.current && enabled) {
-            audioRef.current.volume = 0.35
-          }
-        }}
+        id="bgm"
       />
       <button
         onClick={handleToggle}
@@ -1405,22 +1403,19 @@ function App() {
     )
   }
 
-  if (gamePhase === 'title') {
-    return (
-      <>
-        <AudioController gamePhase={gamePhase} />
-        <BackgroundVideo />
-        <TitleScreen onStart={() => setGamePhase('instructions')} />
-      </>
-    )
-  }
-
-  if (gamePhase === 'instructions') {
-    return (
-      <>
-        <AudioController gamePhase={gamePhase} />
-        <BackgroundVideo />
-        <div className="min-h-screen flex items-center justify-center p-4 overflow-hidden" style={{ background: 'transparent' }}>
+  return (
+    <>
+      <AudioController gamePhase={gamePhase} />
+      {gamePhase === 'title' && (
+        <>
+          <BackgroundVideo />
+          <TitleScreen onStart={() => setGamePhase('instructions')} />
+        </>
+      )}
+      {gamePhase === 'instructions' && (
+        <>
+          <BackgroundVideo />
+          <div className="min-h-screen flex items-center justify-center p-4 overflow-hidden" style={{ background: 'transparent' }}>
         <Card className="max-w-2xl w-full bg-panel-bg/80 backdrop-blur-sm border-hud-accent-soft border-2 shadow-2xl shadow-hud-accent/20">
           <CardHeader className="text-center py-4">
             <div className="flex justify-center mb-3">
@@ -1481,44 +1476,36 @@ function App() {
           </CardContent>
         </Card>
       </div>
-      </>
-    )
-  }
+        </>
+      )}
+      {gamePhase === 'placement' && (() => {
+        const handlePlacementComplete = () => {
+          const aiBoard = placeAIShips()
+          setAiBoard(aiBoard)
+          setGamePhase('battle')
+          setMessage('⚔️ BATTLE STATIONS! ENGAGE HOSTILE TARGETS!')
+        }
 
-  if (gamePhase === 'placement') {
-    const handlePlacementComplete = () => {
-      const aiBoard = placeAIShips()
-      setAiBoard(aiBoard)
-      setGamePhase('battle')
-      setMessage('⚔️ BATTLE STATIONS! ENGAGE HOSTILE TARGETS!')
-    }
+        const canPlaceShipWrapper = (board: Cell[][], row: number, col: number, ship: Ship, orientation: 'horizontal' | 'vertical'): boolean => {
+          return canPlaceShip(board, row, col, ship.width, ship.length, orientation)
+        }
 
-    const canPlaceShipWrapper = (board: Cell[][], row: number, col: number, ship: Ship, orientation: 'horizontal' | 'vertical'): boolean => {
-      return canPlaceShip(board, row, col, ship.width, ship.length, orientation)
-    }
+        const placeShipWrapper = (board: Cell[][], row: number, col: number, ship: Ship, orientation: 'horizontal' | 'vertical'): Cell[][] => {
+          return placeShip(board, row, col, ship.width, ship.length, orientation, ship.id)
+        }
 
-    const placeShipWrapper = (board: Cell[][], row: number, col: number, ship: Ship, orientation: 'horizontal' | 'vertical'): Cell[][] => {
-      return placeShip(board, row, col, ship.width, ship.length, orientation, ship.id)
-    }
-
-    return (
-      <>
-        <AudioController gamePhase={gamePhase} />
-        <PlacementConsole
-          ships={playerShips}
-          onPlacementComplete={handlePlacementComplete}
-          canPlaceShip={canPlaceShipWrapper}
-          placeShip={placeShipWrapper}
-        />
-      </>
-    )
-  }
-
-  if (gamePhase === 'gameOver') {
-    return (
-      <>
-        <AudioController gamePhase={gamePhase} />
-        <BackgroundVideo />
+        return (
+          <PlacementConsole
+            ships={playerShips}
+            onPlacementComplete={handlePlacementComplete}
+            canPlaceShip={canPlaceShipWrapper}
+            placeShip={placeShipWrapper}
+          />
+        )
+      })()}
+      {gamePhase === 'gameOver' && (
+        <>
+          <BackgroundVideo />
         <div className="min-h-screen flex items-center justify-center p-8" style={{ 
           background: 'transparent',
           position: 'relative'
@@ -1692,14 +1679,10 @@ function App() {
             </button>
           </div>
         </div>
-      </>
-    )
-  }
-
-  return (
-    <>
-      <AudioController gamePhase={gamePhase} />
-      <div className="theme-cod min-h-screen p-8" style={{
+        </>
+      )}
+      {gamePhase === 'battle' && (
+        <div className="theme-cod min-h-screen p-8" style={{
         background: 'linear-gradient(180deg, #0c0f12 0%, #0a0d10 60%, #080a0c 100%)',
         backgroundAttachment: 'fixed',
         position: 'relative'
@@ -1840,6 +1823,7 @@ function App() {
         </>
       )}
       </div>
+      )}
     </>
   )
 }
