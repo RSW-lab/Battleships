@@ -713,16 +713,30 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const unlockedRef = useRef(false)
   const [enabled, setEnabled] = useState(() => {
+    const version = localStorage.getItem('audio-pref-version')
+    if (version !== '3') {
+      localStorage.setItem('audio-enabled', 'true')
+      localStorage.setItem('audio-pref-version', '3')
+      return true
+    }
     const stored = localStorage.getItem('audio-enabled')
-    return stored === null ? false : stored === 'true'
+    return stored === null ? true : stored === 'true'
   })
 
   useEffect(() => {
     if (!audioRef.current) return
     const audio = audioRef.current
-    audio.muted = true
     audio.volume = 0.35
-    audio.play().catch(() => {})
+    
+    audio.muted = false
+    audio.play().then(() => {
+      unlockedRef.current = true
+      console.log('Audio autoplay succeeded')
+    }).catch(() => {
+      audio.muted = true
+      audio.play().catch(() => {})
+      console.log('Audio autoplay blocked, prewarming muted')
+    })
   }, [])
 
   useEffect(() => {
@@ -742,11 +756,15 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
     window.addEventListener('pointerdown', unlock, { once: true, capture: true })
     window.addEventListener('touchstart', unlock, { once: true, passive: true, capture: true })
     window.addEventListener('keydown', unlock, { once: true, capture: true })
+    window.addEventListener('click', unlock, { once: true, capture: true })
+    window.addEventListener('touchend', unlock, { once: true, passive: true, capture: true })
 
     return () => {
       window.removeEventListener('pointerdown', unlock, { capture: true })
       window.removeEventListener('touchstart', unlock, { capture: true })
       window.removeEventListener('keydown', unlock, { capture: true })
+      window.removeEventListener('click', unlock, { capture: true })
+      window.removeEventListener('touchend', unlock, { capture: true })
     }
   }, [enabled])
 
