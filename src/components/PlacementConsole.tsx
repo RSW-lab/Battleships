@@ -70,45 +70,69 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
 
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const now = audioContext.currentTime
       
-      const lowOsc = audioContext.createOscillator()
-      const lowGain = audioContext.createGain()
-      lowOsc.type = 'sine'
-      lowOsc.frequency.setValueAtTime(800, audioContext.currentTime)
-      lowGain.gain.setValueAtTime(0.3, audioContext.currentTime)
-      lowGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05)
-      lowOsc.connect(lowGain)
-      lowGain.connect(audioContext.destination)
-      lowOsc.start(audioContext.currentTime)
-      lowOsc.stop(audioContext.currentTime + 0.05)
+      const servoOsc = audioContext.createOscillator()
+      const servoGain = audioContext.createGain()
+      servoOsc.type = 'sawtooth'
+      servoOsc.frequency.setValueAtTime(350, now)
+      servoOsc.frequency.exponentialRampToValueAtTime(1200, now + 0.06)
+      servoGain.gain.setValueAtTime(0.08, now)
+      servoGain.gain.exponentialRampToValueAtTime(0.001, now + 0.07)
+      servoOsc.connect(servoGain)
+      servoGain.connect(audioContext.destination)
+      servoOsc.start(now)
+      servoOsc.stop(now + 0.07)
 
-      const bufferSize = audioContext.sampleRate * 0.03
-      const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate)
-      const data = buffer.getChannelData(0)
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3))
+      const noiseBufferSize = Math.round(audioContext.sampleRate * 0.02)
+      const noiseBuffer = audioContext.createBuffer(1, noiseBufferSize, audioContext.sampleRate)
+      const noiseData = noiseBuffer.getChannelData(0)
+      for (let i = 0; i < noiseBufferSize; i++) {
+        noiseData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (noiseBufferSize * 0.4))
       }
 
-      const noiseSource = audioContext.createBufferSource()
-      noiseSource.buffer = buffer
+      const noiseSource1 = audioContext.createBufferSource()
+      noiseSource1.buffer = noiseBuffer
+      const bandpass1 = audioContext.createBiquadFilter()
+      bandpass1.type = 'bandpass'
+      bandpass1.frequency.setValueAtTime(700, now)
+      bandpass1.Q.setValueAtTime(6, now)
+      const noiseGain1 = audioContext.createGain()
+      noiseGain1.gain.setValueAtTime(0.15, now)
+      noiseGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.05)
+      noiseSource1.connect(bandpass1)
+      bandpass1.connect(noiseGain1)
+      noiseGain1.connect(audioContext.destination)
+      noiseSource1.start(now)
 
-      const bandpass = audioContext.createBiquadFilter()
-      bandpass.type = 'bandpass'
-      bandpass.frequency.setValueAtTime(3000, audioContext.currentTime)
-      bandpass.Q.setValueAtTime(2, audioContext.currentTime)
+      const noiseSource2 = audioContext.createBufferSource()
+      noiseSource2.buffer = noiseBuffer
+      const bandpass2 = audioContext.createBiquadFilter()
+      bandpass2.type = 'bandpass'
+      bandpass2.frequency.setValueAtTime(2300, now)
+      bandpass2.Q.setValueAtTime(8, now)
+      const noiseGain2 = audioContext.createGain()
+      noiseGain2.gain.setValueAtTime(0.12, now)
+      noiseGain2.gain.exponentialRampToValueAtTime(0.001, now + 0.04)
+      noiseSource2.connect(bandpass2)
+      bandpass2.connect(noiseGain2)
+      noiseGain2.connect(audioContext.destination)
+      noiseSource2.start(now)
 
-      const noiseGain = audioContext.createGain()
-      noiseGain.gain.setValueAtTime(0.2, audioContext.currentTime)
-
-      noiseSource.connect(bandpass)
-      bandpass.connect(noiseGain)
-      noiseGain.connect(audioContext.destination)
-
-      noiseSource.start(audioContext.currentTime)
+      const pingOsc = audioContext.createOscillator()
+      const pingGain = audioContext.createGain()
+      pingOsc.type = 'sine'
+      pingOsc.frequency.setValueAtTime(2000, now + 0.01)
+      pingGain.gain.setValueAtTime(0.04, now + 0.01)
+      pingGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035)
+      pingOsc.connect(pingGain)
+      pingGain.connect(audioContext.destination)
+      pingOsc.start(now + 0.01)
+      pingOsc.stop(now + 0.035)
 
       setTimeout(() => {
         audioContext.close()
-      }, 100)
+      }, 120)
     } catch (error) {
       console.log('Placement sound failed:', error)
     }

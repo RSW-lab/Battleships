@@ -414,7 +414,7 @@ function AnimatedMissile({
     }
   }, [ready, missile, playerMetrics, aiMetrics, playerGridRef, aiGridRef])
 
-  const spriteSize = Math.round((cellSize || 0) * 0.7 * 4)
+  const spriteSize = Math.round((cellSize || 0) * 0.7 * 4.8)
   
   if (!ready) return null
   
@@ -767,22 +767,38 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
   }, [enabled])
 
   const handleToggle = () => {
+    if (!audioRef.current) return
+
+    if (!unlockedRef.current) {
+      unlockedRef.current = true
+      audioRef.current.muted = false
+      setEnabled(true)
+      audioRef.current.volume = 0.35
+      audioRef.current.play().catch((err) => {
+        console.log('Audio unlock in toggle failed:', err)
+      })
+      return
+    }
+
     const newEnabled = !enabled
     setEnabled(newEnabled)
     localStorage.setItem('audio-enabled', String(newEnabled))
-
-    if (audioRef.current) {
-      audioRef.current.muted = !newEnabled
-    }
+    audioRef.current.muted = !newEnabled
   }
+
+  const initialSrc = gamePhase === 'title' || gamePhase === 'instructions' || gamePhase === 'gameOver' 
+    ? '/assets/past-deeds.mp3' 
+    : '/assets/under-siege.mp3'
 
   return (
     <>
       <audio
         ref={audioRef}
+        src={initialSrc}
         loop
         preload="auto"
         playsInline
+        muted={!enabled}
         style={{ display: 'none' }}
         onLoadedData={() => {
           if (audioRef.current && enabled) {
