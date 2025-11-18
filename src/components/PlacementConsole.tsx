@@ -69,70 +69,63 @@ export function PlacementConsole({ ships, onPlacementComplete, canPlaceShip, pla
     if (audioEnabled !== 'true' && audioEnabled !== null) return
 
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-      const now = audioContext.currentTime
-      
-      const servoOsc = audioContext.createOscillator()
-      const servoGain = audioContext.createGain()
-      servoOsc.type = 'sawtooth'
-      servoOsc.frequency.setValueAtTime(350, now)
-      servoOsc.frequency.exponentialRampToValueAtTime(1200, now + 0.06)
-      servoGain.gain.setValueAtTime(0.08, now)
-      servoGain.gain.exponentialRampToValueAtTime(0.001, now + 0.07)
-      servoOsc.connect(servoGain)
-      servoGain.connect(audioContext.destination)
-      servoOsc.start(now)
-      servoOsc.stop(now + 0.07)
+      const w = window as any
+      if (!w.__sfxCtx) {
+        w.__sfxCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+      }
+      const ctx = w.__sfxCtx as AudioContext
+      const now = ctx.currentTime
 
-      const noiseBufferSize = Math.round(audioContext.sampleRate * 0.02)
-      const noiseBuffer = audioContext.createBuffer(1, noiseBufferSize, audioContext.sampleRate)
-      const noiseData = noiseBuffer.getChannelData(0)
-      for (let i = 0; i < noiseBufferSize; i++) {
-        noiseData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (noiseBufferSize * 0.4))
+      if (!w.__sfxIR) {
+        const dur = 0.12
+        const len = Math.floor(ctx.sampleRate * dur)
+        const ir = ctx.createBuffer(2, len, ctx.sampleRate)
+        for (let ch = 0; ch < 2; ch++) {
+          const data = ir.getChannelData(ch)
+          for (let i = 0; i < len; i++) {
+            const decay = Math.pow(1 - i / len, 2.2)
+            data[i] = (Math.random() * 2 - 1) * decay
+          }
+        }
+        w.__sfxIR = ir
       }
 
-      const noiseSource1 = audioContext.createBufferSource()
-      noiseSource1.buffer = noiseBuffer
-      const bandpass1 = audioContext.createBiquadFilter()
-      bandpass1.type = 'bandpass'
-      bandpass1.frequency.setValueAtTime(700, now)
-      bandpass1.Q.setValueAtTime(6, now)
-      const noiseGain1 = audioContext.createGain()
-      noiseGain1.gain.setValueAtTime(0.15, now)
-      noiseGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.05)
-      noiseSource1.connect(bandpass1)
-      bandpass1.connect(noiseGain1)
-      noiseGain1.connect(audioContext.destination)
-      noiseSource1.start(now)
+      const clickLen = Math.floor(ctx.sampleRate * 0.01)
+      const clickBuf = ctx.createBuffer(1, clickLen, ctx.sampleRate)
+      const clickData = clickBuf.getChannelData(0)
+      for (let i = 0; i < clickLen; i++) {
+        const env = Math.exp(-i / (clickLen * 0.4))
+        clickData[i] = (Math.random() * 2 - 1) * env
+      }
+      const click = ctx.createBufferSource()
+      click.buffer = clickBuf
 
-      const noiseSource2 = audioContext.createBufferSource()
-      noiseSource2.buffer = noiseBuffer
-      const bandpass2 = audioContext.createBiquadFilter()
-      bandpass2.type = 'bandpass'
-      bandpass2.frequency.setValueAtTime(2300, now)
-      bandpass2.Q.setValueAtTime(8, now)
-      const noiseGain2 = audioContext.createGain()
-      noiseGain2.gain.setValueAtTime(0.12, now)
-      noiseGain2.gain.exponentialRampToValueAtTime(0.001, now + 0.04)
-      noiseSource2.connect(bandpass2)
-      bandpass2.connect(noiseGain2)
-      noiseGain2.connect(audioContext.destination)
-      noiseSource2.start(now)
+      const hp = ctx.createBiquadFilter()
+      hp.type = 'highpass'
+      hp.frequency.value = 1200
+      hp.Q.value = 0.7
 
-      const pingOsc = audioContext.createOscillator()
-      const pingGain = audioContext.createGain()
-      pingOsc.type = 'sine'
-      pingOsc.frequency.setValueAtTime(2000, now + 0.01)
-      pingGain.gain.setValueAtTime(0.04, now + 0.01)
-      pingGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035)
-      pingOsc.connect(pingGain)
-      pingGain.connect(audioContext.destination)
-      pingOsc.start(now + 0.01)
-      pingOsc.stop(now + 0.035)
+      const convolver = ctx.createConvolver()
+      convolver.buffer = w.__sfxIR
 
-      setTimeout(() => {
-        audioContext.close()
-      }, 120)
+      const dry = ctx.createGain()
+      const wet = ctx.createGain()
+      dry.gain.setValueAtTime(0.16, now)
+      wet.gain.setValueAtTime(0.10, now)
+
+      const out = ctx.createGain()
+      out.gain.setValueAtTime(0.6, now)
+      out.gain.exponentialRampToValueAtTime(0.3, now + 0.05)
+
+      click.connect(hp)
+      hp.connect(dry)
+      hp.connect(convolver)
+      convolver.connect(wet)
+      dry.connect(out)
+      wet.connect(out)
+      out.connect(ctx.destination)
+
+      click.start(now)
     } catch (error) {
       console.log('Placement sound failed:', error)
     }

@@ -784,6 +784,10 @@ function AudioController({ gamePhase }: { gamePhase: GamePhase }) {
     setEnabled(newEnabled)
     localStorage.setItem('audio-enabled', String(newEnabled))
     audioRef.current.muted = !newEnabled
+    
+    if (newEnabled && unlockedRef.current) {
+      audioRef.current.play().catch(() => {})
+    }
   }
 
   const initialSrc = gamePhase === 'title' || gamePhase === 'instructions' || gamePhase === 'gameOver' 
